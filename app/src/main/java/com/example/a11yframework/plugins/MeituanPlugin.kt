@@ -8,17 +8,34 @@ import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.core.FrameworkAccessibilityService
 
 /**
- * 美团插件
+ * 美团插件 - 医美团购数据抓取
+ * 
+ * 抓取目标:
+ * 1. 医院名称
+ * 2. 荣誉项
+ * 3. 团单信息（头图、名称、价格、销量）
  */
 class MeituanPlugin : IAccessibilityPlugin {
     
     companion object {
         private const val TAG = "MeituanPlugin"
+        
+        // 美团包名
         val MEITUAN_PACKAGES = listOf(
             "com.sankuai.meituan",
             "com.sankuai.meituan.takeoutnew"
         )
-        private const val PAGE_SHOP_LIST = "shop_list"
+        
+        // 关键词配置
+        private val HOSPITAL_KEYWORDS = listOf("医院", "门诊", "整形", "美容", "医美", " clinic")
+        private val HONOR_KEYWORDS = listOf("认证", "奖", "基地", "定点", "指定", "授权", "合作")
+        private val GROUP_BUY_KEYWORDS = listOf("团购", "套餐", "体验", "次卡", "疗程")
+        private val PRICE_KEYWORDS = listOf("¥", "元")
+        private val SALES_KEYWORDS = listOf("已售", "销量", "购买")
+        
+        // 页面类型
+        private const val PAGE_HOSPITAL_DETAIL = "hospital_detail"
+        private const val PAGE_SEARCH_RESULT = "search_result"
     }
     
     private var service: AccessibilityService? = null
@@ -26,7 +43,7 @@ class MeituanPlugin : IAccessibilityPlugin {
     private var keywords: List<String> = emptyList()
     
     override val pluginId: String = "meituan"
-    override val pluginName: String = "美团"
+    override val pluginName: String = "功能 B"
     override val targetPackages: List<String> = MEITUAN_PACKAGES
     
     override fun initialize(service: AccessibilityService) {
@@ -36,9 +53,8 @@ class MeituanPlugin : IAccessibilityPlugin {
         val frameworkService = service as? FrameworkAccessibilityService
         val configManager = frameworkService?.configManager
         
-        // 加载配置的关键词
         val loadedKeywords = configManager?.getPluginConfigList(pluginId, "keywords")
-        keywords = loadedKeywords?.filter { it.isNotEmpty() } ?: listOf("团购", "优惠", "套餐", "商家")
+        keywords = loadedKeywords?.filter { it.isNotEmpty() } ?: listOf("黄金微针", "水光针", "热玛吉")
         
         currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "list") ?: "list"
         
@@ -55,18 +71,27 @@ class MeituanPlugin : IAccessibilityPlugin {
         
         val searchText = getNodeText(nodeInfo).lowercase()
         
-        // 从配置读取关键词
-        val keywords = keywords.ifEmpty {
-            listOf("团购", "优惠", "套餐", "商家", "到店")
+        // 检查是否是医院/医美相关页面
+        val isHospitalPage = HOSPITAL_KEYWORDS.any { keyword ->
+            searchText.contains(keyword)
         }
         
-        val isTarget = keywords.any { keyword ->
+        // 检查是否包含配置的关键词
+        val hasKeyword = keywords.any { keyword ->
             searchText.contains(keyword.lowercase())
         }
+        
+        // 检查是否有团购相关信息
+        val hasGroupBuy = GROUP_BUY_KEYWORDS.any { keyword ->
+            searchText.contains(keyword)
+        }
+        
+        val isTarget = (isHospitalPage || hasKeyword) && hasGroupBuy
         
         if (isTarget) {
             Log.i(TAG, "Target page detected! Keywords: $keywords")
         }
+        
         return isTarget
     }
     
@@ -76,12 +101,36 @@ class MeituanPlugin : IAccessibilityPlugin {
         val results = mutableListOf<ScrapedData>()
         
         try {
-            findShopNodes(nodeInfo).forEach { shopNode ->
-                val shopData = extractShopData(shopNode)
-                if (shopData != null) {
-                    results.add(shopData)
-                }
+            // 1. 提取医院信息
+            val hospitalInfo = extractHospitalInfo(nodeInfo)
+            
+            // 2. 提取团单列表
+            val groupBuyList = extractGroupBuyList(nodeInfo)
+            
+            // 3. 合并数据
+            groupBuyList.forEach { groupBuy ->
+                val data = ScrapedData(
+                    pluginId = pluginId,
+                    pageType = PAGE_HOSPITAL_DETAIL,
+                    dataType = "hospital_group_buy",
+                    content = mapOf(
+                        "hospitalName" to hospitalInfo.hospitalName,
+                        "honors" to hospitalInfo.honors,
+                        "groupBuyTitle" to groupBuy.title,
+                        "price" to groupBuy.price,
+                        "sales" to groupBuy.sales,
+                        "imageUrl" to groupBuy.imageUrl,
+                        "rawText" to groupBuy.rawText
+                    ),
+                    rawText = "${hospitalInfo.hospitalName} ${groupBuy.title}"
+                )
+                results.add(data)
             }
+            
+            if (results.isNotEmpty()) {
+                Log.i(TAG, "Scraped ${results.size} records from ${hospitalInfo.hospitalName}")
+            }
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error scraping data", e)
         }
@@ -90,12 +139,16 @@ class MeituanPlugin : IAccessibilityPlugin {
     }
     
     override fun processData(data: List<ScrapedData>): List<ScrapedData> {
+        // 数据清洗和标准化
         return data.filter { item ->
             item.content["groupBuyTitle"].isNullOrEmpty().not()
         }.map { item ->
             item.copy(
                 content = item.content.mapValues { (_, value) ->
-                    value?.trim()?.replace("\\s+".toRegex(), " ") ?: ""
+                    value?.trim()
+                        ?.replace("\\s+".toRegex(), " ")
+                        ?.replace("[\\u200B-\\u200D\\uFEFF]".toRegex(), "")
+                        ?: ""
                 }
             )
         }
@@ -109,67 +162,232 @@ class MeituanPlugin : IAccessibilityPlugin {
         Log.i(TAG, "Plugin deactivated")
     }
     
-    private fun findShopNodes(rootNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
-        val shopNodes = mutableListOf<AccessibilityNodeInfo>()
+    // ==================== 数据提取方法 ====================
+    
+    data class HospitalInfo(
+        val hospitalName: String = "",
+        val honors: String = ""
+    )
+    
+    data class GroupBuyInfo(
+        val title: String = "",
+        val price: String = "",
+        val sales: String = "",
+        val imageUrl: String = "",
+        val rawText: String = ""
+    )
+    
+    private fun extractHospitalInfo(rootNode: AccessibilityNodeInfo): HospitalInfo {
+        var hospitalName = ""
+        var honors = ""
         
-        val keywordNodes = rootNode.findAccessibilityNodeInfosByText("团购")
-        keywordNodes.forEach { node ->
-            var parent = node.parent
-            var depth = 0
-            while (parent != null && depth < 5) {
-                if (isShopCardNode(parent)) {
-                    shopNodes.add(parent)
-                    break
+        val hospitalNode = findNodeByKeywords(rootNode, HOSPITAL_KEYWORDS, maxDepth = 3)
+        hospitalName = hospitalNode?.let { getNodeText(it) } ?: ""
+        
+        if (hospitalNode != null) {
+            val honorNode = findNodeByKeywords(rootNode, HONOR_KEYWORDS, maxDepth = 5)
+            honors = honorNode?.let { getNodeText(it) } ?: ""
+        }
+        
+        Log.d(TAG, "Hospital: $hospitalName, Honors: $honors")
+        
+        return HospitalInfo(hospitalName, honors)
+    }
+    
+    private fun extractGroupBuyList(rootNode: AccessibilityNodeInfo): List<GroupBuyInfo> {
+        val results = mutableListOf<GroupBuyInfo>()
+        
+        findNodesByClassName(rootNode, "androidx.recyclerview.widget.RecyclerView").forEach { recyclerView ->
+            for (i in 0 until recyclerView.childCount) {
+                val item = recyclerView.getChild(i)
+                if (item != null) {
+                    val groupBuy = extractGroupBuyItem(item)
+                    if (groupBuy.title.isNotEmpty()) {
+                        results.add(groupBuy)
+                    }
+                    item.recycle()
                 }
-                val grandParent = parent.parent
-                parent.recycle()
-                parent = grandParent
-                depth++
             }
         }
         
-        return shopNodes.distinct()
+        if (results.isEmpty()) {
+            findNodesByKeywords(rootNode, GROUP_BUY_KEYWORDS).forEach { node ->
+                val cardNode = findParentCard(node)
+                if (cardNode != null) {
+                    val groupBuy = extractGroupBuyItem(cardNode)
+                    if (groupBuy.title.isNotEmpty()) {
+                        results.add(groupBuy)
+                    }
+                }
+            }
+        }
+        
+        Log.d(TAG, "Found ${results.size} group buy items")
+        
+        return results
     }
     
-    private fun isShopCardNode(node: AccessibilityNodeInfo): Boolean {
+    private fun extractGroupBuyItem(cardNode: AccessibilityNodeInfo): GroupBuyInfo {
+        val cardText = getNodeText(cardNode)
+        
+        val title = findNodeByKeywords(cardNode, GROUP_BUY_KEYWORDS)?.let { getNodeText(it) }
+            ?: extractPattern(cardText, "(.*?)\\s*¥") ?: ""
+        
+        val price = findNodeByText(cardNode, "¥")?.let { getNodeText(it) }
+            ?: extractPattern(cardText, "¥(\\d+(?:\\.\\d+)?)")?.let { "¥$it" }
+            ?: ""
+        
+        val sales = findNodeByKeywords(cardNode, SALES_KEYWORDS)?.let { getNodeText(it) }
+            ?: extractPattern(cardText, "(已售\\d+[+kKwW]?)") ?: ""
+        
+        val imageUrl = findImageView(cardNode)
+        
+        return GroupBuyInfo(title, price, sales, imageUrl, cardText)
+    }
+    
+    private fun findNodeByKeywords(
+        rootNode: AccessibilityNodeInfo,
+        keywords: List<String>,
+        maxDepth: Int = 5
+    ): AccessibilityNodeInfo? {
+        return findNodeByCondition(rootNode, { node ->
+            val text = getNodeText(node).lowercase()
+            keywords.any { keyword -> text.contains(keyword.lowercase()) }
+        }, maxDepth)
+    }
+    
+    private fun findNodeByText(rootNode: AccessibilityNodeInfo, text: String): AccessibilityNodeInfo? {
+        return findNodeByCondition(rootNode, { node ->
+            getNodeText(node).contains(text)
+        })
+    }
+    
+    private fun findNodeByCondition(
+        node: AccessibilityNodeInfo,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        maxDepth: Int = 5
+    ): AccessibilityNodeInfo? {
+        if (condition(node)) {
+            return node
+        }
+        
+        if (maxDepth <= 0) return null
+        
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val result = findNodeByCondition(child, condition, maxDepth - 1)
+                if (result != null) {
+                    return result
+                }
+                child.recycle()
+            }
+        }
+        
+        return null
+    }
+    
+    private fun findNodesByKeywords(
+        rootNode: AccessibilityNodeInfo,
+        keywords: List<String>
+    ): List<AccessibilityNodeInfo> {
+        val results = mutableListOf<AccessibilityNodeInfo>()
+        findNodesByCondition(rootNode, { node ->
+            val text = getNodeText(node).lowercase()
+            keywords.any { keyword -> text.contains(keyword.lowercase()) }
+        }, results)
+        return results
+    }
+    
+    private fun findNodesByCondition(
+        node: AccessibilityNodeInfo,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        results: MutableList<AccessibilityNodeInfo>
+    ) {
+        if (condition(node)) {
+            results.add(node)
+        }
+        
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                findNodesByCondition(child, condition, results)
+                child.recycle()
+            }
+        }
+    }
+    
+    private fun findNodesByClassName(
+        rootNode: AccessibilityNodeInfo,
+        className: String
+    ): List<AccessibilityNodeInfo> {
+        val results = mutableListOf<AccessibilityNodeInfo>()
+        findNodesByClassNameRecursive(rootNode, className, results)
+        return results
+    }
+    
+    private fun findNodesByClassNameRecursive(
+        node: AccessibilityNodeInfo,
+        className: String,
+        results: MutableList<AccessibilityNodeInfo>
+    ) {
+        if (node.className == className) {
+            results.add(node)
+        }
+        
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                findNodesByClassNameRecursive(child, className, results)
+                child.recycle()
+            }
+        }
+    }
+    
+    private fun findParentCard(node: AccessibilityNodeInfo, maxDepth: Int = 5): AccessibilityNodeInfo? {
+        var parent = node.parent
+        var depth = 0
+        
+        while (parent != null && depth < maxDepth) {
+            if (isCardNode(parent)) {
+                return parent
+            }
+            val grandParent = parent.parent
+            parent.recycle()
+            parent = grandParent
+            depth++
+        }
+        
+        return parent
+    }
+    
+    private fun isCardNode(node: AccessibilityNodeInfo): Boolean {
         val text = getNodeText(node)
-        return text.length > 20 && text.contains("¥")
+        return text.length > 30 && (text.contains("¥") || text.contains("团购"))
     }
     
-    private fun extractShopData(shopNode: AccessibilityNodeInfo): ScrapedData? {
-        val text = getNodeText(shopNode)
-        
-        val shopName = extractPattern(text, "(.*?)\\s+(?:¥|元)") ?: "未知商家"
-        val price = extractPattern(text, "(?:¥|元)(\\d+(?:\\.\\d+)?)") ?: ""
-        val groupBuyTitle = extractPattern(text, "(.*?)\\s+¥") ?: ""
-        
-        return ScrapedData(
-            pluginId = pluginId,
-            pageType = PAGE_SHOP_LIST,
-            dataType = "group_buy",
-            content = mapOf(
-                "shopName" to shopName,
-                "price" to price,
-                "groupBuyTitle" to groupBuyTitle,
-                "rawText" to text
-            ),
-            rawText = text
-        )
+    private fun findImageView(node: AccessibilityNodeInfo): String {
+        val imageView = findNodeByClassName(node, "android.widget.ImageView")
+        return imageView?.let { "" } ?: ""
     }
     
     private fun getNodeText(node: AccessibilityNodeInfo): String {
         val sb = StringBuilder()
+        collectNodeText(node, sb, 0)
+        return sb.toString().trim()
+    }
+    
+    private fun collectNodeText(node: AccessibilityNodeInfo, sb: StringBuilder, depth: Int) {
+        if (depth > 10) return
         node.text?.let { sb.append(it.toString()).append(" ") }
         
         for (i in 0 until node.childCount) {
             val child = node.getChild(i)
             if (child != null) {
-                child.text?.let { sb.append(it.toString()).append(" ") }
+                collectNodeText(child, sb, depth + 1)
                 child.recycle()
             }
         }
-        
-        return sb.toString().trim()
     }
     
     private fun extractPattern(text: String, pattern: String): String? {
@@ -179,5 +397,9 @@ class MeituanPlugin : IAccessibilityPlugin {
         } catch (e: Exception) {
             null
         }
+    }
+    
+    private fun findNodeByClassName(node: AccessibilityNodeInfo, className: String): AccessibilityNodeInfo? {
+        return findNodeByCondition(node, { it.className == className })
     }
 }
