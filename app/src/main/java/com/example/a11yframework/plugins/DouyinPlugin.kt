@@ -50,9 +50,13 @@ class DouyinPlugin : IAccessibilityPlugin {
     override fun isTargetPage(nodeInfo: AccessibilityNodeInfo?): Boolean {
         if (nodeInfo == null) return false
         val searchText = getNodeText(nodeInfo).lowercase()
+        // 支持团购、优惠、搜索关键词
         return searchText.contains("团购") || 
                searchText.contains("优惠") ||
-               searchText.contains("券")
+               searchText.contains("券") ||
+               searchText.contains("黄金微针") ||
+               searchText.contains("套餐") ||
+               searchText.contains("到店")
     }
     
     override fun scrapeData(nodeInfo: AccessibilityNodeInfo?): List<ScrapedData> {
