@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A11y 框架</string>
+    <string name="accessibility_service_name">A11y 数据抓取服务</string>
+    <string name="accessibility_service_description">此服务用于自动抓取指定 APP 上的公开数据，如商家信息、团购内容等。数据仅存储在本地，不会上传到外部服务器。请在受信任的环境下使用。</string>
+    <string name="accessibility_service_summary">自动化数据抓取工具</string>
+    
+    <!-- UI 字符串 -->
+    <string name="service_status">服务状态：%1$s</string>
+    <string name="service_running">运行中</string>
+    <string name="service_stopped">已停止</string>
+    <string name="enabled_plugins">已启用插件</string>
+    <string name="data_stats">数据统计</string>
+    <string name="export_data">导出数据</string>
+    <string name="settings">设置</string>
+    <string name="about">关于</string>
+    
+    <!-- 插件名称 -->
+    <string name="plugin_meituan">美团</string>
+    <string name="plugin_douyin">抖音</string>
+    
+    <!-- 提示消息 -->
+    <string name="toast_service_enabled">服务已启用</string>
+    <string name="toast_service_disabled">服务已停止</string>
+    <string name="toast_data_exported">数据已导出</string>
+    <string name="toast_no_data">暂无数据</string>
+</resources>
