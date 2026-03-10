@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statsText: TextView
     private lateinit var toggleButton: Button
     private lateinit var exportButton: Button
-    private lateinit var settingsButton: Button
     
     private var dataStore: DataStore? = null
     
@@ -61,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         statsText = findViewById(R.id.statsText)
         toggleButton = findViewById(R.id.toggleButton)
         exportButton = findViewById(R.id.exportButton)
-        settingsButton = findViewById(R.id.settingsButton)
     }
     
     private fun setupListeners() {
