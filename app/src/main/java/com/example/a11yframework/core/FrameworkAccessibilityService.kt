@@ -30,8 +30,26 @@ class FrameworkAccessibilityService : AccessibilityService() {
     }
     
     private val pluginManager = PluginManager()
-    private val dataStore by lazy { DataStore(this) }
-    private val configManager by lazy { ConfigManager(this) }
+    
+    // 延迟初始化（避免 by lazy 与方法签名冲突）
+    private var _dataStore: DataStore? = null
+    private var _configManager: ConfigManager? = null
+    
+    val dataStore: DataStore
+        get() {
+            if (_dataStore == null) {
+                _dataStore = DataStore(this)
+            }
+            return _dataStore!!
+        }
+    
+    val configManager: ConfigManager
+        get() {
+            if (_configManager == null) {
+                _configManager = ConfigManager(this)
+            }
+            return _configManager!!
+        }
     
     // 当前激活的插件
     private var activePlugin: IAccessibilityPlugin? = null
@@ -179,14 +197,4 @@ class FrameworkAccessibilityService : AccessibilityService() {
         pluginManager.registerPlugin(DouyinPlugin())
         // 添加新插件：pluginManager.registerPlugin(YourNewPlugin())
     }
-    
-    /**
-     * 获取数据存储器（插件可用）
-     */
-    fun getDataStore(): DataStore = dataStore
-    
-    /**
-     * 获取配置管理器（插件可用）
-     */
-    fun getConfigManager(): ConfigManager = configManager
 }

@@ -50,7 +50,7 @@ class MeituanPlugin : IAccessibilityPlugin {
         
         // 加载配置
         val frameworkService = service as? com.example.a11yframework.core.FrameworkAccessibilityService
-        val configManager = frameworkService?.getConfigManager()
+        val configManager = frameworkService?.configManager
         keywords = configManager?.getPluginConfigList(pluginId, "keywords") ?: emptyList()
         currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "list") ?: "list"
         
@@ -271,7 +271,7 @@ class MeituanPlugin : IAccessibilityPlugin {
      */
     fun setScrapeMode(mode: String) {
         currentMode = mode
-        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()
+        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.configManager
         configManager?.let { config ->
             val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
             currentConfig["scrapeMode"] = mode
@@ -284,7 +284,7 @@ class MeituanPlugin : IAccessibilityPlugin {
      */
     fun setKeywords(keywords: List<String>) {
         this.keywords = keywords
-        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()
+        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.configManager
         configManager?.let { config ->
             val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
             currentConfig["keywords"] = keywords
