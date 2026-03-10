@@ -204,9 +204,6 @@ class MainActivity : AppCompatActivity() {
             configManager?.setPluginConfigMap("meituan", mapOf("keywords" to keywords))
             configManager?.setPluginConfigMap("douyin", mapOf("keywords" to keywords))
             
-            // 更新本地缓存
-            keywords = keywords
-            
             Toast.makeText(this, "✅ 规则已保存：${keywords.joinToString(", ")}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(this, "保存失败：${e.message}", Toast.LENGTH_SHORT).show()
