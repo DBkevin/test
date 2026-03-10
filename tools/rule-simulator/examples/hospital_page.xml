@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hierarchy rotation="0">
+  <node index="0" text="北京 XX 医疗美容医院" resource-id="com.ss.android.ugc.aweme:id/hospital_name" class="android.widget.TextView" bounds="[0,100][1080,200]"/>
+  <node index="1" text="中国整形美容协会认证单位 | 5A 级机构" resource-id="com.ss.android.ugc.aweme:id/hospital_honors" class="android.widget.TextView" bounds="[0,200][1080,250]"/>
+  
+  <node index="2" resource-id="com.ss.android.ugc.aweme:id/group_buy_list" class="androidx.recyclerview.widget.RecyclerView" bounds="[0,300][1080,2000]">
+    <!-- 团单 1 -->
+    <node index="0" class="android.widget.LinearLayout" bounds="[0,300][1080,500]">
+      <node index="0" text="黄金微针体验套餐" resource-id="com.ss.android.ugc.aweme:id/group_buy_title" class="android.widget.TextView" bounds="[50,320][1030,380]"/>
+      <node index="1" text="¥999" resource-id="com.ss.android.ugc.aweme:id/group_buy_price" class="android.widget.TextView" bounds="[50,390][200,430]"/>
+      <node index="2" text="已售 1000+" resource-id="com.ss.android.ugc.aweme:id/group_buy_sales" class="android.widget.TextView" bounds="[210,390][400,430]"/>
+    </node>
+    
+    <!-- 团单 2 -->
+    <node index="1" class="android.widget.LinearLayout" bounds="[0,510][1080,710]">
+      <node index="0" text="水光针补水保湿套餐" resource-id="com.ss.android.ugc.aweme:id/group_buy_title" class="android.widget.TextView" bounds="[50,530][1030,590]"/>
+      <node index="1" text="¥1999" resource-id="com.ss.android.ugc.aweme:id/group_buy_price" class="android.widget.TextView" bounds="[50,600][200,640]"/>
+      <node index="2" text="已售 500+" resource-id="com.ss.android.ugc.aweme:id/group_buy_sales" class="android.widget.TextView" bounds="[210,600][400,640]"/>
+    </node>
+    
+    <!-- 团单 3 -->
+    <node index="2" class="android.widget.LinearLayout" bounds="[0,720][1080,920]">
+      <node index="0" text="热玛吉面部提升疗程" resource-id="com.ss.android.ugc.aweme:id/group_buy_title" class="android.widget.TextView" bounds="[50,740][1030,800]"/>
+      <node index="1" text="¥3999" resource-id="com.ss.android.ugc.aweme:id/group_buy_price" class="android.widget.TextView" bounds="[50,810][200,850]"/>
+      <node index="2" text="已售 200+" resource-id="com.ss.android.ugc.aweme:id/group_buy_sales" class="android.widget.TextView" bounds="[210,810][400,850]"/>
+    </node>
+    
+    <!-- 团单 4 -->
+    <node index="3" class="android.widget.LinearLayout" bounds="[0,930][1080,1130]">
+      <node index="0" text="光子嫩肤美白次卡" resource-id="com.ss.android.ugc.aweme:id/group_buy_title" class="android.widget.TextView" bounds="[50,950][1030,1010]"/>
+      <node index="1" text="¥2999" resource-id="com.ss.android.ugc.aweme:id/group_buy_price" class="android.widget.TextView" bounds="[50,1020][200,1060]"/>
+      <node index="2" text="已售 800+" resource-id="com.ss.android.ugc.aweme:id/group_buy_sales" class="android.widget.TextView" bounds="[210,1020][400,1060]"/>
+    </node>
+  </node>
+</hierarchy>

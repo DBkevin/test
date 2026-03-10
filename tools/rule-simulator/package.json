@@ -1,0 +1,31 @@
+{
+  "name": "a11y-rule-simulator",
+  "version": "1.0.0",
+  "description": "A11y 规则引擎本地模拟器 - 无需真机即可测试规则",
+  "main": "src/simulator.js",
+  "bin": {
+    "a11y-sim": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "start": "node src/cli.js",
+    "dev": "nodemon src/cli.js"
+  },
+  "dependencies": {
+    "commander": "^9.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nodemon": "^2.0.0"
+  },
+  "keywords": [
+    "a11y",
+    "accessibility",
+    "rule-engine",
+    "simulator"
+  ],
+  "author": "Li Er",
+  "license": "MIT"
+}
