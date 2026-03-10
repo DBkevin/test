@@ -49,9 +49,10 @@ class MeituanPlugin : IAccessibilityPlugin {
         Log.i(TAG, "Plugin initialized")
         
         // 加载配置
-        val configManager = service.getConfigManager()
-        keywords = configManager.getPluginConfigList(pluginId, "keywords")
-        currentMode = configManager.getPluginConfigString(pluginId, "scrapeMode", "list")
+        val frameworkService = service as? com.example.a11yframework.core.FrameworkAccessibilityService
+        val configManager = frameworkService?.getConfigManager()
+        keywords = configManager?.getPluginConfigList(pluginId, "keywords") ?: emptyList()
+        currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "list") ?: "list"
         
         Log.d(TAG, "Config loaded: mode=$currentMode, keywords=$keywords")
     }
