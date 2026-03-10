@@ -63,30 +63,37 @@ class FrameworkAccessibilityService : AccessibilityService() {
         super.onCreate()
         instance = this
         Log.i(TAG, "Service created")
-        
-        // 初始化插件
-        registerPlugins()
     }
     
     override fun onServiceConnected() {
         super.onServiceConnected()
         
-        // 配置服务类型
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
-                        AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-                   AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-            notificationTimeout = 100
-        }
-        serviceInfo = info
-        
-        Log.i(TAG, "Service connected")
-        
-        // 初始化所有插件
-        pluginManager.getAllPlugins().forEach { plugin ->
-            plugin.initialize(this)
+        try {
+            // 配置服务类型
+            val info = AccessibilityServiceInfo().apply {
+                eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
+                            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+                feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+                flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+                       AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+                notificationTimeout = 100
+            }
+            serviceInfo = info
+            
+            Log.i(TAG, "Service connected")
+            
+            // 注册并初始化插件
+            registerPlugins()
+            pluginManager.getAllPlugins().forEach { plugin ->
+                try {
+                    plugin.initialize(this)
+                    Log.i(TAG, "Plugin initialized: ${plugin.pluginName}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to initialize plugin: ${plugin.pluginName}", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in onServiceConnected", e)
         }
     }
     

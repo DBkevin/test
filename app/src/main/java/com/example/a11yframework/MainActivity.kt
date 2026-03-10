@@ -31,16 +31,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var exportButton: Button
     private lateinit var settingsButton: Button
     
-    private lateinit var dataStore: DataStore
+    private var dataStore: DataStore? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        
-        dataStore = DataStore(this)
-        
-        initViews()
-        setupListeners()
+        try {
+            setContentView(R.layout.activity_main)
+            
+            dataStore = DataStore(this)
+            
+            initViews()
+            setupListeners()
+        } catch (e: Exception) {
+            Toast.makeText(this, "启动失败：${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
     
     override fun onResume() {
@@ -97,24 +102,28 @@ class MainActivity : AppCompatActivity() {
      * 更新数据统计
      */
     private fun updateStats() {
-        val stats = dataStore.getStats()
-        val total = stats["total"] as? Int ?: 0
-        val byPlugin = stats["byPlugin"] as? Map<String, Int> ?: emptyMap()
-        
-        val sb = StringBuilder()
-        sb.append("总记录数：$total\n\n")
-        sb.append("按插件:\n")
-        
-        byPlugin.forEach { (pluginId, count) ->
-            val pluginName = when (pluginId) {
-                "meituan" -> "美团"
-                "douyin" -> "抖音"
-                else -> pluginId
+        try {
+            val stats = dataStore?.getStats()
+            val total = stats?.get("total") as? Int ?: 0
+            val byPlugin = stats?.get("byPlugin") as? Map<String, Int> ?: emptyMap()
+            
+            val sb = StringBuilder()
+            sb.append("总记录数：$total\n\n")
+            sb.append("按插件:\n")
+            
+            byPlugin.forEach { (pluginId, count) ->
+                val pluginName = when (pluginId) {
+                    "meituan" -> "美团"
+                    "douyin" -> "抖音"
+                    else -> pluginId
+                }
+                sb.append("  $pluginName: $count 条\n")
             }
-            sb.append("  $pluginName: $count 条\n")
+            
+            statsText.text = sb.toString()
+        } catch (e: Exception) {
+            statsText.text = "暂无数据"
         }
-        
-        statsText.text = sb.toString()
     }
     
     /**
