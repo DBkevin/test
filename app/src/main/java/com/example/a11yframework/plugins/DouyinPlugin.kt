@@ -36,7 +36,10 @@ class DouyinPlugin : IAccessibilityPlugin {
         val frameworkService = service as? FrameworkAccessibilityService
         val configManager = frameworkService?.configManager
         
-        keywords = configManager?.getPluginConfigList(pluginId, "keywords") ?: emptyList()
+        // 加载配置的关键词
+        val loadedKeywords = configManager?.getPluginConfigList(pluginId, "keywords")
+        keywords = loadedKeywords?.filter { it.isNotEmpty() } ?: listOf("团购", "优惠", "套餐", "券")
+        
         currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "feed") ?: "feed"
         
         Log.d(TAG, "Config loaded: mode=$currentMode, keywords=$keywords")
@@ -48,23 +51,21 @@ class DouyinPlugin : IAccessibilityPlugin {
     }
     
     override fun isTargetPage(nodeInfo: AccessibilityNodeInfo?): Boolean {
-        if (nodeInfo == null) {
-            Log.d(TAG, "Node is null")
-            return false
-        }
-        val searchText = getNodeText(nodeInfo).lowercase()
-        Log.d(TAG, "Page text length: ${searchText.length}, contains 团购：${searchText.contains("团购")}")
+        if (nodeInfo == null) return false
         
-        // 支持团购、优惠、搜索关键词
-        val isTarget = searchText.contains("团购") || 
-               searchText.contains("优惠") ||
-               searchText.contains("券") ||
-               searchText.contains("黄金微针") ||
-               searchText.contains("套餐") ||
-               searchText.contains("到店")
+        val searchText = getNodeText(nodeInfo).lowercase()
+        
+        // 从配置读取关键词
+        val keywords = keywords.ifEmpty {
+            listOf("团购", "优惠", "套餐", "券", "到店")
+        }
+        
+        val isTarget = keywords.any { keyword ->
+            searchText.contains(keyword.lowercase())
+        }
         
         if (isTarget) {
-            Log.i(TAG, "Target page detected!")
+            Log.i(TAG, "Target page detected! Keywords: $keywords")
         }
         return isTarget
     }

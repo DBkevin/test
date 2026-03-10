@@ -33,11 +33,13 @@ class MeituanPlugin : IAccessibilityPlugin {
         this.service = service
         Log.i(TAG, "Plugin initialized")
         
-        // 安全获取配置
         val frameworkService = service as? FrameworkAccessibilityService
         val configManager = frameworkService?.configManager
         
-        keywords = configManager?.getPluginConfigList(pluginId, "keywords") ?: emptyList()
+        // 加载配置的关键词
+        val loadedKeywords = configManager?.getPluginConfigList(pluginId, "keywords")
+        keywords = loadedKeywords?.filter { it.isNotEmpty() } ?: listOf("团购", "优惠", "套餐", "商家")
+        
         currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "list") ?: "list"
         
         Log.d(TAG, "Config loaded: mode=$currentMode, keywords=$keywords")
@@ -50,10 +52,22 @@ class MeituanPlugin : IAccessibilityPlugin {
     
     override fun isTargetPage(nodeInfo: AccessibilityNodeInfo?): Boolean {
         if (nodeInfo == null) return false
+        
         val searchText = getNodeText(nodeInfo).lowercase()
-        return searchText.contains("团购") || 
-               searchText.contains("优惠") ||
-               searchText.contains("商家")
+        
+        // 从配置读取关键词
+        val keywords = keywords.ifEmpty {
+            listOf("团购", "优惠", "套餐", "商家", "到店")
+        }
+        
+        val isTarget = keywords.any { keyword ->
+            searchText.contains(keyword.lowercase())
+        }
+        
+        if (isTarget) {
+            Log.i(TAG, "Target page detected! Keywords: $keywords")
+        }
+        return isTarget
     }
     
     override fun scrapeData(nodeInfo: AccessibilityNodeInfo?): List<ScrapedData> {

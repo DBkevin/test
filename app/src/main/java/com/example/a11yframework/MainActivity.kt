@@ -192,13 +192,22 @@ class MainActivity : AppCompatActivity() {
     private fun saveRules() {
         try {
             val keywordsText = findViewById<EditText>(R.id.keywordsEdit).text.toString()
-            val keywords = keywordsText.split("，", ",").map { it.trim() }.filter { it.isNotEmpty() }
+            val keywords = keywordsText.split("，", ",", " ", "\n").map { it.trim() }.filter { it.isNotEmpty() }
             
+            if (keywords.isEmpty()) {
+                Toast.makeText(this, "请输入至少一个关键词", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // 保存到两个插件
             val configManager = FrameworkAccessibilityService.instance?.configManager
             configManager?.setPluginConfigMap("meituan", mapOf("keywords" to keywords))
             configManager?.setPluginConfigMap("douyin", mapOf("keywords" to keywords))
             
-            Toast.makeText(this, "规则已保存：${keywords.joinToString(", ")}", Toast.LENGTH_LONG).show()
+            // 更新本地缓存
+            keywords = keywords
+            
+            Toast.makeText(this, "✅ 规则已保存：${keywords.joinToString(", ")}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(this, "保存失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
