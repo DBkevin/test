@@ -8,10 +8,12 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.a11yframework.core.FrameworkAccessibilityService
+import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.data.DataStore
 
 /**
@@ -77,9 +79,19 @@ class MainActivity : AppCompatActivity() {
             exportData()
         }
         
-        // 设置
-        settingsButton.setOnClickListener {
-            Toast.makeText(this, "设置功能开发中", Toast.LENGTH_SHORT).show()
+        // 保存规则
+        findViewById<Button>(R.id.saveRulesButton).setOnClickListener {
+            saveRules()
+        }
+        
+        // 生成美团测试数据
+        findViewById<Button>(R.id.testMeituanButton).setOnClickListener {
+            generateTestMeituanData()
+        }
+        
+        // 生成抖音测试数据
+        findViewById<Button>(R.id.testDouyinButton).setOnClickListener {
+            generateTestDouyinData()
         }
     }
     
@@ -167,13 +179,104 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             
-            // 保存到文件
             val file = getFileStreamPath("exported_data.json")
             file.writeText(json)
             
             Toast.makeText(this, "数据已导出到：${file.absolutePath}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(this, "导出失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 保存抓取规则
+     */
+    private fun saveRules() {
+        try {
+            val keywordsText = findViewById<EditText>(R.id.keywordsEdit).text.toString()
+            val keywords = keywordsText.split("，", ",").map { it.trim() }.filter { it.isNotEmpty() }
+            
+            val configManager = FrameworkAccessibilityService.instance?.configManager
+            configManager?.setPluginConfigMap("meituan", mapOf("keywords" to keywords))
+            configManager?.setPluginConfigMap("douyin", mapOf("keywords" to keywords))
+            
+            Toast.makeText(this, "规则已保存：${keywords.joinToString(", ")}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "保存失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 生成美团测试数据
+     */
+    private fun generateTestMeituanData() {
+        try {
+            val testData = listOf(
+                ScrapedData(
+                    pluginId = "meituan",
+                    pageType = "shop_list",
+                    dataType = "group_buy",
+                    content = mapOf(
+                        "shopName" to "测试餐厅 1 号店",
+                        "price" to "99",
+                        "groupBuyTitle" to "双人豪华套餐",
+                        "rawText" to "测试餐厅 1 号店 双人豪华套餐 ¥99"
+                    )
+                ),
+                ScrapedData(
+                    pluginId = "meituan",
+                    pageType = "shop_list",
+                    dataType = "group_buy",
+                    content = mapOf(
+                        "shopName" to "测试餐厅 2 号店",
+                        "price" to "158",
+                        "groupBuyTitle" to "四人聚餐套餐",
+                        "rawText" to "测试餐厅 2 号店 四人聚餐套餐 ¥158"
+                    )
+                )
+            )
+            
+            dataStore?.saveData(testData)
+            Toast.makeText(this, "已生成 ${testData.size} 条美团测试数据", Toast.LENGTH_LONG).show()
+            updateStats()
+        } catch (e: Exception) {
+            Toast.makeText(this, "生成失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 生成抖音测试数据
+     */
+    private fun generateTestDouyinData() {
+        try {
+            val testData = listOf(
+                ScrapedData(
+                    pluginId = "douyin",
+                    pageType = "feed",
+                    dataType = "group_buy",
+                    content = mapOf(
+                        "groupBuyTitle" to "抖音团购测试 - 99 元双人餐",
+                        "price" to "99",
+                        "rawText" to "抖音团购测试 - 99 元双人餐 已售 1000+"
+                    )
+                ),
+                ScrapedData(
+                    pluginId = "douyin",
+                    pageType = "feed",
+                    dataType = "group_buy",
+                    content = mapOf(
+                        "groupBuyTitle" to "抖音团购测试 - 199 元套餐",
+                        "price" to "199",
+                        "rawText" to "抖音团购测试 - 199 元套餐 已售 500+"
+                    )
+                )
+            )
+            
+            dataStore?.saveData(testData)
+            Toast.makeText(this, "已生成 ${testData.size} 条抖音测试数据", Toast.LENGTH_LONG).show()
+            updateStats()
+        } catch (e: Exception) {
+            Toast.makeText(this, "生成失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 }

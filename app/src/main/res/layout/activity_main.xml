@@ -1,103 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <!-- 标题 -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="A11y 数据抓取框架"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <!-- 服务状态卡片 -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:elevation="4dp">
-
-        <LinearLayout
+        <!-- 标题 -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="A11y 数据抓取框架"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="服务状态"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="服务状态：检查中..."
-                android:textSize="14sp"
-                android:layout_marginBottom="16dp" />
-
-            <Button
-                android:id="@+id/toggleButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="启动服务" />
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- 数据统计卡片 -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:elevation="4dp">
-
-        <LinearLayout
+        <!-- 服务状态 -->
+        <TextView
+            android:id="@+id/statusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="服务状态：检查中..."
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="数据统计"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+        <Button
+            android:id="@+id/toggleButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="启动服务"
+            android:layout_marginBottom="16dp" />
 
-            <TextView
-                android:id="@+id/statsText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="加载中..."
-                android:textSize="14sp" />
+        <!-- 抓取规则设置 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="抓取规则"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-        </LinearLayout>
+        <EditText
+            android:id="@+id/keywordsEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="关键词（逗号分隔）"
+            android:text="团购，优惠，套餐"
+            android:layout_marginBottom="8dp" />
 
-    </androidx.cardview.widget.CardView>
+        <Button
+            android:id="@+id/saveRulesButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="保存规则"
+            android:layout_marginBottom="16dp" />
 
-    <!-- 操作按钮 -->
-    <Button
-        android:id="@+id/exportButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="导出数据 (JSON)"
-        android:layout_marginBottom="8dp" />
+        <!-- 测试抓取 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试数据"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-    <Button
-        android:id="@+id/settingsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="设置" />
+        <Button
+            android:id="@+id/testMeituanButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="生成美团测试数据"
+            android:layout_marginBottom="8dp" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/testDouyinButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="生成抖音测试数据"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 数据统计 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="数据统计"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/statsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="加载中..."
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 操作按钮 -->
+        <Button
+            android:id="@+id/exportButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="导出数据 (JSON)" />
+
+    </LinearLayout>
+</ScrollView>
