@@ -162,7 +162,10 @@ class MainActivity : AppCompatActivity() {
      */
     private fun exportData() {
         try {
-            val json = dataStore.exportToJson()
+            val json = dataStore?.exportToJson() ?: run {
+                Toast.makeText(this, "暂无数据可导出", Toast.LENGTH_SHORT).show()
+                return
+            }
             
             // 保存到文件
             val file = getFileStreamPath("exported_data.json")
