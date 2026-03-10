@@ -353,7 +353,7 @@ class DouyinPlugin : IAccessibilityPlugin {
     
     fun setScrapeMode(mode: String) {
         currentMode = mode
-        service?.getConfigManager()?.let { config ->
+        (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()?.let { config ->
             val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
             currentConfig["scrapeMode"] = mode
             config.setPluginConfigMap(pluginId, currentConfig)
@@ -362,7 +362,7 @@ class DouyinPlugin : IAccessibilityPlugin {
     
     fun setKeywords(keywords: List<String>) {
         this.keywords = keywords
-        service?.getConfigManager()?.let { config ->
+        (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()?.let { config ->
             val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
             currentConfig["keywords"] = keywords
             config.setPluginConfigMap(pluginId, currentConfig)

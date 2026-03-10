@@ -174,18 +174,22 @@ class ConfigManager(context: Context) {
     /**
      * 从 JSON 导入配置
      */
+    @Suppress("UNCHECKED_CAST")
     fun importFromJson(json: String) {
         try {
-            val configMap = gson.fromJson(json, object : TypeToken<Map<String, Any>>() {}.type)
+            val configMap = gson.fromJson(json, object : TypeToken<Map<String, Any>>() {}.type) as Map<String, Any>
             val editor = prefs.edit()
             
-            configMap.forEach { (key, value) ->
+            configMap.forEach { entry ->
+                val key = entry.key
+                val value = entry.value
                 when (value) {
                     is String -> editor.putString(key, value)
                     is Int -> editor.putInt(key, value)
                     is Long -> editor.putLong(key, value)
                     is Boolean -> editor.putBoolean(key, value)
                     is Float -> editor.putFloat(key, value)
+                    else -> Log.w(TAG, "Unknown type for key $key: ${value?.javaClass}")
                 }
             }
             

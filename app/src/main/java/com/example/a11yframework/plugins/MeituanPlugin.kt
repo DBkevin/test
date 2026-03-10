@@ -270,7 +270,12 @@ class MeituanPlugin : IAccessibilityPlugin {
      */
     fun setScrapeMode(mode: String) {
         currentMode = mode
-        service?.getConfigManager()?.setPluginConfigString(pluginId, "scrapeMode", mode)
+        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()
+        configManager?.let { config ->
+            val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
+            currentConfig["scrapeMode"] = mode
+            config.setPluginConfigMap(pluginId, currentConfig)
+        }
     }
     
     /**
@@ -278,33 +283,11 @@ class MeituanPlugin : IAccessibilityPlugin {
      */
     fun setKeywords(keywords: List<String>) {
         this.keywords = keywords
-        service?.getConfigManager()?.setPluginConfigList(pluginId, "keywords", keywords)
+        val configManager = (service as? com.example.a11yframework.core.FrameworkAccessibilityService)?.getConfigManager()
+        configManager?.let { config ->
+            val currentConfig = config.getPluginConfigMap(pluginId).toMutableMap()
+            currentConfig["keywords"] = keywords
+            config.setPluginConfigMap(pluginId, currentConfig)
+        }
     }
-}
-
-// ==================== 扩展函数 ====================
-
-/**
- * 配置管理器扩展：设置列表配置
- */
-fun com.example.a11yframework.config.ConfigManager.setPluginConfigList(
-    pluginId: String, 
-    key: String, 
-    value: List<String>
-) {
-    val editor = this.javaClass.getDeclaredField("prefs").apply { isAccessible = true }.get(this) as android.content.SharedPreferences
-    editor.edit().putStringSet("plugin_config_${pluginId}_$key", value.toSet()).apply()
-}
-
-/**
- * 配置管理器扩展：设置字符串配置
- */
-fun com.example.a11yframework.config.ConfigManager.setPluginConfigString(
-    pluginId: String,
-    key: String,
-    value: String
-) {
-    val config = getPluginConfigMap(pluginId).toMutableMap()
-    config[key] = value
-    setPluginConfigMap(pluginId, config)
 }
