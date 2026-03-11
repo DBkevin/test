@@ -248,6 +248,90 @@ object NodeUtils {
     }
     
     /**
+     * 获取节点文本
+     */
+    fun getNodeText(node: AccessibilityNodeInfo?): String {
+        return node?.text?.toString() ?: ""
+    }
+    
+    /**
+     * 查找第一个满足条件的节点
+     */
+    fun findNodeByCondition(
+        rootNode: AccessibilityNodeInfo?,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        maxDepth: Int = 10
+    ): AccessibilityNodeInfo? {
+        if (rootNode == null) return null
+        return findNodeByConditionRecursive(rootNode, condition, 0, maxDepth)
+    }
+    
+    private fun findNodeByConditionRecursive(
+        node: AccessibilityNodeInfo,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        depth: Int,
+        maxDepth: Int
+    ): AccessibilityNodeInfo? {
+        if (depth > maxDepth) return null
+        
+        if (condition(node)) {
+            return node
+        }
+        
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                val result = findNodeByConditionRecursive(child, condition, depth + 1, maxDepth)
+                if (result != null) {
+                    return result
+                }
+                child.recycle()
+            }
+        }
+        
+        return null
+    }
+    
+    /**
+     * 查找所有满足条件的节点
+     */
+    fun findNodesByCondition(
+        rootNode: AccessibilityNodeInfo?,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        maxDepth: Int = 10
+    ): List<AccessibilityNodeInfo> {
+        val results = mutableListOf<AccessibilityNodeInfo>()
+        if (rootNode == null) return results
+        
+        findNodesByConditionRecursive(rootNode, condition, results, 0, maxDepth)
+        return results
+    }
+    
+    private fun findNodesByConditionRecursive(
+        node: AccessibilityNodeInfo,
+        condition: (AccessibilityNodeInfo) -> Boolean,
+        results: MutableList<AccessibilityNodeInfo>,
+        depth: Int,
+        maxDepth: Int
+    ) {
+        if (depth > maxDepth) return
+        
+        if (condition(node)) {
+            results.add(node)
+        }
+        
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                findNodesByConditionRecursive(child, condition, results, depth + 1, maxDepth)
+                if (child !in results) {
+                    child.recycle()
+                }
+            }
+        }
+    }
+    
+    /**
      * 安全地 recycle 节点列表
      */
     fun recycleNodes(nodes: List<AccessibilityNodeInfo?>) {

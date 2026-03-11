@@ -316,10 +316,8 @@ class RemoteCommandManager(
         val json = gson.toJson(result)
         
         try {
-            val body = RequestBody.create(
-                okhttp3.MediaType.parse("application/json; charset=utf-8"),
-                json
-            )
+            val mediaType = okhttp3.MediaType.get("application/json; charset=utf-8")
+            val body = okhttp3.RequestBody.create(mediaType, json)
             
             val request = Request.Builder()
                 .url(url)

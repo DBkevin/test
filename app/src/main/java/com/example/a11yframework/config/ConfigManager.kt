@@ -122,6 +122,15 @@ class ConfigManager(context: Context) {
     }
     
     /**
+     * 设置插件的字符串配置项
+     */
+    fun setPluginConfigString(pluginId: String, key: String, value: String) {
+        val config = getPluginConfigMap(pluginId).toMutableMap()
+        config[key] = value
+        setPluginConfigMap(pluginId, config)
+    }
+    
+    /**
      * 获取插件的字符串配置项
      */
     fun getPluginConfigString(pluginId: String, key: String, default: String = ""): String {
