@@ -4,9 +4,11 @@ import android.util.Log
 import com.example.a11yframework.capture.CaptureExecutionResult
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.core.FrameworkAccessibilityService
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.*
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -141,7 +143,7 @@ class RemoteCommandManager(
      */
     private fun parseCommand(json: String): RemoteCommand {
         return try {
-            val gson = com.google.code.gson.Gson()
+            val gson = Gson()
             gson.fromJson(json, RemoteCommand::class.java)
         } catch (e: Exception) {
             Log.e(TAG, "Parse command error", e)
@@ -345,11 +347,11 @@ class RemoteCommandManager(
             targetPackage = task.targetPackage
         )
         
-        val gson = com.google.code.gson.Gson()
+        val gson = Gson()
         val json = gson.toJson(result)
         
         try {
-            val mediaType = okhttp3.MediaType.parse("application/json; charset=utf-8")
+            val mediaType = "application/json; charset=utf-8".toMediaType()
             val body = json.toRequestBody(mediaType)
             
             val request = Request.Builder()

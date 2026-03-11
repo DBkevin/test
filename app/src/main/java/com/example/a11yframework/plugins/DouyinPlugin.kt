@@ -333,10 +333,10 @@ class DouyinPlugin : IAccessibilityPlugin {
         rootNode: AccessibilityNodeInfo,
         keywords: List<String>
     ): List<AccessibilityNodeInfo> {
-        return NodeUtils.findNodesByCondition(rootNode) { node ->
+        return NodeUtils.findNodesByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
             val text = NodeUtils.getNodeText(node).lowercase()
             keywords.any { keyword -> text.contains(keyword.lowercase()) }
-        }
+        })
     }
     
     /**

@@ -92,10 +92,10 @@ class SearchController(
         
         try {
             // 方法 1: 通过关键词查找
-            val byKeyword = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val byKeyword = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 val text = NodeUtils.getNodeText(node).lowercase()
                 SEARCH_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
-            }
+            })
             
             if (byKeyword != null) {
                 Log.d(TAG, "Found search box by keyword")
@@ -103,10 +103,10 @@ class SearchController(
             }
             
             // 方法 2: 通过 className 查找（EditText）
-            val byClass = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val byClass = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 node.className?.toString()?.contains("EditText") == true ||
                 node.className?.toString()?.contains("edittext") == true
-            }
+            })
             
             if (byClass != null) {
                 Log.d(TAG, "Found search box by class")
@@ -114,10 +114,10 @@ class SearchController(
             }
             
             // 方法 3: 通过 viewId 查找
-            val byId = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val byId = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
                 viewId.contains("search") || viewId.contains("Search")
-            }
+            })
             
             if (byId != null) {
                 Log.d(TAG, "Found search box by id")
@@ -209,12 +209,12 @@ class SearchController(
         
         try {
             // 方法 1: 通过关键词查找搜索按钮
-            val button = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val button = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val text = NodeUtils.getNodeText(node).lowercase()
                 SEARCH_BUTTON_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
-            }
+            })
             
             if (button != null) {
                 NodeUtils.clickNode(button)
@@ -223,13 +223,13 @@ class SearchController(
             }
             
             // 方法 2: 通过 viewId 查找
-            val buttonById = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val buttonById = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
                 viewId.contains("search") || viewId.contains("Search") ||
                 viewId.contains("btn") || viewId.contains("button")
-            }
+            })
             
             if (buttonById != null) {
                 NodeUtils.clickNode(buttonById)
@@ -239,7 +239,9 @@ class SearchController(
             
             // 方法 3: 使用输入法搜索动作
             if (searchBox != null) {
-                val imeResult = searchBox.performAction(AccessibilityNodeInfo.ACTION_IME_ENTER)
+                val imeResult = searchBox.performAction(
+                    AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id
+                )
                 if (imeResult) {
                     Log.d(TAG, "Submitted search with IME action")
                     return true
@@ -257,7 +259,7 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
-            val entryNode = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+            val entryNode = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
 
                 val nodeText = NodeUtils.getNodeText(node).lowercase()
@@ -270,7 +272,7 @@ class SearchController(
                         contentDesc.contains(lowerKeyword) ||
                         viewId.contains(lowerKeyword)
                 }
-            }
+            })
 
             if (entryNode != null) {
                 val clicked = NodeUtils.clickNode(entryNode)
@@ -346,10 +348,10 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return
         
         try {
-            val selectAllButton = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val selectAllButton = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 NodeUtils.getNodeText(node).contains("全选")
-            }
+            })
             
             selectAllButton?.let { NodeUtils.clickNode(it) }
             
@@ -366,11 +368,11 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return
         
         try {
-            val deleteButton = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val deleteButton = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 val text = NodeUtils.getNodeText(node)
                 text.contains("删除") || text.contains("剪切")
-            }
+            })
             
             deleteButton?.let { NodeUtils.clickNode(it) }
             
