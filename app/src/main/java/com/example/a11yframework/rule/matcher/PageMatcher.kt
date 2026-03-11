@@ -27,11 +27,6 @@ class PageMatcher(private val service: AccessibilityService) {
     }
     
     /**
-     * 文本匹配器（缓存）
-     */
-    private val textCache = mutableMapOf<String, String>()
-    
-    /**
      * 匹配页面
      * 
      * @param pageConfig 页面配置
@@ -163,14 +158,10 @@ class PageMatcher(private val service: AccessibilityService) {
     }
     
     /**
-     * 获取页面文本（带缓存）
+     * 获取页面文本
      */
     private fun getPageText(rootNode: AccessibilityNodeInfo?): String {
-        val cacheKey = "page_text_${System.currentTimeMillis() / 60000}" // 每分钟缓存
-        
-        return textCache.getOrPut(cacheKey) {
-            getAllNodeText(rootNode)
-        }
+        return getAllNodeText(rootNode)
     }
     
     /**
@@ -271,8 +262,7 @@ class PageMatcher(private val service: AccessibilityService) {
      * 清除缓存
      */
     fun clearCache() {
-        textCache.clear()
-        Log.d(TAG, "文本缓存已清除")
+        Log.d(TAG, "PageMatcher is stateless, no cache to clear")
     }
 }
 

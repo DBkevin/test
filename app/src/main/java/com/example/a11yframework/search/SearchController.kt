@@ -43,10 +43,11 @@ class SearchController(
      */
     fun search(keyword: String): Boolean {
         Log.i(TAG, "Searching for: $keyword")
-        
+        var searchBox: AccessibilityNodeInfo? = null
+
         return try {
             // 1. 定位搜索框
-            val searchBox = findSearchBox()
+            searchBox = prepareSearchBox()
             if (searchBox == null) {
                 Log.e(TAG, "Search box not found")
                 return false
@@ -59,15 +60,28 @@ class SearchController(
             inputText(searchBox, keyword)
             
             // 4. 点击搜索按钮
-            clickSearchButton()
+            val submitted = clickSearchButton(searchBox)
             
-            Log.i(TAG, "Search executed: $keyword")
-            true
+            Log.i(TAG, "Search executed: $keyword, submitted=$submitted")
+            submitted
             
         } catch (e: Exception) {
             Log.e(TAG, "Search error", e)
             false
+        } finally {
+            searchBox?.recycle()
         }
+    }
+
+    private fun prepareSearchBox(): AccessibilityNodeInfo? {
+        findSearchBox()?.let { return it }
+
+        if (!openSearchEntry()) {
+            return null
+        }
+
+        Thread.sleep(1200)
+        return findSearchBox()
     }
     
     /**
@@ -78,36 +92,36 @@ class SearchController(
         
         try {
             // 方法 1: 通过关键词查找
-            val byKeyword = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byKeyword = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 val text = NodeUtils.getNodeText(node).lowercase()
                 SEARCH_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
             }
             
             if (byKeyword != null) {
                 Log.d(TAG, "Found search box by keyword")
-                return byKeyword
+                return AccessibilityNodeInfo.obtain(byKeyword)
             }
             
             // 方法 2: 通过 className 查找（EditText）
-            val byClass = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byClass = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 node.className?.toString()?.contains("EditText") == true ||
                 node.className?.toString()?.contains("edittext") == true
             }
             
             if (byClass != null) {
                 Log.d(TAG, "Found search box by class")
-                return byClass
+                return AccessibilityNodeInfo.obtain(byClass)
             }
             
             // 方法 3: 通过 viewId 查找
-            val byId = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byId = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
                 viewId.contains("search") || viewId.contains("Search")
             }
             
             if (byId != null) {
                 Log.d(TAG, "Found search box by id")
-                return byId
+                return AccessibilityNodeInfo.obtain(byId)
             }
             
             return null
@@ -123,7 +137,7 @@ class SearchController(
     private fun clearSearchBox(searchBox: AccessibilityNodeInfo) {
         try {
             // 方法 1: 使用 setText（如果支持）
-            if (searchBox.isEditable) {
+            if (supportsSetText(searchBox)) {
                 val arguments = android.os.Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
                 searchBox.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
@@ -159,9 +173,10 @@ class SearchController(
     private fun inputText(searchBox: AccessibilityNodeInfo, text: String) {
         try {
             // 方法 1: 使用 setText（如果支持）
-            if (searchBox.isEditable) {
+            if (supportsSetText(searchBox)) {
                 val arguments = android.os.Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+                searchBox.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
                 searchBox.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
                 Log.d(TAG, "Input text with setText: $text")
                 return
@@ -189,12 +204,12 @@ class SearchController(
     /**
      * 点击搜索按钮
      */
-    private fun clickSearchButton(): Boolean {
+    private fun clickSearchButton(searchBox: AccessibilityNodeInfo? = null): Boolean {
         val rootNode = service.rootInActiveWindow ?: return false
         
         try {
             // 方法 1: 通过关键词查找搜索按钮
-            val button = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val button = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val text = NodeUtils.getNodeText(node).lowercase()
@@ -208,7 +223,7 @@ class SearchController(
             }
             
             // 方法 2: 通过 viewId 查找
-            val buttonById = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val buttonById = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
@@ -222,11 +237,60 @@ class SearchController(
                 return true
             }
             
-            // 方法 3: 在搜索框附近查找可点击节点
+            // 方法 3: 使用输入法搜索动作
+            if (searchBox != null) {
+                val imeResult = searchBox.performAction(AccessibilityNodeInfo.ACTION_IME_ENTER)
+                if (imeResult) {
+                    Log.d(TAG, "Submitted search with IME action")
+                    return true
+                }
+            }
+
             return false
             
         } finally {
             rootNode.recycle()
+        }
+    }
+
+    private fun openSearchEntry(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            val entryNode = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
+                if (!node.isClickable) return@findNodeByCondition false
+
+                val nodeText = NodeUtils.getNodeText(node).lowercase()
+                val contentDesc = node.contentDescription?.toString()?.lowercase() ?: ""
+                val viewId = node.viewIdResourceName?.lowercase() ?: ""
+
+                SEARCH_KEYWORDS.any { keyword ->
+                    val lowerKeyword = keyword.lowercase()
+                    nodeText.contains(lowerKeyword) ||
+                        contentDesc.contains(lowerKeyword) ||
+                        viewId.contains(lowerKeyword)
+                }
+            }
+
+            if (entryNode != null) {
+                val clicked = NodeUtils.clickNode(entryNode)
+                Log.d(TAG, "Opened search entry: $clicked")
+                return clicked
+            }
+
+            return false
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun supportsSetText(node: AccessibilityNodeInfo): Boolean {
+        if (node.isEditable) {
+            return true
+        }
+
+        return node.actionList.any { action ->
+            action.id == AccessibilityNodeInfo.ACTION_SET_TEXT
         }
     }
     
@@ -319,7 +383,6 @@ class SearchController(
      * 判断当前是否是搜索页面
      */
     fun isSearchPage(): Boolean {
-        // 简化实现：总是返回 true，让调用者自己判断
-        return true
+        return findSearchBox() != null
     }
 }

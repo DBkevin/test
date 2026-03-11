@@ -2,13 +2,17 @@ package com.example.a11yframework.core
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import com.example.a11yframework.capture.CaptureCoordinator
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.data.DataStore
 import com.example.a11yframework.plugins.MeituanPlugin
 import com.example.a11yframework.plugins.DouyinPlugin
+import com.example.a11yframework.remote.RemoteCommandManager
+import com.example.a11yframework.rule.engine.RuleEngine
 
 /**
  * 核心无障碍服务
@@ -22,6 +26,9 @@ class FrameworkAccessibilityService : AccessibilityService() {
     }
     
     private val pluginManager = PluginManager()
+    private val captureCoordinator by lazy { CaptureCoordinator(this) }
+    private val remoteCommandManager by lazy { RemoteCommandManager(this) }
+    private val ruleEngine by lazy { RuleEngine(this) }
     
     // 延迟初始化
     private var _dataStore: DataStore? = null
@@ -80,6 +87,9 @@ class FrameworkAccessibilityService : AccessibilityService() {
                     Log.e(TAG, "Failed to initialize plugin: ${plugin.pluginName}", e)
                 }
             }
+
+            Log.i(TAG, "Rule engine ready, loaded ${ruleEngine.getRuleCount()} rules")
+            setupRemoteCommandFlow()
         } catch (e: Exception) {
             Log.e(TAG, "Error in onServiceConnected", e)
         }
@@ -105,6 +115,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
         
         lastPackageName = packageName
         Log.d(TAG, "Window changed to: $packageName")
+        captureCoordinator.onWindowChanged(packageName)
         
         activePlugin?.onDeactivate()
         activePlugin = null
@@ -120,25 +131,47 @@ class FrameworkAccessibilityService : AccessibilityService() {
     private fun handleContentChange(packageName: String) {
         val now = System.currentTimeMillis()
         if (now - lastScrapeTime < SCRAPE_COOLDOWN) return
-        
-        val plugin = activePlugin ?: return
-        if (packageName !in plugin.targetPackages) return
+
+        val hasRule = ruleEngine.hasRulesForPackage(packageName)
+        val plugin = activePlugin
+        if (!hasRule && plugin == null) return
+        if (!hasRule && plugin != null && packageName !in plugin.targetPackages) return
         
         val rootNode = rootInActiveWindow ?: return
         
         try {
-            if (!plugin.isTargetPage(rootNode)) {
+            if (hasRule) {
+                val ruleResult = ruleEngine.execute(packageName, rootNode)
+                if (ruleResult.matched) {
+                    if (ruleResult.data.isNotEmpty()) {
+                        dataStore.saveData(ruleResult.data)
+                        captureCoordinator.onRecordsCaptured(packageName, ruleResult.data)
+                        Log.i(
+                            TAG,
+                            "Rule scraped ${ruleResult.data.size} records from ${ruleResult.ruleId}"
+                        )
+                    } else {
+                        Log.d(TAG, "Rule matched but no data extracted: ${ruleResult.ruleId}")
+                    }
+                    lastScrapeTime = now
+                    return
+                }
+            }
+
+            val activePlugin = plugin ?: return
+            if (!activePlugin.isTargetPage(rootNode)) {
                 Log.d(TAG, "Not a target page, skipping")
                 return
             }
             
             Log.d(TAG, "Target page detected, scraping...")
             
-            val rawData = plugin.scrapeData(rootNode)
+            val rawData = activePlugin.scrapeData(rootNode)
             
             if (rawData.isNotEmpty()) {
-                val processedData = plugin.processData(rawData)
+                val processedData = activePlugin.processData(rawData)
                 dataStore.saveData(processedData)
+                captureCoordinator.onRecordsCaptured(packageName, processedData)
                 Log.i(TAG, "Scraped ${processedData.size} records")
             }
             
@@ -156,6 +189,8 @@ class FrameworkAccessibilityService : AccessibilityService() {
     
     override fun onDestroy() {
         Log.i(TAG, "Service destroying")
+        captureCoordinator.cancelActiveCapture("service destroyed")
+        remoteCommandManager.stopPolling()
         pluginManager.getAllPlugins().forEach { it.cleanup() }
         instance = null
         super.onDestroy()
@@ -165,4 +200,33 @@ class FrameworkAccessibilityService : AccessibilityService() {
         pluginManager.registerPlugin(MeituanPlugin())
         pluginManager.registerPlugin(DouyinPlugin())
     }
+
+    private fun setupRemoteCommandFlow() {
+        remoteCommandManager.taskExecutor = { task ->
+            captureCoordinator.executeTask(task)
+        }
+        remoteCommandManager.onExecutionStopped = {
+            captureCoordinator.cancelActiveCapture("remote stop command")
+        }
+        remoteCommandManager.startPolling()
+    }
+
+    fun launchTargetApp(packageName: String): Boolean {
+        return try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            if (launchIntent == null) {
+                Log.e(TAG, "Launch intent not found: $packageName")
+                false
+            } else {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent)
+                true
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch target app: $packageName", e)
+            false
+        }
+    }
+
+    fun getCurrentActivePackage(): String = lastPackageName
 }

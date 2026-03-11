@@ -1,10 +1,13 @@
 package com.example.a11yframework.remote
 
 import android.util.Log
+import com.example.a11yframework.capture.CaptureExecutionResult
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.core.FrameworkAccessibilityService
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.*
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -36,6 +39,7 @@ class RemoteCommandManager(
     private val configManager: ConfigManager
     private val httpClient: OkHttpClient
     private var pollJob: Job? = null
+    private var executionJob: Job? = null
     private var isRunning = false
     
     // 任务队列
@@ -45,6 +49,8 @@ class RemoteCommandManager(
     // 监听器
     var onTaskReceived: ((HospitalTask) -> Unit)? = null
     var onTaskCompleted: ((HospitalTask) -> Unit)? = null
+    var taskExecutor: (suspend (HospitalTask) -> CaptureExecutionResult)? = null
+    var onExecutionStopped: (() -> Unit)? = null
     
     init {
         configManager = service.configManager
@@ -93,7 +99,9 @@ class RemoteCommandManager(
     fun stopPolling() {
         isRunning = false
         pollJob?.cancel()
+        executionJob?.cancel()
         pollJob = null
+        executionJob = null
         Log.i(TAG, "Polling stopped")
     }
     
@@ -170,6 +178,7 @@ class RemoteCommandManager(
      */
     private fun handleHospitalList(command: RemoteCommand) {
         val hospitals = command.data?.hospitals ?: emptyList()
+        val targetPackage = command.data?.appPackage
         
         if (hospitals.isEmpty()) {
             Log.w(TAG, "Empty hospital list")
@@ -185,7 +194,8 @@ class RemoteCommandManager(
                 id = index,
                 hospitalName = hospital,
                 status = TaskStatus.PENDING,
-                createdAt = System.currentTimeMillis()
+                createdAt = System.currentTimeMillis(),
+                targetPackage = targetPackage
             )
             taskQueue.add(task)
         }
@@ -234,7 +244,12 @@ class RemoteCommandManager(
      * 开始执行任务队列
      */
     private fun startTaskExecution() {
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+        if (executionJob?.isActive == true) {
+            Log.w(TAG, "Task execution already running")
+            return
+        }
+
+        executionJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             while (taskQueue.isNotEmpty() && isRunning) {
                 val task = taskQueue.removeAt(0)
                 currentTask = task
@@ -244,13 +259,41 @@ class RemoteCommandManager(
                 
                 // 通知执行任务
                 onTaskReceived?.invoke(task)
-                
-                // 等待任务完成（由插件回调）
-                waitForTaskCompletion(task)
-                
-                // 上报完成
+
+                val executor = taskExecutor
+                if (executor == null) {
+                    task.status = TaskStatus.FAILED
+                    task.errorMessage = "未配置任务执行器"
+                    task.completedAt = System.currentTimeMillis()
+                    reportTaskCompletion(task)
+                    continue
+                }
+
+                val executionResult = try {
+                    executor.invoke(task)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Task execution failed: ${task.hospitalName}", e)
+                    CaptureExecutionResult(
+                        success = false,
+                        targetPackage = task.targetPackage ?: "",
+                        errorMessage = e.message ?: "任务执行异常"
+                    )
+                }
+
+                task.targetPackage = executionResult.targetPackage.ifBlank { task.targetPackage ?: "" }
+                task.resultData = executionResult.data
+                task.errorMessage = executionResult.errorMessage
+                task.status = if (executionResult.success) {
+                    TaskStatus.COMPLETED
+                } else {
+                    TaskStatus.FAILED
+                }
+                task.completedAt = System.currentTimeMillis()
+
                 reportTaskCompletion(task)
             }
+
+            currentTask = null
         }
     }
     
@@ -258,33 +301,21 @@ class RemoteCommandManager(
      * 停止任务执行
      */
     private fun stopTaskExecution() {
+        executionJob?.cancel()
+        executionJob = null
         taskQueue.clear()
         currentTask = null
+        onExecutionStopped?.invoke()
         Log.i(TAG, "Task execution stopped")
-    }
-    
-    /**
-     * 等待任务完成
-     */
-    private suspend fun waitForTaskCompletion(task: HospitalTask) {
-        // 等待插件完成抓取（超时 5 分钟）
-        val timeout = 5 * 60 * 1000L
-        val startTime = System.currentTimeMillis()
-        
-        while (System.currentTimeMillis() - startTime < timeout) {
-            delay(1000)
-            // 这里可以检查插件是否完成
-        }
     }
     
     /**
      * 上报任务完成
      */
     private fun reportTaskCompletion(task: HospitalTask) {
-        task.status = TaskStatus.COMPLETED
-        task.completedAt = System.currentTimeMillis()
-        
-        onTaskCompleted?.invoke(task)
+        if (task.status == TaskStatus.COMPLETED) {
+            onTaskCompleted?.invoke(task)
+        }
         
         // 发送到服务器
         CoroutineScope(Dispatchers.IO).launch {
@@ -308,16 +339,18 @@ class RemoteCommandManager(
             taskId = task.id,
             hospitalName = task.hospitalName,
             status = task.status.name,
-            data = emptyMap(),  // 这里可以附加抓取的数据
-            timestamp = System.currentTimeMillis()
+            data = task.resultData,
+            timestamp = System.currentTimeMillis(),
+            errorMessage = task.errorMessage,
+            targetPackage = task.targetPackage
         )
         
         val gson = com.google.code.gson.Gson()
         val json = gson.toJson(result)
         
         try {
-            val mediaType = okhttp3.MediaType.get("application/json; charset=utf-8")
-            val body = okhttp3.RequestBody.create(mediaType, json)
+            val mediaType = okhttp3.MediaType.parse("application/json; charset=utf-8")
+            val body = json.toRequestBody(mediaType)
             
             val request = Request.Builder()
                 .url(url)
@@ -373,7 +406,9 @@ data class RemoteCommand(
 
 data class CommandData(
     val hospitals: List<String>? = null,
-    val config: Map<String, String>? = null
+    val config: Map<String, String>? = null,
+    @SerializedName("app_package")
+    val appPackage: String? = null
 )
 
 /**
@@ -384,7 +419,10 @@ data class HospitalTask(
     val hospitalName: String,
     var status: TaskStatus,
     val createdAt: Long,
-    var completedAt: Long? = null
+    var completedAt: Long? = null,
+    var resultData: Map<String, Any> = emptyMap(),
+    var errorMessage: String? = null,
+    var targetPackage: String? = null
 )
 
 enum class TaskStatus {
@@ -398,10 +436,17 @@ enum class TaskStatus {
  * 任务结果数据类
  */
 data class TaskResult(
+    @SerializedName("device_id")
     val deviceId: String,
+    @SerializedName("task_id")
     val taskId: Int,
+    @SerializedName("hospital_name")
     val hospitalName: String,
     val status: String,
     val data: Map<String, Any>,
-    val timestamp: Long
+    val timestamp: Long,
+    @SerializedName("error_message")
+    val errorMessage: String? = null,
+    @SerializedName("target_package")
+    val targetPackage: String? = null
 )

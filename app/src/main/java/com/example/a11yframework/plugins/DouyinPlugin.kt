@@ -6,6 +6,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.example.a11yframework.core.IAccessibilityPlugin
 import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.core.FrameworkAccessibilityService
+import com.example.a11yframework.utils.NodeUtils
 
 /**
  * 抖音插件 - 医美团购数据抓取
@@ -332,12 +333,10 @@ class DouyinPlugin : IAccessibilityPlugin {
         rootNode: AccessibilityNodeInfo,
         keywords: List<String>
     ): List<AccessibilityNodeInfo> {
-        val results = mutableListOf<AccessibilityNodeInfo>()
-        findNodesByCondition(rootNode, { node ->
-            val text = getNodeText(node).lowercase()
+        return NodeUtils.findNodesByCondition(rootNode) { node ->
+            val text = NodeUtils.getNodeText(node).lowercase()
             keywords.any { keyword -> text.contains(keyword.lowercase()) }
-        }, results)
-        return results
+        }
     }
     
     /**

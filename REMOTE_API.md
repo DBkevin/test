@@ -34,6 +34,7 @@ GET /api/command/poll?device_id={device_id}
 {
   "type": "hospital_list",
   "data": {
+    "app_package": "com.ss.android.ugc.aweme",
     "hospitals": [
       "北京协和医院",
       "上海九院",
@@ -48,7 +49,7 @@ GET /api/command/poll?device_id={device_id}
 
 | type | 说明 | data 字段 |
 |------|------|----------|
-| `hospital_list` | 下发医院列表 | `hospitals`: 医院名称数组 |
+| `hospital_list` | 下发医院列表 | `hospitals`: 医院名称数组, `app_package`: 目标 APP 包名（可选） |
 | `start_capture` | 开始抓取 | 无 |
 | `stop_capture` | 停止抓取 | 无 |
 | `update_config` | 更新配置 | `config`: 配置键值对 |
@@ -67,14 +68,20 @@ Content-Type: application/json
   "task_id": 0,
   "hospital_name": "北京协和医院",
   "status": "COMPLETED",
+  "target_package": "com.ss.android.ugc.aweme",
   "data": {
     "hospital_name": "北京协和医院",
-    "honors": "中国整形美容协会认证单位",
-    "group_buys": [
+    "record_count": 1,
+    "records": [
       {
-        "title": "黄金微针体验",
-        "price": "¥999",
-        "sales": "已售 1000+"
+        "plugin_id": "douyin",
+        "page_type": "hospital_detail",
+        "data_type": "group_buys",
+        "content": {
+          "title": "黄金微针体验",
+          "price": "¥999",
+          "sales": "已售 1000+"
+        }
       }
     ]
   },
@@ -183,11 +190,11 @@ app.listen(8080, () => {
 4. 服务端发送"开始抓取"指令
    ↓
 5. 手机端执行第一个任务:
-   - 打开抖音
+   - 打开目标 APP（默认抖音，也可通过 `app_package` 指定）
+   - 自动进入搜索入口
    - 搜索框输入医院名称
    - 点击搜索
-   - 抓取医院信息
-   - 抓取团单数据
+   - 规则引擎抓取医院信息与团单数据
    ↓
 6. 上报抓取结果
    ↓
