@@ -44,13 +44,19 @@ class SearchController(
      * @param keyword 搜索关键词（医院名称）
      * @return 是否成功
      */
-    fun search(keyword: String): Boolean {
+    fun search(
+        keyword: String,
+        entryKeywords: List<String> = SEARCH_KEYWORDS,
+        buttonKeywords: List<String> = SEARCH_BUTTON_KEYWORDS
+    ): Boolean {
+        val resolvedEntryKeywords = entryKeywords.ifEmpty { SEARCH_KEYWORDS }
+        val resolvedButtonKeywords = buttonKeywords.ifEmpty { SEARCH_BUTTON_KEYWORDS }
         Log.i(TAG, "Searching for: $keyword")
         var searchBox: AccessibilityNodeInfo? = null
 
         return try {
             // 1. 定位搜索框
-            searchBox = prepareSearchBox()
+            searchBox = prepareSearchBox(resolvedEntryKeywords)
             if (searchBox == null) {
                 Log.e(TAG, "Search box not found")
                 return false
@@ -63,7 +69,7 @@ class SearchController(
             inputText(searchBox, keyword)
             
             // 4. 点击搜索按钮
-            val submitted = clickSearchButton(searchBox)
+            val submitted = clickSearchButton(searchBox, resolvedButtonKeywords)
             
             Log.i(TAG, "Search executed: $keyword, submitted=$submitted")
             submitted
@@ -154,28 +160,115 @@ class SearchController(
         return swiped
     }
 
-    private fun prepareSearchBox(): AccessibilityNodeInfo? {
-        findSearchBox()?.let { return it }
+    fun clickText(
+        targetText: String,
+        exactMatch: Boolean = false,
+        maxScrollRounds: Int = 0
+    ): Boolean {
+        repeat(maxScrollRounds + 1) { round ->
+            val matchedNode = findTextNode(targetText, exactMatch)
+            if (matchedNode != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(matchedNode)
+                    Log.i(
+                        TAG,
+                        "Click text: target=$targetText, round=$round, exact=$exactMatch, clicked=$clicked"
+                    )
+                    if (clicked) {
+                        return true
+                    }
+                } finally {
+                    matchedNode.recycle()
+                }
+            }
 
-        if (!openSearchEntry()) {
+            if (round == maxScrollRounds || !scrollCurrentPage()) {
+                return false
+            }
+            Thread.sleep(1200)
+        }
+
+        return false
+    }
+
+    fun clickTextFuzzy(targetText: String, maxScrollRounds: Int = 0): Boolean {
+        return openMerchantResult(targetText, maxScrollRounds)
+    }
+
+    fun clickViewId(viewId: String, maxScrollRounds: Int = 0): Boolean {
+        repeat(maxScrollRounds + 1) { round ->
+            val matchedNode = findNodeByViewId(viewId)
+            if (matchedNode != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(matchedNode)
+                    Log.i(TAG, "Click viewId: id=$viewId, round=$round, clicked=$clicked")
+                    if (clicked) {
+                        return true
+                    }
+                } finally {
+                    matchedNode.recycle()
+                }
+            }
+
+            if (round == maxScrollRounds || !scrollCurrentPage()) {
+                return false
+            }
+            Thread.sleep(1200)
+        }
+
+        return false
+    }
+
+    fun waitForAnyText(targetTexts: List<String>, timeoutMs: Long): Boolean {
+        if (targetTexts.isEmpty()) {
+            return false
+        }
+
+        val startAt = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    val pageText = NodeUtils.getAllNodeText(rootNode)
+                    val matched = targetTexts.any { target ->
+                        pageText.contains(target, ignoreCase = true)
+                    }
+                    if (matched) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+
+            Thread.sleep(400)
+        }
+
+        return false
+    }
+
+    private fun prepareSearchBox(entryKeywords: List<String> = SEARCH_KEYWORDS): AccessibilityNodeInfo? {
+        findSearchBox(entryKeywords)?.let { return it }
+
+        if (!openSearchEntry(entryKeywords)) {
             return null
         }
 
         Thread.sleep(1200)
-        return findSearchBox()
+        return findSearchBox(entryKeywords)
     }
     
     /**
      * 定位搜索框
      */
-    private fun findSearchBox(): AccessibilityNodeInfo? {
+    private fun findSearchBox(searchKeywords: List<String> = SEARCH_KEYWORDS): AccessibilityNodeInfo? {
         val rootNode = service.rootInActiveWindow ?: return null
         
         try {
             // 方法 1: 通过关键词查找
             val byKeyword = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
                 val text = NodeUtils.getNodeText(node).lowercase()
-                SEARCH_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
+                searchKeywords.any { keyword -> text.contains(keyword.lowercase()) }
             })
             
             if (byKeyword != null) {
@@ -285,7 +378,10 @@ class SearchController(
     /**
      * 点击搜索按钮
      */
-    private fun clickSearchButton(searchBox: AccessibilityNodeInfo? = null): Boolean {
+    private fun clickSearchButton(
+        searchBox: AccessibilityNodeInfo? = null,
+        buttonKeywords: List<String> = SEARCH_BUTTON_KEYWORDS
+    ): Boolean {
         val rootNode = service.rootInActiveWindow ?: return false
         
         try {
@@ -294,7 +390,7 @@ class SearchController(
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val text = NodeUtils.getNodeText(node).lowercase()
-                SEARCH_BUTTON_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
+                buttonKeywords.any { keyword -> text.contains(keyword.lowercase()) }
             })
             
             if (button != null) {
@@ -336,7 +432,7 @@ class SearchController(
         }
     }
 
-    private fun openSearchEntry(): Boolean {
+    private fun openSearchEntry(entryKeywords: List<String> = SEARCH_KEYWORDS): Boolean {
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
@@ -347,7 +443,7 @@ class SearchController(
                 val contentDesc = node.contentDescription?.toString()?.lowercase() ?: ""
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
 
-                SEARCH_KEYWORDS.any { keyword ->
+                entryKeywords.any { keyword ->
                     val lowerKeyword = keyword.lowercase()
                     nodeText.contains(lowerKeyword) ||
                         contentDesc.contains(lowerKeyword) ||
@@ -604,5 +700,106 @@ class SearchController(
      */
     fun isSearchPage(): Boolean {
         return findSearchBox() != null
+    }
+
+    private fun findTextNode(targetText: String, exactMatch: Boolean): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val normalizedTarget = normalizeText(targetText)
+            if (normalizedTarget.isBlank()) {
+                return null
+            }
+
+            val candidates = NodeUtils.findNodesByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val comparableText = normalizeText(getComparableNodeText(node))
+                    if (comparableText.isBlank()) {
+                        return@findNodesByCondition false
+                    }
+
+                    if (exactMatch) {
+                        comparableText == normalizedTarget
+                    } else {
+                        comparableText.contains(normalizedTarget)
+                    }
+                },
+                maxDepth = 20
+            )
+
+            val scoredCandidate = candidates
+                .map { it to scoreTextCandidate(it, normalizedTarget, exactMatch) }
+                .filter { (_, score) -> score > 0 }
+                .maxByOrNull { (_, score) -> score }
+
+            val bestNode = scoredCandidate?.first
+            val result = bestNode?.let { AccessibilityNodeInfo.obtain(it) }
+
+            candidates.forEach { candidate ->
+                if (candidate !== bestNode) {
+                    candidate.recycle()
+                }
+            }
+            bestNode?.recycle()
+
+            return result
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun findNodeByViewId(targetViewId: String): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val matchedNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
+                    viewId.contains(targetViewId, ignoreCase = true)
+                },
+                maxDepth = 20
+            )
+
+            return matchedNode?.let { AccessibilityNodeInfo.obtain(it) }
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun scoreTextCandidate(
+        node: AccessibilityNodeInfo,
+        normalizedTarget: String,
+        exactMatch: Boolean
+    ): Int {
+        val comparableText = normalizeText(getComparableNodeText(node))
+        if (comparableText.isBlank()) {
+            return 0
+        }
+
+        if (exactMatch && comparableText != normalizedTarget) {
+            return 0
+        }
+        if (!exactMatch && !comparableText.contains(normalizedTarget)) {
+            return 0
+        }
+
+        var score = 0
+        if (comparableText == normalizedTarget) {
+            score += 120
+        }
+        if (!exactMatch && comparableText.contains(normalizedTarget)) {
+            score += 80
+        }
+        if (node.isClickable) {
+            score += 15
+        }
+        if (node.className?.toString()?.contains("TextView", ignoreCase = true) == true) {
+            score += 10
+        }
+
+        score -= abs(comparableText.length - normalizedTarget.length)
+        return score
     }
 }

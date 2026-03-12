@@ -1,6 +1,8 @@
 package com.example.a11yframework.capture
 
 import android.util.Log
+import com.example.a11yframework.appplugin.AppPluginBundle
+import com.example.a11yframework.appplugin.CollectionConfig
 import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.remote.HospitalTask
@@ -11,8 +13,13 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.math.min
 
 /**
- * 串联 V2 手机端执行链路：
- * 打开目标 App -> 搜索医院 -> 进入商家详情 -> 滚动汇总抓取结果 -> 组装返回
+ * 手机端采集编排器。
+ *
+ * 框架职责只剩下：
+ * 1. 启动目标 App
+ * 2. 选择对应插件包
+ * 3. 执行插件导航步骤
+ * 4. 收敛采集窗口、滚动聚合结果、组装回传
  */
 class CaptureCoordinator(
     private val service: FrameworkAccessibilityService
@@ -44,17 +51,21 @@ class CaptureCoordinator(
 
     private val executionMutex = Mutex()
     private val searchController by lazy { SearchController(service) }
+    private val navigationExecutor by lazy { NavigationExecutor(searchController) }
 
     @Volatile
     private var activeCapture: ActiveCapture? = null
 
     suspend fun executeTask(task: HospitalTask): CaptureExecutionResult = executionMutex.withLock {
         val targetPackage = resolveTargetPackage(task)
+        val appPlugin = service.appPluginManager.findPluginForPackage(targetPackage)
+
         task.targetPackage = targetPackage
 
         val activeExecution = ActiveCapture(
             task = task,
-            targetPackage = targetPackage
+            targetPackage = targetPackage,
+            navigationPluginId = appPlugin?.pluginId
         )
         activeCapture = activeExecution
 
@@ -64,11 +75,12 @@ class CaptureCoordinator(
             } else if (!waitForPackage(targetPackage, 15_000L)) {
                 failure(task, targetPackage, "等待目标 App 超时: $targetPackage")
             } else {
-                delay(resolveAppStartDelayMs())
-                val attemptResult = if (isDouyinPackage(targetPackage)) {
-                    executeDouyinCapture(activeExecution)
-                } else {
-                    executeGenericCapture(activeExecution)
+                delay(resolveAppStartDelayMs(appPlugin))
+
+                val attemptResult = when {
+                    appPlugin?.captureFlow != null -> executePluginCapture(activeExecution, appPlugin)
+                    isDouyinPackage(targetPackage) -> executeDouyinCapture(activeExecution)
+                    else -> executeGenericCapture(activeExecution)
                 }
 
                 if (attemptResult.records.isEmpty()) {
@@ -174,10 +186,14 @@ class CaptureCoordinator(
                 content.values.filter { it.isNotBlank() }.joinToString(" ")
             }
 
+            val metadata = record.metadata.toMutableMap()
+            metadata["captureStage"] = activeExecution.stage.name.lowercase()
+            activeExecution.navigationPluginId?.let { metadata["navigationPluginId"] = it }
+
             record.copy(
                 content = content.toMap(),
                 rawText = rawText,
-                metadata = record.metadata + mapOf("captureStage" to activeExecution.stage.name.lowercase())
+                metadata = metadata.toMap()
             )
         }
     }
@@ -202,20 +218,30 @@ class CaptureCoordinator(
             )).ifBlank { DEFAULT_TARGET_APP_PACKAGE }
     }
 
-    private fun resolveCaptureTimeoutMs(): Long {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_CAPTURE_TIMEOUT_MS,
-            DEFAULT_CAPTURE_TIMEOUT_MS.toInt()
-        ).toLong()
-    }
+    private suspend fun executePluginCapture(
+        activeExecution: ActiveCapture,
+        plugin: AppPluginBundle
+    ): CaptureAttemptResult {
+        activeExecution.stage = CaptureStage.EXECUTING_PLUGIN_FLOW
 
-    private fun resolveAppStartDelayMs(): Long {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_APP_START_DELAY_MS,
-            DEFAULT_APP_START_DELAY_MS.toInt()
-        ).toLong()
+        val navigationResult = navigationExecutor.execute(plugin, activeExecution.task)
+        if (!navigationResult.success) {
+            return CaptureAttemptResult(
+                errorMessage = navigationResult.errorMessage ?: "插件导航流程执行失败"
+            )
+        }
+
+        activeExecution.stage = CaptureStage.COLLECTING
+        val records = collectDetailRecords(
+            activeExecution,
+            plugin.captureFlow?.collection
+        )
+
+        return if (records.isEmpty()) {
+            CaptureAttemptResult(errorMessage = "插件流程执行完成，但未采集到数据")
+        } else {
+            CaptureAttemptResult(records = records)
+        }
     }
 
     private suspend fun executeGenericCapture(activeExecution: ActiveCapture): CaptureAttemptResult {
@@ -261,7 +287,7 @@ class CaptureCoordinator(
         delay(resolveDetailOpenDelayMs())
 
         activeExecution.stage = CaptureStage.COLLECTING
-        val records = collectDetailRecords(activeExecution, resolveCaptureTimeoutMs())
+        val records = collectDetailRecords(activeExecution, null)
         return if (records.isEmpty()) {
             CaptureAttemptResult(errorMessage = "进入商家详情后未采集到团购数据")
         } else {
@@ -280,11 +306,11 @@ class CaptureCoordinator(
 
     private suspend fun collectDetailRecords(
         activeExecution: ActiveCapture,
-        timeoutMs: Long
+        collectionConfig: CollectionConfig?
     ): List<ScrapedData> {
-        val deadline = System.currentTimeMillis() + timeoutMs
-        val maxScrollRounds = resolveMaxScrollRounds()
-        val maxIdleScrollRounds = resolveMaxIdleScrollRounds()
+        val deadline = System.currentTimeMillis() + resolveCaptureTimeoutMs(collectionConfig)
+        val maxScrollRounds = resolveMaxScrollRounds(collectionConfig)
+        val maxIdleScrollRounds = resolveMaxIdleScrollRounds(collectionConfig)
 
         var idleRounds = 0
         var scrollRounds = 0
@@ -292,7 +318,7 @@ class CaptureCoordinator(
         waitForRecordGrowth(
             activeExecution,
             baselineCount = activeExecution.recordCount(),
-            timeoutMs = min(resolveCaptureRoundWaitMs(), remainingTime(deadline))
+            timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
         )
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
@@ -303,11 +329,11 @@ class CaptureCoordinator(
             }
 
             scrollRounds++
-            delay(resolveScrollSettleMs())
+            delay(resolveScrollSettleMs(collectionConfig))
             waitForRecordGrowth(
                 activeExecution,
                 baselineCount = beforeCount,
-                timeoutMs = min(resolveCaptureRoundWaitMs(), remainingTime(deadline))
+                timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
             )
 
             val afterCount = activeExecution.recordCount()
@@ -379,6 +405,24 @@ class CaptureCoordinator(
         )
     }
 
+    private fun resolveCaptureTimeoutMs(collectionConfig: CollectionConfig? = null): Long {
+        return collectionConfig?.captureTimeoutMs?.takeIf { it > 0L }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_CAPTURE_TIMEOUT_MS,
+                DEFAULT_CAPTURE_TIMEOUT_MS.toInt()
+            ).toLong()
+    }
+
+    private fun resolveAppStartDelayMs(plugin: AppPluginBundle? = null): Long {
+        return plugin?.captureFlow?.appStartDelayMs?.takeIf { it > 0L }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_APP_START_DELAY_MS,
+                DEFAULT_APP_START_DELAY_MS.toInt()
+            ).toLong()
+    }
+
     private fun resolveResultListWaitMs(): Long {
         return service.configManager.getPluginConfigInt(
             "system",
@@ -395,36 +439,40 @@ class CaptureCoordinator(
         ).toLong()
     }
 
-    private fun resolveScrollSettleMs(): Long {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_SCROLL_SETTLE_MS,
-            DEFAULT_SCROLL_SETTLE_MS.toInt()
-        ).toLong()
+    private fun resolveScrollSettleMs(collectionConfig: CollectionConfig? = null): Long {
+        return collectionConfig?.scrollSettleMs?.takeIf { it > 0L }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_SCROLL_SETTLE_MS,
+                DEFAULT_SCROLL_SETTLE_MS.toInt()
+            ).toLong()
     }
 
-    private fun resolveCaptureRoundWaitMs(): Long {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_CAPTURE_ROUND_WAIT_MS,
-            DEFAULT_CAPTURE_ROUND_WAIT_MS.toInt()
-        ).toLong()
+    private fun resolveCaptureRoundWaitMs(collectionConfig: CollectionConfig? = null): Long {
+        return collectionConfig?.captureRoundWaitMs?.takeIf { it > 0L }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_CAPTURE_ROUND_WAIT_MS,
+                DEFAULT_CAPTURE_ROUND_WAIT_MS.toInt()
+            ).toLong()
     }
 
-    private fun resolveMaxScrollRounds(): Int {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_MAX_SCROLL_ROUNDS,
-            DEFAULT_MAX_SCROLL_ROUNDS
-        )
+    private fun resolveMaxScrollRounds(collectionConfig: CollectionConfig? = null): Int {
+        return collectionConfig?.maxScrollRounds?.takeIf { it > 0 }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_MAX_SCROLL_ROUNDS,
+                DEFAULT_MAX_SCROLL_ROUNDS
+            )
     }
 
-    private fun resolveMaxIdleScrollRounds(): Int {
-        return service.configManager.getPluginConfigInt(
-            "system",
-            KEY_MAX_IDLE_SCROLL_ROUNDS,
-            DEFAULT_MAX_IDLE_SCROLL_ROUNDS
-        )
+    private fun resolveMaxIdleScrollRounds(collectionConfig: CollectionConfig? = null): Int {
+        return collectionConfig?.maxIdleScrollRounds?.takeIf { it > 0 }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_MAX_IDLE_SCROLL_ROUNDS,
+                DEFAULT_MAX_IDLE_SCROLL_ROUNDS
+            )
     }
 }
 
@@ -439,6 +487,7 @@ data class CaptureExecutionResult(
 private data class ActiveCapture(
     val task: HospitalTask,
     val targetPackage: String,
+    val navigationPluginId: String? = null,
     var stage: CaptureStage = CaptureStage.OPENING_APP,
     var lastSeenPackage: String = "",
     val recordsByKey: LinkedHashMap<String, ScrapedData> = linkedMapOf()
@@ -446,6 +495,7 @@ private data class ActiveCapture(
 
 private enum class CaptureStage {
     OPENING_APP,
+    EXECUTING_PLUGIN_FLOW,
     NAVIGATING_GROUPBUY,
     SEARCHING,
     WAITING_RESULT_LIST,

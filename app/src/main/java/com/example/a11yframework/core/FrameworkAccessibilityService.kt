@@ -6,6 +6,7 @@ import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import com.example.a11yframework.appplugin.AppPluginManager
 import com.example.a11yframework.capture.CaptureCoordinator
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.data.DataStore
@@ -25,6 +26,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
             private set
     }
     
+    val appPluginManager by lazy { AppPluginManager(this) }
     private val pluginManager = PluginManager()
     private val captureCoordinator by lazy { CaptureCoordinator(this) }
     private val remoteCommandManager by lazy { RemoteCommandManager(this) }
@@ -76,6 +78,9 @@ class FrameworkAccessibilityService : AccessibilityService() {
             serviceInfo = info
             
             Log.i(TAG, "Service connected")
+
+            appPluginManager.installBundledPlugins()
+            Log.i(TAG, "App plugin manager ready, loaded ${appPluginManager.getPluginCount()} bundles")
             
             // 注册并初始化插件
             registerPlugins()
@@ -219,6 +224,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
     }
     
     private fun registerPlugins() {
+        // 旧版 Kotlin 插件仍保留为兼容兜底。
         pluginManager.registerPlugin(MeituanPlugin())
         pluginManager.registerPlugin(DouyinPlugin())
     }
