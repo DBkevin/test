@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.example.a11yframework.utils.NodeUtils
+import kotlin.math.abs
 
 /**
  * 搜索控制器
@@ -27,6 +28,8 @@ class SearchController(
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
         private val SEARCH_BUTTON_KEYWORDS = listOf("搜索", "查找", "search", "🔍")
+        private val DOUYIN_GROUPBUY_PAGE_KEYWORDS = listOf("附近好店", "美食", "休闲娱乐", "景点/周边游", "酒店民宿", "丽人")
+        private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
         
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -71,6 +74,84 @@ class SearchController(
         } finally {
             searchBox?.recycle()
         }
+    }
+
+    fun searchDouyinGroupBuy(keyword: String): Boolean {
+        val tabSelected = selectDouyinGroupBuyTab()
+        if (tabSelected) {
+            Thread.sleep(1200)
+        } else {
+            Log.w(TAG, "Douyin group buy tab not explicitly selected, fallback to direct search")
+        }
+
+        return search(keyword)
+    }
+
+    fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
+        repeat(maxScrollRounds + 1) { round ->
+            val merchantNode = findMerchantResultNode(merchantName)
+            if (merchantNode != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(merchantNode)
+                    Log.i(
+                        TAG,
+                        "Merchant result click: name=$merchantName, round=$round, clicked=$clicked"
+                    )
+                    if (clicked) {
+                        return true
+                    }
+                } finally {
+                    merchantNode.recycle()
+                }
+            }
+
+            if (round == maxScrollRounds) {
+                return false
+            }
+
+            if (!scrollCurrentPage()) {
+                return false
+            }
+            Thread.sleep(1500)
+        }
+
+        return false
+    }
+
+    fun scrollCurrentPage(forward: Boolean = true): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            val scrollableNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val className = node.className?.toString().orEmpty()
+                    node.isScrollable || SCROLLABLE_CLASS_KEYWORDS.any { keyword ->
+                        className.contains(keyword, ignoreCase = true)
+                    }
+                },
+                maxDepth = 12
+            )
+
+            if (scrollableNode != null) {
+                val scrollCopy = AccessibilityNodeInfo.obtain(scrollableNode)
+                try {
+                    val scrolled = NodeUtils.scrollNode(scrollCopy, forward)
+                    if (scrolled) {
+                        Log.d(TAG, "Scrolled page with accessibility action")
+                        return true
+                    }
+                } finally {
+                    scrollCopy.recycle()
+                }
+            }
+        } finally {
+            rootNode.recycle()
+        }
+
+        val swiped = swipePage(forward)
+        Log.d(TAG, "Scrolled page with gesture: $swiped")
+        return swiped
     }
 
     private fun prepareSearchBox(): AccessibilityNodeInfo? {
@@ -286,6 +367,125 @@ class SearchController(
         }
     }
 
+    private fun selectDouyinGroupBuyTab(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            if (isLikelyDouyinGroupBuyPage(rootNode)) {
+                return true
+            }
+
+            val tabNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val nodeText = getComparableNodeText(node)
+                    nodeText.contains("团购", ignoreCase = true)
+                },
+                maxDepth = 10
+            )
+
+            if (tabNode != null) {
+                val clicked = NodeUtils.clickNode(tabNode)
+                Log.d(TAG, "Selected Douyin group buy tab: $clicked")
+                return clicked
+            }
+
+            return false
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun isLikelyDouyinGroupBuyPage(rootNode: AccessibilityNodeInfo): Boolean {
+        val pageText = NodeUtils.getAllNodeText(rootNode)
+        val hitCount = DOUYIN_GROUPBUY_PAGE_KEYWORDS.count { keyword ->
+            pageText.contains(keyword, ignoreCase = true)
+        }
+        return hitCount >= 2
+    }
+
+    private fun findMerchantResultNode(merchantName: String): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val normalizedTarget = normalizeText(merchantName)
+            if (normalizedTarget.isBlank()) {
+                return null
+            }
+
+            val candidates = NodeUtils.findNodesByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val text = normalizeText(getComparableNodeText(node))
+                    text.isNotBlank() && (
+                        text.contains(normalizedTarget) || normalizedTarget.contains(text)
+                    )
+                },
+                maxDepth = 20
+            )
+
+            val scoredCandidate = candidates
+                .map { it to scoreMerchantCandidate(it, normalizedTarget) }
+                .filter { (_, score) -> score > 0 }
+                .maxByOrNull { (_, score) -> score }
+
+            val bestNode = scoredCandidate?.first
+            val result = bestNode?.let { AccessibilityNodeInfo.obtain(it) }
+
+            candidates.forEach { candidate ->
+                if (candidate !== bestNode) {
+                    candidate.recycle()
+                }
+            }
+            bestNode?.recycle()
+
+            return result
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun scoreMerchantCandidate(node: AccessibilityNodeInfo, normalizedTarget: String): Int {
+        val comparableText = normalizeText(getComparableNodeText(node))
+        if (comparableText.isBlank()) {
+            return 0
+        }
+        if (!comparableText.contains(normalizedTarget) && !normalizedTarget.contains(comparableText)) {
+            return 0
+        }
+
+        var score = 0
+        if (comparableText == normalizedTarget) {
+            score += 120
+        }
+        if (comparableText.contains(normalizedTarget)) {
+            score += 80
+        }
+        if (node.isClickable) {
+            score += 10
+        }
+        if (node.className?.toString()?.contains("TextView", ignoreCase = true) == true) {
+            score += 10
+        }
+
+        score -= abs(comparableText.length - normalizedTarget.length)
+        return score
+    }
+
+    private fun getComparableNodeText(node: AccessibilityNodeInfo): String {
+        val text = NodeUtils.getNodeText(node)
+        if (text.isNotBlank()) {
+            return text
+        }
+        return node.contentDescription?.toString().orEmpty()
+    }
+
+    private fun normalizeText(text: String): String {
+        return text.lowercase()
+            .replace("[\\s·•|｜/\\\\-]+".toRegex(), "")
+            .replace("[^\\p{L}\\p{N}]".toRegex(), "")
+    }
+
     private fun supportsSetText(node: AccessibilityNodeInfo): Boolean {
         if (node.isEditable) {
             return true
@@ -338,6 +538,24 @@ class SearchController(
             .build()
         
         service.dispatchGesture(gesture, null, null)
+    }
+
+    private fun swipePage(forward: Boolean): Boolean {
+        val metrics = service.resources.displayMetrics
+        val x = metrics.widthPixels / 2f
+        val startY = if (forward) metrics.heightPixels * 0.78f else metrics.heightPixels * 0.32f
+        val endY = if (forward) metrics.heightPixels * 0.32f else metrics.heightPixels * 0.78f
+
+        val path = Path().apply {
+            moveTo(x, startY)
+            lineTo(x, endY)
+        }
+
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 450))
+            .build()
+
+        return service.dispatchGesture(gesture, null, null)
     }
     
     /**

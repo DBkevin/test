@@ -111,6 +111,7 @@ object NodeUtils {
     
     private fun collectTextRecursive(node: AccessibilityNodeInfo, sb: StringBuilder) {
         node.text?.let { sb.append(it.toString()).append(" ") }
+        node.contentDescription?.let { sb.append(it.toString()).append(" ") }
         
         for (i in 0 until node.childCount) {
             val child = node.getChild(i)
@@ -251,7 +252,16 @@ object NodeUtils {
      * 获取节点文本
      */
     fun getNodeText(node: AccessibilityNodeInfo?): String {
-        return node?.text?.toString() ?: ""
+        if (node == null) {
+            return ""
+        }
+
+        val text = node.text?.toString()?.trim().orEmpty()
+        if (text.isNotEmpty()) {
+            return text
+        }
+
+        return node.contentDescription?.toString()?.trim().orEmpty()
     }
     
     /**

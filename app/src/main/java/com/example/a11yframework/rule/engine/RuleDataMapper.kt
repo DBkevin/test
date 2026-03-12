@@ -39,6 +39,9 @@ object RuleDataMapper {
         }.filter { (_, items) -> items.isNotEmpty() }
 
         if (listFields.isEmpty()) {
+            if (baseContent.isEmpty()) {
+                return emptyList()
+            }
             return listOf(buildRecord(rule, page, "rule_extract", baseContent))
         }
 

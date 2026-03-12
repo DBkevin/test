@@ -56,6 +56,25 @@ class RuleDataMapperTest {
         assertEquals("黄金微针", result.first().content["title"])
     }
 
+    @Test
+    fun `should skip empty extraction payload`() {
+        val page = createPage()
+        val rule = createRule(page)
+
+        val result = RuleDataMapper.toScrapedData(
+            rule = rule,
+            page = page,
+            extractedData = mapOf(
+                "hospital_name" to " ",
+                "group_buys" to listOf(
+                    mapOf("title" to " ", "price" to "")
+                )
+            )
+        )
+
+        assertTrue(result.isEmpty())
+    }
+
     private fun createRule(page: PageConfig): Rule {
         return Rule(
             ruleId = "douyin_hospital_v1",

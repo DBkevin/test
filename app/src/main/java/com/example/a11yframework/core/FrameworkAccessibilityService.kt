@@ -130,7 +130,8 @@ class FrameworkAccessibilityService : AccessibilityService() {
     
     private fun handleContentChange(packageName: String) {
         val now = System.currentTimeMillis()
-        if (now - lastScrapeTime < SCRAPE_COOLDOWN) return
+        val cooldownMs = captureCoordinator.getScrapeCooldownMs(packageName, SCRAPE_COOLDOWN)
+        if (now - lastScrapeTime < cooldownMs) return
 
         val hasRule = ruleEngine.hasRulesForPackage(packageName)
         val plugin = activePlugin
@@ -140,21 +141,36 @@ class FrameworkAccessibilityService : AccessibilityService() {
         val rootNode = rootInActiveWindow ?: return
         
         try {
+            if (!captureCoordinator.shouldScrapePage(packageName)) {
+                Log.d(TAG, "Capture stage not ready for scraping: $packageName")
+                return
+            }
+
             if (hasRule) {
                 val ruleResult = ruleEngine.execute(packageName, rootNode)
                 if (ruleResult.matched) {
-                    if (ruleResult.data.isNotEmpty()) {
-                        dataStore.saveData(ruleResult.data)
-                        captureCoordinator.onRecordsCaptured(packageName, ruleResult.data)
+                    val preparedRuleData = captureCoordinator.prepareCapturedRecords(
+                        packageName,
+                        ruleResult.data
+                    )
+
+                    if (preparedRuleData.isNotEmpty()) {
+                        dataStore.saveData(preparedRuleData)
+                        captureCoordinator.onRecordsCaptured(packageName, preparedRuleData)
                         Log.i(
                             TAG,
-                            "Rule scraped ${ruleResult.data.size} records from ${ruleResult.ruleId}"
+                            "Rule scraped ${preparedRuleData.size} records from ${ruleResult.ruleId}"
                         )
+                        lastScrapeTime = now
+                        return
                     } else {
                         Log.d(TAG, "Rule matched but no data extracted: ${ruleResult.ruleId}")
                     }
-                    lastScrapeTime = now
-                    return
+
+                    if (!captureCoordinator.isCollectingForPackage(packageName)) {
+                        lastScrapeTime = now
+                        return
+                    }
                 }
             }
 
@@ -170,9 +186,15 @@ class FrameworkAccessibilityService : AccessibilityService() {
             
             if (rawData.isNotEmpty()) {
                 val processedData = activePlugin.processData(rawData)
-                dataStore.saveData(processedData)
-                captureCoordinator.onRecordsCaptured(packageName, processedData)
-                Log.i(TAG, "Scraped ${processedData.size} records")
+                val preparedPluginData = captureCoordinator.prepareCapturedRecords(
+                    packageName,
+                    processedData
+                )
+                if (preparedPluginData.isNotEmpty()) {
+                    dataStore.saveData(preparedPluginData)
+                    captureCoordinator.onRecordsCaptured(packageName, preparedPluginData)
+                    Log.i(TAG, "Scraped ${preparedPluginData.size} records")
+                }
             }
             
             lastScrapeTime = now
