@@ -33,6 +33,7 @@ class SearchController(
         private val SEARCH_BUTTON_KEYWORDS = listOf("搜索", "查找", "search", "🔍")
         private val DOUYIN_GROUPBUY_PAGE_KEYWORDS = listOf("附近好店", "美食", "休闲娱乐", "景点/周边游", "酒店民宿", "丽人")
         private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
+        private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
         
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -491,6 +492,12 @@ class SearchController(
                 if (clicked) {
                     return true
                 }
+
+                val tapped = tapNodeCenter(button)
+                if (tapped) {
+                    Log.d(TAG, "Tapped search button by keyword bounds")
+                    return true
+                }
             }
             
             // 方法 2: 通过 viewId 查找按钮型搜索控件
@@ -514,6 +521,12 @@ class SearchController(
                 val clicked = NodeUtils.clickNode(buttonById)
                 Log.d(TAG, "Clicked search button by id: $clicked")
                 if (clicked) {
+                    return true
+                }
+
+                val tapped = tapNodeCenter(buttonById)
+                if (tapped) {
+                    Log.d(TAG, "Tapped search button by id bounds")
                     return true
                 }
             }
@@ -618,6 +631,20 @@ class SearchController(
             val candidates = NodeUtils.findNodesByCondition(
                 rootNode,
                 condition = { node: AccessibilityNodeInfo ->
+                    if (node.isFocused || isLikelySearchInput(node)) {
+                        return@findNodesByCondition false
+                    }
+
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    if (viewId.contains("et_search") || viewId.contains("search_kw")) {
+                        return@findNodesByCondition false
+                    }
+
+                    val contentDesc = node.contentDescription?.toString().orEmpty()
+                    if (contentDesc.contains("填入搜索框")) {
+                        return@findNodesByCondition false
+                    }
+
                     val text = normalizeText(getComparableNodeText(node))
                     text.isNotBlank() && (
                         text.contains(normalizedTarget) || normalizedTarget.contains(text)
@@ -648,7 +675,8 @@ class SearchController(
     }
 
     private fun scoreMerchantCandidate(node: AccessibilityNodeInfo, normalizedTarget: String): Int {
-        val comparableText = normalizeText(getComparableNodeText(node))
+        val rawText = getComparableNodeText(node)
+        val comparableText = normalizeText(rawText)
         if (comparableText.isBlank()) {
             return 0
         }
@@ -656,12 +684,24 @@ class SearchController(
             return 0
         }
 
+        val hasMerchantHint = MERCHANT_RESULT_HINTS.any { hint ->
+            rawText.contains(hint, ignoreCase = true)
+        }
+
         var score = 0
         if (comparableText == normalizedTarget) {
-            score += 120
+            score += 30
         }
         if (comparableText.contains(normalizedTarget)) {
             score += 80
+        }
+        if (comparableText.length > normalizedTarget.length) {
+            score += minOf(40, comparableText.length - normalizedTarget.length)
+        }
+        if (hasMerchantHint) {
+            score += 120
+        } else if (comparableText == normalizedTarget) {
+            score -= 80
         }
         if (node.isClickable) {
             score += 10
@@ -742,6 +782,15 @@ class SearchController(
             .build()
         
         return service.dispatchGesture(gesture, null, null)
+    }
+
+    private fun tapNodeCenter(node: AccessibilityNodeInfo): Boolean {
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        if (bounds.isEmpty) {
+            return false
+        }
+        return tapScreen(bounds.centerX(), bounds.centerY())
     }
     
     /**
