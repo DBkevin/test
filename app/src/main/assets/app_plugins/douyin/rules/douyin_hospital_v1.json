@@ -5,7 +5,7 @@
   "app_package": "com.ss.android.ugc.aweme",
   "priority": 200,
   "enabled": true,
-  "version": 1,
+  "version": 2,
   "pages": [
     {
       "page_id": "hospital_detail",
@@ -19,22 +19,28 @@
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["医院", "门诊", "整形", "美容", "医美", "美莱"],
+          "values": ["收藏", "关注", "回头客", "门店地址", "营业中"],
           "logic": "OR"
         },
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["现价", "原价", "预约", "随时退", "领券抢购"],
+          "values": ["现价", "原价", "预约", "随时退", "领券抢购", "已售"],
           "logic": "OR"
         }
       ],
       "extract_rules": {
+        "merchant_name": {
+          "type": "find_by_keywords",
+          "keywords": ["医院", "门诊", "整形", "美容", "医美", "美莱"],
+          "location": "top",
+          "max_depth": 16
+        },
         "hospital_name": {
           "type": "find_by_keywords",
-          "keywords": ["医院", "门诊", "整形", "美容", "医美"],
+          "keywords": ["医院", "门诊", "整形", "美容", "医美", "美莱"],
           "location": "top",
-          "max_depth": 8
+          "max_depth": 16
         },
         "honors": {
           "type": "find_by_keywords",
@@ -66,7 +72,7 @@
             },
             "sales": {
               "type": "regex",
-              "pattern": "((?:已售|销量|售出|购买)[^,，\\s]{0,10})",
+              "pattern": "((?:已售|销量|售出|购买)\\s*\\d+(?:\\+)?)",
               "group": 1
             },
             "card_text": {

@@ -1,7 +1,7 @@
 {
   "plugin_id": "douyin",
   "plugin_name": "抖音团购插件",
-  "version": 1,
+  "version": 102,
   "enabled": true,
   "app_packages": ["com.ss.android.ugc.aweme"],
   "entry_package": "com.ss.android.ugc.aweme",

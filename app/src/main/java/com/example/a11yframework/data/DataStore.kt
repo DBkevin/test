@@ -8,6 +8,7 @@ import android.util.Log
 import com.example.a11yframework.core.ScrapedData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.util.LinkedHashMap
 
 /**
  * 数据存储
@@ -21,6 +22,8 @@ class DataStore(context: Context) {
         private const val TAG = "DataStore"
         private const val DB_NAME = "a11y_scraped_data.db"
         private const val DB_VERSION = 1
+        private const val RECENT_RECORD_TTL_MS = 10 * 60 * 1000L
+        private const val RECENT_RECORD_CACHE_LIMIT = 4000
         
         private const val TABLE_NAME = "scraped_data"
         
@@ -38,6 +41,7 @@ class DataStore(context: Context) {
     
     private val dbHelper: DbHelper
     private val gson = Gson()
+    private val recentRecordKeys = LinkedHashMap<String, Long>()
     
     init {
         dbHelper = DbHelper(context)
@@ -47,12 +51,26 @@ class DataStore(context: Context) {
      * 保存数据
      */
     fun saveData(dataList: List<ScrapedData>) {
+        if (dataList.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        val freshCandidates = synchronized(recentRecordKeys) {
+            selectFreshCandidates(dataList, now)
+        }
+
+        if (freshCandidates.isEmpty()) {
+            Log.d(TAG, "Skipped ${dataList.size} duplicate records")
+            return
+        }
+
         val db = dbHelper.writableDatabase
+        var committed = false
         
         try {
             db.beginTransaction()
             
-            dataList.forEach { data ->
+            freshCandidates.forEach { candidate ->
+                val data = candidate.data
                 val values = ContentValues().apply {
                     put(COL_TIMESTAMP, data.timestamp)
                     put(COL_PLUGIN_ID, data.pluginId)
@@ -68,11 +86,17 @@ class DataStore(context: Context) {
             }
             
             db.setTransactionSuccessful()
-            Log.i(TAG, "Saved ${dataList.size} records")
+            committed = true
+            Log.i(TAG, "Saved ${freshCandidates.size} records")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving data", e)
         } finally {
             db.endTransaction()
+            if (committed) {
+                synchronized(recentRecordKeys) {
+                    rememberRecentKeys(freshCandidates, now)
+                }
+            }
         }
     }
     
@@ -242,6 +266,94 @@ class DataStore(context: Context) {
             metadata = metadata
         )
     }
+
+    private fun selectFreshCandidates(
+        dataList: List<ScrapedData>,
+        now: Long
+    ): List<RecordInsertCandidate> {
+        pruneRecentRecordKeys(now)
+
+        val freshCandidates = mutableListOf<RecordInsertCandidate>()
+        val seenInBatch = mutableSetOf<String>()
+
+        dataList.forEach { data ->
+            val key = buildRecordKey(data)
+            if (!seenInBatch.add(key)) {
+                return@forEach
+            }
+            if (recentRecordKeys.containsKey(key)) {
+                return@forEach
+            }
+
+            freshCandidates.add(RecordInsertCandidate(key, data))
+        }
+
+        return freshCandidates
+    }
+
+    private fun rememberRecentKeys(
+        candidates: List<RecordInsertCandidate>,
+        now: Long
+    ) {
+        candidates.forEach { candidate ->
+            recentRecordKeys[candidate.key] = now
+        }
+
+        trimRecentRecordKeys()
+    }
+
+    private fun pruneRecentRecordKeys(now: Long) {
+        val iterator = recentRecordKeys.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (now - entry.value > RECENT_RECORD_TTL_MS) {
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun trimRecentRecordKeys() {
+        while (recentRecordKeys.size > RECENT_RECORD_CACHE_LIMIT) {
+            val oldestKey = recentRecordKeys.entries.firstOrNull()?.key ?: break
+            recentRecordKeys.remove(oldestKey)
+        }
+    }
+
+    private fun buildRecordKey(data: ScrapedData): String {
+        val content = data.content
+
+        val merchantName = content["merchant_name"]
+            ?: content["hospital_name"]
+            ?: content["hospitalName"]
+            ?: ""
+        val title = content["groupBuyTitle"]
+            ?: content["title"]
+            ?: ""
+        val price = content["price"].orEmpty()
+        val sales = content["sales"].orEmpty()
+        val rawText = data.rawText.ifBlank {
+            content.entries
+                .sortedBy { it.key }
+                .joinToString("|") { (_, value) -> value }
+        }
+
+        return listOf(
+            data.pluginId,
+            data.pageType,
+            data.dataType,
+            normalizeKeyPart(merchantName),
+            normalizeKeyPart(title),
+            normalizeKeyPart(price),
+            normalizeKeyPart(sales),
+            normalizeKeyPart(rawText)
+        ).joinToString("|")
+    }
+
+    private fun normalizeKeyPart(value: String): String {
+        return value.lowercase()
+            .replace("\\s+".toRegex(), "")
+            .trim()
+    }
     
     /**
      * 数据库帮助类
@@ -279,3 +391,8 @@ class DataStore(context: Context) {
         }
     }
 }
+
+private data class RecordInsertCandidate(
+    val key: String,
+    val data: ScrapedData
+)
