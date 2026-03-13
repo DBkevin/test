@@ -94,8 +94,8 @@ class PageMatcher(private val service: AccessibilityService) {
         pageTextProvider: () -> String
     ): Boolean {
         return when (rule.type) {
-            MatchType.TEXT_CONTAINS -> matchTextContains(rule, rootNode)
-            MatchType.TEXT_EQUALS -> matchTextEquals(rule, rootNode)
+            MatchType.TEXT_CONTAINS -> matchTextContains(rule, rootNode, pageTextProvider)
+            MatchType.TEXT_EQUALS -> matchTextEquals(rule, rootNode, pageTextProvider)
             MatchType.CLASS_NAME -> matchClassName(rule, rootNode)
             MatchType.VIEW_ID -> matchViewId(rule, rootNode)
             MatchType.REGEX -> matchRegex(rule, pageTextProvider())
@@ -105,13 +105,17 @@ class PageMatcher(private val service: AccessibilityService) {
     /**
      * 文本包含匹配
      */
-    private fun matchTextContains(rule: MatchRule, rootNode: AccessibilityNodeInfo?): Boolean {
+    private fun matchTextContains(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        pageTextProvider: () -> String
+    ): Boolean {
         val values = rule.values ?: return false
-        
+
         val results = values.map { value ->
-            hasTextMatch(rootNode, value, exact = false)
+            hasTextMatch(rule, rootNode, value, exact = false, pageTextProvider)
         }
-        
+
         return when (rule.logic) {
             MatchLogic.AND -> results.all { it }
             MatchLogic.OR -> results.any { it }
@@ -121,13 +125,17 @@ class PageMatcher(private val service: AccessibilityService) {
     /**
      * 文本完全匹配
      */
-    private fun matchTextEquals(rule: MatchRule, rootNode: AccessibilityNodeInfo?): Boolean {
+    private fun matchTextEquals(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        pageTextProvider: () -> String
+    ): Boolean {
         val values = rule.values ?: return false
-        
+
         val results = values.map { value ->
-            hasTextMatch(rootNode, value, exact = true)
+            hasTextMatch(rule, rootNode, value, exact = true, pageTextProvider)
         }
-        
+
         return when (rule.logic) {
             MatchLogic.AND -> results.all { it }
             MatchLogic.OR -> results.any { it }
@@ -214,11 +222,26 @@ class PageMatcher(private val service: AccessibilityService) {
     }
 
     private fun hasTextMatch(
+        rule: MatchRule,
         rootNode: AccessibilityNodeInfo?,
         value: String,
-        exact: Boolean
+        exact: Boolean,
+        pageTextProvider: () -> String
     ): Boolean {
-        if (rootNode == null || value.isBlank()) {
+        if (value.isBlank()) {
+            return false
+        }
+
+        if (rule.field.equals("page_text", ignoreCase = true)) {
+            val pageText = normalizeText(pageTextProvider())
+            return if (exact) {
+                pageText.equals(value, ignoreCase = true)
+            } else {
+                pageText.contains(value, ignoreCase = true)
+            }
+        }
+
+        if (rootNode == null) {
             return false
         }
 

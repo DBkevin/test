@@ -5,7 +5,7 @@
   "app_package": "com.ss.android.ugc.aweme",
   "priority": 200,
   "enabled": true,
-  "version": 3,
+  "version": 5,
   "pages": [
     {
       "page_id": "hospital_detail",
@@ -19,14 +19,14 @@
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["团购", "服务", "评价"],
+          "values": ["郑州美莱", "回头客"],
           "logic": "AND"
         },
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["领券抢购", "在线咨询", "预约有礼", "已售"],
-          "logic": "OR"
+          "values": ["原价", "现价", "已售", "领券抢购"],
+          "logic": "AND"
         }
       ],
       "extract_rules": {
@@ -57,17 +57,17 @@
           "item_rules": {
             "title": {
               "type": "regex",
-              "pattern": "([^¥￥]{4,60}?)(?=\\s*(?:¥|￥)\\s*\\d)",
+              "pattern": "^(【[^】]+】[^,，]{1,80})",
               "group": 1
             },
             "price": {
               "type": "regex",
-              "pattern": "(?:¥|￥)\\s*(\\d+(?:\\.\\d+)?)",
+              "pattern": "现价\\s*(\\d+(?:\\.\\d+)?)元",
               "group": 1
             },
             "original_price": {
               "type": "regex",
-              "pattern": "(?:¥|￥)\\s*\\d+(?:\\.\\d+)?\\s*(?:¥|￥)\\s*(\\d+(?:\\.\\d+)?)",
+              "pattern": "原价\\s*(\\d+(?:\\.\\d+)?)元",
               "group": 1
             },
             "sales": {
