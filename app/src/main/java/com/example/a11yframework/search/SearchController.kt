@@ -24,6 +24,9 @@ class SearchController(
     
     companion object {
         private const val TAG = "SearchController"
+        private const val SEARCH_NODE_MAX_DEPTH = 18
+        private const val SEARCH_PREPARE_MAX_ATTEMPTS = 6
+        private const val SEARCH_RETRY_DELAY_MS = 700L
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -314,13 +317,17 @@ class SearchController(
     }
 
     private fun prepareSearchBox(entryKeywords: List<String> = SEARCH_KEYWORDS): AccessibilityNodeInfo? {
-        findSearchBox(entryKeywords)?.let { return it }
+        repeat(SEARCH_PREPARE_MAX_ATTEMPTS) { attempt ->
+            findSearchBox(entryKeywords)?.let { return it }
 
-        if (!openSearchEntry(entryKeywords)) {
-            return null
+            val opened = openSearchEntry(entryKeywords)
+            if (opened) {
+                Log.d(TAG, "Opened search entry on attempt=${attempt + 1}")
+            }
+
+            Thread.sleep(SEARCH_RETRY_DELAY_MS)
         }
 
-        Thread.sleep(1200)
         return findSearchBox(entryKeywords)
     }
     
@@ -331,37 +338,52 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return null
         
         try {
-            // 方法 1: 通过关键词查找
-            val byKeyword = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                val text = NodeUtils.getNodeText(node).lowercase()
-                searchKeywords.any { keyword -> text.contains(keyword.lowercase()) }
-            })
-            
-            if (byKeyword != null) {
-                Log.d(TAG, "Found search box by keyword")
-                return AccessibilityNodeInfo.obtain(byKeyword)
+            // 方法 1: 通过更稳定的 viewId 查找真实输入框
+            val byId = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase() ?: return@findNodeByCondition false
+                    (viewId.contains("et_search") ||
+                        viewId.contains("search_kw") ||
+                        viewId.contains("search_input") ||
+                        viewId.contains("search_edit")) &&
+                        isLikelySearchInput(node)
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
+
+            if (byId != null) {
+                Log.d(TAG, "Found search box by id")
+                return AccessibilityNodeInfo.obtain(byId)
             }
-            
-            // 方法 2: 通过 className 查找（EditText）
+
+            // 方法 2: 通过 className / editability 查找真实输入框
             val byClass = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                node.className?.toString()?.contains("EditText") == true ||
-                node.className?.toString()?.contains("edittext") == true
-            })
+                isLikelySearchInput(node)
+            }, maxDepth = SEARCH_NODE_MAX_DEPTH)
             
             if (byClass != null) {
                 Log.d(TAG, "Found search box by class")
                 return AccessibilityNodeInfo.obtain(byClass)
             }
             
-            // 方法 3: 通过 viewId 查找
-            val byId = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
-                viewId.contains("search") || viewId.contains("Search")
-            })
-            
-            if (byId != null) {
-                Log.d(TAG, "Found search box by id")
-                return AccessibilityNodeInfo.obtain(byId)
+            // 方法 3: 通过关键词查找可输入的搜索框，避免把顶部搜索按钮误当成输入框
+            val byKeyword = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    if (!isLikelySearchInput(node)) {
+                        return@findNodeByCondition false
+                    }
+
+                    val text = getComparableNodeText(node).lowercase()
+                    searchKeywords.any { keyword -> text.contains(keyword.lowercase()) }
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
+
+            if (byKeyword != null) {
+                Log.d(TAG, "Found search box by keyword")
+                return AccessibilityNodeInfo.obtain(byKeyword)
             }
             
             return null
@@ -451,33 +473,49 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
         
         try {
-            // 方法 1: 通过关键词查找搜索按钮
-            val button = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                if (!node.isClickable) return@findNodeByCondition false
-                
-                val text = NodeUtils.getNodeText(node).lowercase()
-                buttonKeywords.any { keyword -> text.contains(keyword.lowercase()) }
-            })
+            // 方法 1: 通过关键词查找搜索按钮，允许点击父节点
+            val button = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val text = getComparableNodeText(node).lowercase()
+                    text.isNotBlank() && buttonKeywords.any { keyword ->
+                        text.contains(keyword.lowercase())
+                    }
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
             
             if (button != null) {
-                NodeUtils.clickNode(button)
-                Log.d(TAG, "Clicked search button by keyword")
-                return true
+                val clicked = NodeUtils.clickNode(button)
+                Log.d(TAG, "Clicked search button by keyword: $clicked")
+                if (clicked) {
+                    return true
+                }
             }
             
-            // 方法 2: 通过 viewId 查找
-            val buttonById = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                if (!node.isClickable) return@findNodeByCondition false
-                
-                val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
-                viewId.contains("search") || viewId.contains("Search") ||
-                viewId.contains("btn") || viewId.contains("button")
-            })
+            // 方法 2: 通过 viewId 查找按钮型搜索控件
+            val buttonById = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    if (isLikelySearchInput(node)) {
+                        return@findNodeByCondition false
+                    }
+
+                    val viewId = node.viewIdResourceName?.lowercase() ?: return@findNodeByCondition false
+                    (viewId.contains("btn") ||
+                        viewId.contains("button") ||
+                        viewId.contains("submit")) &&
+                        viewId.contains("search")
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
             
             if (buttonById != null) {
-                NodeUtils.clickNode(buttonById)
-                Log.d(TAG, "Clicked search button by id")
-                return true
+                val clicked = NodeUtils.clickNode(buttonById)
+                Log.d(TAG, "Clicked search button by id: $clicked")
+                if (clicked) {
+                    return true
+                }
             }
             
             // 方法 3: 使用输入法搜索动作
@@ -502,10 +540,10 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
-            val entryNode = NodeUtils.findNodeByCondition(rootNode, condition = { node: AccessibilityNodeInfo ->
-                if (!node.isClickable) return@findNodeByCondition false
-
-                val nodeText = NodeUtils.getNodeText(node).lowercase()
+            val entryNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                val nodeText = getComparableNodeText(node).lowercase()
                 val contentDesc = node.contentDescription?.toString()?.lowercase() ?: ""
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
 
@@ -515,7 +553,9 @@ class SearchController(
                         contentDesc.contains(lowerKeyword) ||
                         viewId.contains(lowerKeyword)
                 }
-            })
+            },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
 
             if (entryNode != null) {
                 val clicked = NodeUtils.clickNode(entryNode)
@@ -656,6 +696,18 @@ class SearchController(
         return node.actionList.any { action ->
             action.id == AccessibilityNodeInfo.ACTION_SET_TEXT
         }
+    }
+
+    private fun isLikelySearchInput(node: AccessibilityNodeInfo): Boolean {
+        val className = node.className?.toString().orEmpty()
+        val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+        return node.isEditable ||
+            className.contains("EditText", ignoreCase = true) ||
+            className.contains("AutoCompleteTextView", ignoreCase = true) ||
+            supportsSetText(node) ||
+            viewId.contains("search_input") ||
+            viewId.contains("search_edit") ||
+            viewId.contains("search_kw")
     }
     
     /**
