@@ -195,6 +195,60 @@ class SearchController(
         return openMerchantResult(targetText, maxScrollRounds)
     }
 
+    fun clickAnyText(
+        targetTexts: List<String>,
+        exactMatch: Boolean = false,
+        maxClicks: Int = targetTexts.size
+    ): Int {
+        val normalizedTargets = targetTexts
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+
+        if (normalizedTargets.isEmpty() || maxClicks <= 0) {
+            return 0
+        }
+
+        val clickedKeys = mutableSetOf<String>()
+        var clickCount = 0
+
+        while (clickCount < maxClicks) {
+            var clickedInThisPass = false
+
+            for (targetText in normalizedTargets) {
+                val matchedNode = findTextNode(targetText, exactMatch) ?: continue
+                try {
+                    val bounds = Rect()
+                    matchedNode.getBoundsInScreen(bounds)
+                    val clickKey = "$targetText:${bounds.left},${bounds.top},${bounds.right},${bounds.bottom}"
+                    if (!clickedKeys.add(clickKey)) {
+                        continue
+                    }
+
+                    val clicked = NodeUtils.clickNode(matchedNode)
+                    Log.i(
+                        TAG,
+                        "Click any text: target=$targetText, exact=$exactMatch, clicked=$clicked"
+                    )
+                    if (clicked) {
+                        clickCount++
+                        clickedInThisPass = true
+                        Thread.sleep(600)
+                        break
+                    }
+                } finally {
+                    matchedNode.recycle()
+                }
+            }
+
+            if (!clickedInThisPass) {
+                break
+            }
+        }
+
+        return clickCount
+    }
+
     fun clickViewId(viewId: String, maxScrollRounds: Int = 0): Boolean {
         repeat(maxScrollRounds + 1) { round ->
             val matchedNode = findNodeByViewId(viewId)

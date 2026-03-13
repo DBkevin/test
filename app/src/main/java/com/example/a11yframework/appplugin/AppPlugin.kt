@@ -30,7 +30,10 @@ data class CollectionConfig(
     val captureRoundWaitMs: Long = 2_500L,
     val scrollSettleMs: Long = 1_800L,
     val maxScrollRounds: Int = 6,
-    val maxIdleScrollRounds: Int = 2
+    val maxIdleScrollRounds: Int = 2,
+    val expandKeywords: List<String> = emptyList(),
+    val expandSettleMs: Long = 1_000L,
+    val maxExpandClicksPerRound: Int = 0
 )
 
 data class NavigationStep(

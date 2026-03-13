@@ -3,18 +3,28 @@ package com.example.a11yframework.core
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
 import com.example.a11yframework.appplugin.AppPluginManager
 import com.example.a11yframework.appplugin.PluginInstallResult
 import com.example.a11yframework.capture.CaptureCoordinator
+import com.example.a11yframework.capture.CaptureExecutionResult
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.data.DataStore
 import com.example.a11yframework.plugins.MeituanPlugin
 import com.example.a11yframework.plugins.DouyinPlugin
 import com.example.a11yframework.remote.RemoteCommandManager
+import com.example.a11yframework.remote.HospitalTask
+import com.example.a11yframework.remote.TaskStatus
 import com.example.a11yframework.rule.engine.RuleEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
  * 核心无障碍服务
@@ -32,6 +42,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
     private val captureCoordinator by lazy { CaptureCoordinator(this) }
     private val remoteCommandManager by lazy { RemoteCommandManager(this) }
     private val ruleEngine by lazy { RuleEngine(this) }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     // 延迟初始化
     private var _dataStore: DataStore? = null
@@ -219,6 +230,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
         Log.i(TAG, "Service destroying")
         captureCoordinator.cancelActiveCapture("service destroyed")
         remoteCommandManager.stopPolling()
+        serviceScope.cancel()
         pluginManager.getAllPlugins().forEach { it.cleanup() }
         instance = null
         super.onDestroy()
@@ -283,5 +295,35 @@ class FrameworkAccessibilityService : AccessibilityService() {
         }
 
         return result
+    }
+
+    fun startLocalCapture(
+        hospitalName: String,
+        targetPackage: String = "com.ss.android.ugc.aweme",
+        onCompleted: ((CaptureExecutionResult) -> Unit)? = null
+    ): Boolean {
+        val normalizedHospitalName = hospitalName.trim()
+        if (normalizedHospitalName.isBlank()) {
+            return false
+        }
+
+        val task = HospitalTask(
+            id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+            hospitalName = normalizedHospitalName,
+            status = TaskStatus.PENDING,
+            createdAt = System.currentTimeMillis(),
+            targetPackage = targetPackage
+        )
+
+        serviceScope.launch {
+            val result = captureCoordinator.executeTask(task)
+            onCompleted?.let { callback ->
+                Handler(Looper.getMainLooper()).post {
+                    callback(result)
+                }
+            }
+        }
+
+        return true
     }
 }

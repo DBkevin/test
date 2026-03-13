@@ -46,7 +46,20 @@ class CaptureCoordinator(
         private const val DEFAULT_MAX_SCROLL_ROUNDS = 6
         private const val KEY_MAX_IDLE_SCROLL_ROUNDS = "max_idle_scroll_rounds"
         private const val DEFAULT_MAX_IDLE_SCROLL_ROUNDS = 2
+        private const val KEY_EXPAND_SETTLE_MS = "expand_settle_ms"
+        private const val DEFAULT_EXPAND_SETTLE_MS = 1_000L
+        private const val KEY_MAX_EXPAND_CLICKS_PER_ROUND = "max_expand_clicks_per_round"
+        private const val DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND = 4
         private const val COLLECTING_SCRAPE_COOLDOWN_MS = 1_200L
+        private val DEFAULT_EXPAND_KEYWORDS = listOf(
+            "展开更多",
+            "查看全部",
+            "更多团购",
+            "更多套餐",
+            "全部团购",
+            "全部套餐",
+            "展开"
+        )
     }
 
     private val executionMutex = Mutex()
@@ -315,11 +328,7 @@ class CaptureCoordinator(
         var idleRounds = 0
         var scrollRounds = 0
 
-        waitForRecordGrowth(
-            activeExecution,
-            baselineCount = activeExecution.recordCount(),
-            timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
-        )
+        collectCurrentViewport(activeExecution, collectionConfig, deadline)
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
             val beforeCount = activeExecution.recordCount()
@@ -330,11 +339,7 @@ class CaptureCoordinator(
 
             scrollRounds++
             delay(resolveScrollSettleMs(collectionConfig))
-            waitForRecordGrowth(
-                activeExecution,
-                baselineCount = beforeCount,
-                timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
-            )
+            collectCurrentViewport(activeExecution, collectionConfig, deadline)
 
             val afterCount = activeExecution.recordCount()
             if (afterCount <= beforeCount) {
@@ -348,6 +353,47 @@ class CaptureCoordinator(
         }
 
         return activeExecution.snapshotRecords()
+    }
+
+    private suspend fun collectCurrentViewport(
+        activeExecution: ActiveCapture,
+        collectionConfig: CollectionConfig?,
+        deadline: Long
+    ) {
+        val baselineCount = activeExecution.recordCount()
+        val expandedCount = expandVisibleSections(collectionConfig)
+        if (expandedCount > 0) {
+            delay(resolveExpandSettleMs(collectionConfig))
+        }
+
+        waitForRecordGrowth(
+            activeExecution,
+            baselineCount = baselineCount,
+            timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
+        )
+    }
+
+    private suspend fun expandVisibleSections(collectionConfig: CollectionConfig?): Int {
+        val expandKeywords = resolveExpandKeywords(collectionConfig)
+        val maxClicks = resolveMaxExpandClicksPerRound(collectionConfig)
+        if (expandKeywords.isEmpty() || maxClicks <= 0) {
+            return 0
+        }
+
+        val expandedCount = searchController.clickAnyText(
+            targetTexts = expandKeywords,
+            exactMatch = false,
+            maxClicks = maxClicks
+        )
+
+        if (expandedCount > 0) {
+            Log.i(
+                TAG,
+                "Expanded detail sections: clicks=$expandedCount, keywords=${expandKeywords.joinToString(",")}"
+            )
+        }
+
+        return expandedCount
     }
 
     private suspend fun waitForRecordGrowth(
@@ -472,6 +518,33 @@ class CaptureCoordinator(
                 "system",
                 KEY_MAX_IDLE_SCROLL_ROUNDS,
                 DEFAULT_MAX_IDLE_SCROLL_ROUNDS
+            )
+    }
+
+    private fun resolveExpandKeywords(collectionConfig: CollectionConfig? = null): List<String> {
+        return collectionConfig?.expandKeywords
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.distinct()
+            ?.takeIf { it.isNotEmpty() }
+            ?: DEFAULT_EXPAND_KEYWORDS
+    }
+
+    private fun resolveExpandSettleMs(collectionConfig: CollectionConfig? = null): Long {
+        return collectionConfig?.expandSettleMs?.takeIf { it > 0L }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_EXPAND_SETTLE_MS,
+                DEFAULT_EXPAND_SETTLE_MS.toInt()
+            ).toLong()
+    }
+
+    private fun resolveMaxExpandClicksPerRound(collectionConfig: CollectionConfig? = null): Int {
+        return collectionConfig?.maxExpandClicksPerRound?.takeIf { it > 0 }
+            ?: service.configManager.getPluginConfigInt(
+                "system",
+                KEY_MAX_EXPAND_CLICKS_PER_ROUND,
+                DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND
             )
     }
 }

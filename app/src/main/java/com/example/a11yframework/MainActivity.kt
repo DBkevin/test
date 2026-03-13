@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pluginStatusText: TextView
     private lateinit var toggleButton: Button
     private lateinit var exportButton: Button
+    private lateinit var captureTargetEdit: EditText
     
     private var dataStore: DataStore? = null
     private lateinit var appPluginManager: AppPluginManager
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         pluginStatusText = findViewById(R.id.pluginStatusText)
         toggleButton = findViewById(R.id.toggleButton)
         exportButton = findViewById(R.id.exportButton)
+        captureTargetEdit = findViewById(R.id.captureTargetEdit)
     }
     
     private fun setupListeners() {
@@ -111,6 +113,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.rollbackPluginButton).setOnClickListener {
             rollbackLastPlugin()
+        }
+
+        findViewById<Button>(R.id.startDouyinCaptureButton).setOnClickListener {
+            startLocalDouyinCapture()
         }
         
         // 保存规则
@@ -247,6 +253,48 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "数据已导出到：${file.absolutePath}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(this, "导出失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startLocalDouyinCapture() {
+        val hospitalName = captureTargetEdit.text.toString().trim()
+        if (hospitalName.isBlank()) {
+            Toast.makeText(this, "请输入医院名称", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!isAccessibilityServiceEnabled()) {
+            Toast.makeText(this, "请先启动无障碍服务", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val service = FrameworkAccessibilityService.instance
+        if (service == null) {
+            Toast.makeText(this, "服务尚未连接，请稍后重试", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val started = service.startLocalCapture(
+            hospitalName = hospitalName,
+            targetPackage = "com.ss.android.ugc.aweme"
+        ) { result ->
+            updateStats()
+            val message = if (result.success) {
+                "抖音采集完成：${result.recordCount} 条"
+            } else {
+                "抖音采集失败：${result.errorMessage ?: "未知错误"}"
+            }
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+
+        if (started) {
+            Toast.makeText(
+                this,
+                "已开始抖音采集，请保持手机停留在可操作状态",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(this, "启动采集失败", Toast.LENGTH_LONG).show()
         }
     }
 
