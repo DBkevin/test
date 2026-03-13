@@ -27,6 +27,7 @@ class SearchController(
         private const val SEARCH_NODE_MAX_DEPTH = 18
         private const val SEARCH_PREPARE_MAX_ATTEMPTS = 6
         private const val SEARCH_RETRY_DELAY_MS = 700L
+        private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 1800L
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -34,6 +35,8 @@ class SearchController(
         private val DOUYIN_GROUPBUY_PAGE_KEYWORDS = listOf("附近好店", "美食", "休闲娱乐", "景点/周边游", "酒店民宿", "丽人")
         private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
         private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
+        private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
+        private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -102,17 +105,8 @@ class SearchController(
             val merchantNode = findMerchantResultNode(merchantName)
             if (merchantNode != null) {
                 try {
-                    val clicked = NodeUtils.clickNode(merchantNode)
-                    val tapped = if (!clicked) {
-                        tapNodeCenter(merchantNode)
-                    } else {
-                        false
-                    }
-                    Log.i(
-                        TAG,
-                        "Merchant result click: name=$merchantName, round=$round, clicked=$clicked, tapped=$tapped"
-                    )
-                    if (clicked || tapped) {
+                    val opened = openMerchantCandidate(merchantNode, merchantName, round)
+                    if (opened) {
                         return true
                     }
                 } finally {
@@ -658,12 +652,24 @@ class SearchController(
                 maxDepth = 20
             )
 
-            val scoredCandidate = candidates
-                .map { it to scoreMerchantCandidate(it, normalizedTarget) }
-                .filter { (_, score) -> score > 0 }
-                .maxByOrNull { (_, score) -> score }
+            val scoredCandidates = candidates
+                .map { candidate ->
+                    val contextText = buildMerchantCandidateContext(candidate)
+                    val score = scoreMerchantCandidate(candidate, normalizedTarget, contextText)
+                    MerchantCandidateScore(
+                        node = candidate,
+                        score = score,
+                        comparableText = getComparableNodeText(candidate),
+                        context = contextText
+                    )
+                }
+            logTopMerchantCandidates(scoredCandidates)
 
-            val bestNode = scoredCandidate?.first
+            val bestCandidate = scoredCandidates
+                .filter { it.score > 0 }
+                .maxByOrNull { it.score }
+
+            val bestNode = bestCandidate?.node
             val result = bestNode?.let { AccessibilityNodeInfo.obtain(it) }
 
             candidates.forEach { candidate ->
@@ -679,7 +685,11 @@ class SearchController(
         }
     }
 
-    private fun scoreMerchantCandidate(node: AccessibilityNodeInfo, normalizedTarget: String): Int {
+    private fun scoreMerchantCandidate(
+        node: AccessibilityNodeInfo,
+        normalizedTarget: String,
+        contextText: String
+    ): Int {
         val rawText = getComparableNodeText(node)
         val comparableText = normalizeText(rawText)
         if (comparableText.isBlank()) {
@@ -692,10 +702,17 @@ class SearchController(
         val hasMerchantHint = MERCHANT_RESULT_HINTS.any { hint ->
             rawText.contains(hint, ignoreCase = true)
         }
-        val contextText = buildMerchantCandidateContext(node)
+        val hasStructuredContext = MERCHANT_RESULT_CONTEXT_HINTS.any { hint ->
+            contextText.contains(hint, ignoreCase = true)
+        }
         val hasReviewContext = contextText.contains("评价")
         val hasRepeatCustomerContext = contextText.contains("回头客")
-        val hasDistanceContext = contextText.contains("km", ignoreCase = true) || contextText.contains("m")
+        val hasDistanceContext = Regex("\\d+(\\.\\d+)?\\s*(km|m)", RegexOption.IGNORE_CASE)
+            .containsMatchIn(contextText)
+        val hasPricePerPersonContext = contextText.contains("/人") || contextText.contains("人均")
+        val hasReviewCountContext = Regex("\\d+条评价").containsMatchIn(contextText)
+        val bounds = Rect().also { node.getBoundsInScreen(it) }
+        val isInResultListArea = bounds.top >= 500
 
         var score = 0
         if (comparableText == normalizedTarget) {
@@ -712,14 +729,28 @@ class SearchController(
         } else if (comparableText == normalizedTarget) {
             score -= 80
         }
+        if (hasStructuredContext) {
+            score += 70
+        }
         if (hasReviewContext) {
             score += 45
+        }
+        if (hasReviewCountContext) {
+            score += 35
         }
         if (hasRepeatCustomerContext) {
             score += 60
         }
         if (hasDistanceContext) {
             score += 25
+        }
+        if (hasPricePerPersonContext) {
+            score += 35
+        }
+        if (isInResultListArea) {
+            score += 80
+        } else {
+            score -= 140
         }
         if (node.isClickable) {
             score += 10
@@ -734,30 +765,134 @@ class SearchController(
 
     private fun buildMerchantCandidateContext(node: AccessibilityNodeInfo): String {
         val snippets = mutableListOf<String>()
-        var current = node.parent
-        var depth = 0
+        val parent = node.parent
 
-        while (current != null && depth < 3) {
-            val next = current.parent
+        if (parent != null) {
             try {
-                val context = NodeUtils.getAllNodeText(
-                    current,
-                    maxDepth = 4,
-                    maxNodes = 80,
-                    maxTextLength = 1200
-                )
-                if (context.isNotBlank()) {
-                    snippets.add(context)
+                for (index in 0 until parent.childCount) {
+                    val child = parent.getChild(index) ?: continue
+                    try {
+                        val text = NodeUtils.getAllNodeText(
+                            child,
+                            maxDepth = 2,
+                            maxNodes = 20,
+                            maxTextLength = 240
+                        )
+                        if (text.isNotBlank()) {
+                            snippets.add(text)
+                        }
+                    } finally {
+                        child.recycle()
+                    }
                 }
             } finally {
-                current.recycle()
+                parent.recycle()
             }
+        }
 
-            current = next
-            depth++
+        if (snippets.isEmpty()) {
+            snippets.add(getComparableNodeText(node))
         }
 
         return snippets.joinToString(" ")
+    }
+
+    private fun openMerchantCandidate(
+        merchantNode: AccessibilityNodeInfo,
+        merchantName: String,
+        round: Int
+    ): Boolean {
+        val clicked = NodeUtils.clickNode(merchantNode)
+        if (clicked && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by accessibility click: name=$merchantName, round=$round")
+            return true
+        }
+
+        val tappedCenter = tapNodeCenter(merchantNode)
+        if (tappedCenter && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by center tap: name=$merchantName, round=$round")
+            return true
+        }
+
+        val tappedBelow = tapNodeCenterWithOffset(merchantNode, offsetY = 110)
+        if (tappedBelow && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by offset tap: name=$merchantName, round=$round")
+            return true
+        }
+
+        Log.w(
+            TAG,
+            "Merchant result did not open detail page: name=$merchantName, round=$round, clicked=$clicked, tappedCenter=$tappedCenter, tappedBelow=$tappedBelow"
+        )
+        return false
+    }
+
+    private fun waitForMerchantDetailPage(merchantName: String, timeoutMs: Long): Boolean {
+        val normalizedTarget = normalizeText(merchantName)
+        val startAt = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    if (isLikelyMerchantDetailPage(rootNode, normalizedTarget)) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+            Thread.sleep(250)
+        }
+
+        return false
+    }
+
+    private fun isLikelyMerchantDetailPage(
+        rootNode: AccessibilityNodeInfo,
+        normalizedTarget: String
+    ): Boolean {
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 14,
+            maxNodes = 220,
+            maxTextLength = 3000
+        )
+        val normalizedPageText = normalizeText(pageText)
+        val hasMerchantName = normalizedTarget.isBlank() || normalizedPageText.contains(normalizedTarget)
+        val hasDetailSignal = MERCHANT_DETAIL_PAGE_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+        return hasMerchantName && hasDetailSignal
+    }
+
+    private fun tapNodeCenterWithOffset(node: AccessibilityNodeInfo, offsetY: Int): Boolean {
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        if (bounds.isEmpty) {
+            return false
+        }
+
+        val metrics = service.resources.displayMetrics
+        val x = bounds.centerX().coerceIn(0, metrics.widthPixels - 1)
+        val y = (bounds.centerY() + offsetY).coerceIn(0, metrics.heightPixels - 1)
+        return tapScreen(x, y)
+    }
+
+    private fun logTopMerchantCandidates(candidates: List<MerchantCandidateScore>) {
+        val topCandidates = candidates
+            .sortedByDescending { it.score }
+            .take(3)
+
+        if (topCandidates.isEmpty()) {
+            return
+        }
+
+        val summary = topCandidates.joinToString(" | ") { candidate ->
+            val normalizedText = normalizeText(candidate.comparableText)
+            "score=${candidate.score}, text=${normalizedText.take(24)}, context=${candidate.context.take(48)}"
+        }
+        Log.i(TAG, "Merchant candidates: $summary")
     }
 
     private fun getComparableNodeText(node: AccessibilityNodeInfo): String {
@@ -838,6 +973,13 @@ class SearchController(
         }
         return tapScreen(bounds.centerX(), bounds.centerY())
     }
+
+    private data class MerchantCandidateScore(
+        val node: AccessibilityNodeInfo,
+        val score: Int,
+        val comparableText: String,
+        val context: String
+    )
     
     /**
      * 长按坐标
