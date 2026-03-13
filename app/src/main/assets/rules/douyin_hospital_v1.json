@@ -5,7 +5,7 @@
   "app_package": "com.ss.android.ugc.aweme",
   "priority": 200,
   "enabled": true,
-  "version": 2,
+  "version": 3,
   "pages": [
     {
       "page_id": "hospital_detail",
@@ -19,28 +19,28 @@
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["收藏", "关注", "回头客", "门店地址", "营业中"],
-          "logic": "OR"
+          "values": ["团购", "服务", "评价"],
+          "logic": "AND"
         },
         {
           "type": "text_contains",
           "field": "page_text",
-          "values": ["现价", "原价", "预约", "随时退", "领券抢购", "已售"],
+          "values": ["领券抢购", "在线咨询", "预约有礼", "已售"],
           "logic": "OR"
         }
       ],
       "extract_rules": {
         "merchant_name": {
           "type": "find_by_keywords",
-          "keywords": ["医院", "门诊", "整形", "美容", "医美", "美莱"],
+          "keywords": ["郑州美莱", "医疗美容", "美容医院", "医院", "门诊", "美莱"],
           "location": "top",
-          "max_depth": 16
+          "max_depth": 20
         },
         "hospital_name": {
           "type": "find_by_keywords",
-          "keywords": ["医院", "门诊", "整形", "美容", "医美", "美莱"],
+          "keywords": ["郑州美莱", "医疗美容", "美容医院", "医院", "门诊", "美莱"],
           "location": "top",
-          "max_depth": 16
+          "max_depth": 20
         },
         "honors": {
           "type": "find_by_keywords",
@@ -57,22 +57,22 @@
           "item_rules": {
             "title": {
               "type": "regex",
-              "pattern": "^\\s*([^,，]+)",
+              "pattern": "([^¥￥]{4,60}?)(?=\\s*(?:¥|￥)\\s*\\d)",
               "group": 1
             },
             "price": {
               "type": "regex",
-              "pattern": "(?:现价|券后|到手价)\\s*(\\d+(?:\\.\\d+)?)\\s*元",
+              "pattern": "(?:¥|￥)\\s*(\\d+(?:\\.\\d+)?)",
               "group": 1
             },
             "original_price": {
               "type": "regex",
-              "pattern": "原价\\s*(\\d+(?:\\.\\d+)?)\\s*元",
+              "pattern": "(?:¥|￥)\\s*\\d+(?:\\.\\d+)?\\s*(?:¥|￥)\\s*(\\d+(?:\\.\\d+)?)",
               "group": 1
             },
             "sales": {
               "type": "regex",
-              "pattern": "((?:已售|销量|售出|购买)\\s*\\d+(?:\\+)?)",
+              "pattern": "((?:已售|销量|售出|购买)\\s*\\d+(?:\\.\\d+)?(?:万|w|\\+)?)",
               "group": 1
             },
             "card_text": {
