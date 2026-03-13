@@ -71,7 +71,7 @@ class SearchController(
             
             // 3. 输入搜索内容
             inputText(searchBox, keyword)
-            
+
             // 4. 点击搜索按钮
             val submitted = clickSearchButton(searchBox, resolvedButtonKeywords)
             
@@ -103,11 +103,16 @@ class SearchController(
             if (merchantNode != null) {
                 try {
                     val clicked = NodeUtils.clickNode(merchantNode)
+                    val tapped = if (!clicked) {
+                        tapNodeCenter(merchantNode)
+                    } else {
+                        false
+                    }
                     Log.i(
                         TAG,
-                        "Merchant result click: name=$merchantName, round=$round, clicked=$clicked"
+                        "Merchant result click: name=$merchantName, round=$round, clicked=$clicked, tapped=$tapped"
                     )
-                    if (clicked) {
+                    if (clicked || tapped) {
                         return true
                     }
                 } finally {
@@ -687,6 +692,10 @@ class SearchController(
         val hasMerchantHint = MERCHANT_RESULT_HINTS.any { hint ->
             rawText.contains(hint, ignoreCase = true)
         }
+        val contextText = buildMerchantCandidateContext(node)
+        val hasReviewContext = contextText.contains("评价")
+        val hasRepeatCustomerContext = contextText.contains("回头客")
+        val hasDistanceContext = contextText.contains("km", ignoreCase = true) || contextText.contains("m")
 
         var score = 0
         if (comparableText == normalizedTarget) {
@@ -703,6 +712,15 @@ class SearchController(
         } else if (comparableText == normalizedTarget) {
             score -= 80
         }
+        if (hasReviewContext) {
+            score += 45
+        }
+        if (hasRepeatCustomerContext) {
+            score += 60
+        }
+        if (hasDistanceContext) {
+            score += 25
+        }
         if (node.isClickable) {
             score += 10
         }
@@ -712,6 +730,34 @@ class SearchController(
 
         score -= abs(comparableText.length - normalizedTarget.length)
         return score
+    }
+
+    private fun buildMerchantCandidateContext(node: AccessibilityNodeInfo): String {
+        val snippets = mutableListOf<String>()
+        var current = node.parent
+        var depth = 0
+
+        while (current != null && depth < 3) {
+            val next = current.parent
+            try {
+                val context = NodeUtils.getAllNodeText(
+                    current,
+                    maxDepth = 4,
+                    maxNodes = 80,
+                    maxTextLength = 1200
+                )
+                if (context.isNotBlank()) {
+                    snippets.add(context)
+                }
+            } finally {
+                current.recycle()
+            }
+
+            current = next
+            depth++
+        }
+
+        return snippets.joinToString(" ")
     }
 
     private fun getComparableNodeText(node: AccessibilityNodeInfo): String {
