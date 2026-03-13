@@ -32,6 +32,12 @@ class RuleEngine(
         return ruleManager.getRuleCount()
     }
 
+    fun reload() {
+        ruleManager.refresh()
+        pageMatcher.clearCache()
+        Log.i(TAG, "Rule engine reloaded")
+    }
+
     fun execute(packageName: String, rootNode: AccessibilityNodeInfo?): RuleExecutionResult {
         if (rootNode == null) {
             return RuleExecutionResult()

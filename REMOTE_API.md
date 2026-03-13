@@ -53,6 +53,8 @@ GET /api/command/poll?device_id={device_id}
 | `start_capture` | 开始抓取 | 无 |
 | `stop_capture` | 停止抓取 | 无 |
 | `update_config` | 更新配置 | `config`: 配置键值对 |
+| `update_plugin` | 热更新运行时插件包 | `plugin`: 插件清单与规则内容，支持内联 JSON 或 URL |
+| `reload_plugins` | 重载运行时插件目录 | 无 |
 
 ---
 
@@ -203,6 +205,83 @@ app.listen(8080, () => {
 
 ---
 
+## 插件热更新
+
+### 适用场景
+
+- 页面按钮文案变了，只需要改插件 `plugin.json`
+- 页面 XML 结构变了，只需要改对应规则 `rules/*.json`
+- 插件文件放在 GitHub Raw、对象存储或任意 HTTPS 地址，不要求重新编译 APK
+
+### 1. 内联下发插件包
+
+```json
+{
+  "type": "update_plugin",
+  "data": {
+    "plugin": {
+      "plugin_id": "douyin",
+      "manifest": "{\n  \"plugin_id\": \"douyin\",\n  \"plugin_name\": \"抖音团购插件\",\n  \"version\": 2,\n  \"enabled\": true,\n  \"app_packages\": [\"com.ss.android.ugc.aweme\"],\n  \"entry_package\": \"com.ss.android.ugc.aweme\",\n  \"rule_assets\": [\"douyin_hospital_v1.json\"]\n}",
+      "rules": {
+        "douyin_hospital_v1.json": "{\n  \"rule_id\": \"douyin_hospital_v1\",\n  \"app_package\": \"com.ss.android.ugc.aweme\"\n}"
+      }
+    }
+  }
+}
+```
+
+### 2. 通过 URL 下发插件包
+
+推荐把插件文件放在 HTTPS 地址，例如 GitHub Raw：
+
+```json
+{
+  "type": "update_plugin",
+  "data": {
+    "plugin": {
+      "plugin_id": "douyin",
+      "manifest_url": "https://raw.githubusercontent.com/your-org/adb-plugins/main/douyin/plugin.json",
+      "rule_urls": {
+        "douyin_hospital_v1.json": "https://raw.githubusercontent.com/your-org/adb-plugins/main/douyin/rules/douyin_hospital_v1.json"
+      }
+    }
+  }
+}
+```
+
+### 3. 仅提供 manifest_url 的简化方式
+
+如果规则文件和 `plugin.json` 放在同一插件目录下，手机端会自动按下面的规则补全：
+
+- manifest: `https://.../douyin/plugin.json`
+- rule: `https://.../douyin/rules/<rule_file_name>`
+
+也就是说，下面这种 payload 也是有效的：
+
+```json
+{
+  "type": "update_plugin",
+  "data": {
+    "plugin": {
+      "plugin_id": "douyin",
+      "manifest_url": "https://raw.githubusercontent.com/your-org/adb-plugins/main/douyin/plugin.json"
+    }
+  }
+}
+```
+
+### 4. 重载插件目录
+
+如果你已经通过 ADB、文件同步或别的方式直接覆盖了 `filesDir/app_plugins`，可以发一条重载命令让插件立即生效：
+
+```json
+{
+  "type": "reload_plugins"
+}
+```
+
+---
+
 ## 错误处理
 
 ### 错误码
@@ -229,7 +308,7 @@ app.listen(8080, () => {
 
 1. **内网使用** - 建议在局域网内使用，不暴露到公网
 2. **设备认证** - 可添加设备 token 认证
-3. **HTTPS** - 生产环境使用 HTTPS
+3. **HTTPS** - 插件热更新建议只使用 HTTPS，避免明文流量被系统拦截
 4. **频率限制** - 限制轮询频率，防止滥用
 
 ---

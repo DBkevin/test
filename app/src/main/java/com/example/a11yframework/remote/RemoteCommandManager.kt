@@ -1,6 +1,7 @@
 package com.example.a11yframework.remote
 
 import android.util.Log
+import com.example.a11yframework.appplugin.AppPluginParser
 import com.example.a11yframework.capture.CaptureExecutionResult
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.core.FrameworkAccessibilityService
@@ -40,6 +41,7 @@ class RemoteCommandManager(
     
     private val configManager: ConfigManager
     private val httpClient: OkHttpClient
+    private val pluginParser = AppPluginParser()
     private var pollJob: Job? = null
     private var executionJob: Job? = null
     private var isRunning = false
@@ -122,16 +124,18 @@ class RemoteCommandManager(
                 .get()
                 .build()
             
-            val response = httpClient.newCall(request).execute()
-            
-            if (response.isSuccessful) {
-                val body = response.body?.string()
-                if (!body.isNullOrEmpty()) {
-                    val command = parseCommand(body)
-                    handleCommand(command)
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val command = parseCommand(body)
+                        handleCommand(command)
+                    } else {
+                        Log.d(TAG, "Poll returned empty command body")
+                    }
+                } else {
+                    Log.w(TAG, "Poll failed: ${response.code}")
                 }
-            } else {
-                Log.w(TAG, "Poll failed: ${response.code}")
             }
         } catch (e: IOException) {
             Log.e(TAG, "Network error", e)
@@ -154,7 +158,7 @@ class RemoteCommandManager(
     /**
      * 处理远程指令
      */
-    private fun handleCommand(command: RemoteCommand) {
+    private suspend fun handleCommand(command: RemoteCommand) {
         when (command.type) {
             "hospital_list" -> {
                 // 接收医院列表
@@ -171,6 +175,17 @@ class RemoteCommandManager(
             "update_config" -> {
                 // 更新配置
                 handleUpdateConfig(command)
+            }
+            "update_plugin" -> {
+                handleUpdatePlugin(command)
+            }
+            "reload_plugins" -> {
+                handleReloadPlugins()
+            }
+            else -> {
+                if (command.type.isNotBlank()) {
+                    Log.w(TAG, "Unknown command type: ${command.type}")
+                }
             }
         }
     }
@@ -240,6 +255,146 @@ class RemoteCommandManager(
         }
         
         Log.i(TAG, "Config updated: $config")
+    }
+
+    /**
+     * 处理运行时插件热更新指令
+     */
+    private suspend fun handleUpdatePlugin(command: RemoteCommand) {
+        val pluginData = command.data?.plugin
+        if (pluginData == null) {
+            Log.w(TAG, "update_plugin 缺少 plugin 数据")
+            return
+        }
+
+        val manifestJson = resolveManifestJson(pluginData) ?: return
+        val pluginBundle = try {
+            pluginParser.parse(manifestJson)
+        } catch (e: Exception) {
+            Log.e(TAG, "update_plugin manifest 非法", e)
+            return
+        }
+
+        val ruleFiles = resolveRuleFiles(pluginData, pluginBundle) ?: return
+        val result = service.installRuntimePlugin(
+            manifestJson = manifestJson,
+            ruleFiles = ruleFiles
+        )
+
+        if (result.success) {
+            Log.i(
+                TAG,
+                "Plugin updated: ${result.pluginId}@${result.version}, rules=${result.installedRuleCount}"
+            )
+        } else {
+            Log.w(TAG, "Plugin update failed: ${result.errorMessage}")
+        }
+    }
+
+    /**
+     * 处理插件重载指令，适合 ADB 或远端直接覆盖 filesDir/app_plugins 后手动触发。
+     */
+    private fun handleReloadPlugins() {
+        val pluginCount = service.reloadRuntimePlugins()
+        Log.i(TAG, "Plugins reloaded: $pluginCount")
+    }
+
+    private suspend fun resolveManifestJson(pluginData: PluginUpdatePayload): String? {
+        pluginData.manifest?.trim()?.takeIf { it.isNotEmpty() }?.let { manifestJson ->
+            return manifestJson
+        }
+
+        val manifestUrl = pluginData.manifestUrl?.trim().orEmpty()
+        if (manifestUrl.isEmpty()) {
+            Log.w(TAG, "update_plugin 缺少 manifest 或 manifest_url")
+            return null
+        }
+
+        return fetchText(manifestUrl)
+    }
+
+    private suspend fun resolveRuleFiles(
+        pluginData: PluginUpdatePayload,
+        pluginBundle: com.example.a11yframework.appplugin.AppPluginBundle
+    ): Map<String, String>? {
+        val inlineRules = pluginData.rules
+            ?.mapValues { (_, content) -> content.trim() }
+            ?.filterValues { it.isNotEmpty() }
+            ?.toMutableMap()
+            ?: linkedMapOf()
+
+        if (pluginBundle.ruleAssets.isEmpty()) {
+            return inlineRules
+        }
+
+        val explicitRuleUrls = pluginData.ruleUrls.orEmpty()
+        pluginBundle.ruleAssets.forEach { ruleFileName ->
+            if (inlineRules.containsKey(ruleFileName)) {
+                return@forEach
+            }
+
+            val ruleUrl = explicitRuleUrls[ruleFileName]
+                ?: deriveDefaultRuleUrl(pluginData.manifestUrl, ruleFileName)
+
+            if (ruleUrl.isNullOrBlank()) {
+                return@forEach
+            }
+
+            val ruleJson = fetchText(ruleUrl)
+            if (ruleJson.isNullOrBlank()) {
+                Log.w(
+                    TAG,
+                    "规则下载失败: plugin=${pluginBundle.pluginId}, rule=$ruleFileName, url=$ruleUrl"
+                )
+                return null
+            }
+
+            inlineRules[ruleFileName] = ruleJson
+        }
+
+        if (pluginData.pluginId != null && pluginData.pluginId != pluginBundle.pluginId) {
+            Log.w(
+                TAG,
+                "update_plugin plugin_id 与 manifest 不一致: command=${pluginData.pluginId}, manifest=${pluginBundle.pluginId}"
+            )
+        }
+
+        Log.i(
+            TAG,
+            "Resolved plugin payload: ${pluginBundle.pluginId}@${pluginBundle.version}, rules=${inlineRules.size}"
+        )
+        return inlineRules
+    }
+
+    private fun deriveDefaultRuleUrl(manifestUrl: String?, ruleFileName: String): String? {
+        val trimmedManifestUrl = manifestUrl?.trim().orEmpty()
+        if (trimmedManifestUrl.isEmpty() || !trimmedManifestUrl.contains("/")) {
+            return null
+        }
+
+        val baseUrl = trimmedManifestUrl.substringBeforeLast("/")
+        return "$baseUrl/rules/$ruleFileName"
+    }
+
+    private suspend fun fetchText(url: String): String? {
+        return try {
+            val request = Request.Builder()
+                .url(url)
+                .get()
+                .build()
+
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Log.w(TAG, "Fetch failed: code=${response.code}, url=$url")
+                    return null
+                }
+
+                response.body?.string()
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Fetch error: $url", e)
+            null
+        }
     }
     
     /**
@@ -359,12 +514,12 @@ class RemoteCommandManager(
                 .post(body)
                 .build()
             
-            val response = httpClient.newCall(request).execute()
-            
-            if (response.isSuccessful) {
-                Log.i(TAG, "Task result sent: ${task.hospitalName}")
-            } else {
-                Log.w(TAG, "Send result failed: ${response.code}")
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    Log.i(TAG, "Task result sent: ${task.hospitalName}")
+                } else {
+                    Log.w(TAG, "Send result failed: ${response.code}")
+                }
             }
         } catch (e: IOException) {
             Log.e(TAG, "Send result error", e)
@@ -410,7 +565,19 @@ data class CommandData(
     val hospitals: List<String>? = null,
     val config: Map<String, String>? = null,
     @SerializedName("app_package")
-    val appPackage: String? = null
+    val appPackage: String? = null,
+    val plugin: PluginUpdatePayload? = null
+)
+
+data class PluginUpdatePayload(
+    @SerializedName("plugin_id")
+    val pluginId: String? = null,
+    val manifest: String? = null,
+    @SerializedName("manifest_url")
+    val manifestUrl: String? = null,
+    val rules: Map<String, String>? = null,
+    @SerializedName("rule_urls")
+    val ruleUrls: Map<String, String>? = null
 )
 
 /**

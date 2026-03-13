@@ -7,6 +7,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
 import com.example.a11yframework.appplugin.AppPluginManager
+import com.example.a11yframework.appplugin.PluginInstallResult
 import com.example.a11yframework.capture.CaptureCoordinator
 import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.data.DataStore
@@ -257,4 +258,30 @@ class FrameworkAccessibilityService : AccessibilityService() {
     }
 
     fun getCurrentActivePackage(): String = lastPackageName
+
+    fun reloadRuntimePlugins(): Int {
+        appPluginManager.reloadPlugins()
+        ruleEngine.reload()
+        Log.i(TAG, "Runtime plugins reloaded: ${appPluginManager.getPluginCount()}")
+        return appPluginManager.getPluginCount()
+    }
+
+    fun installRuntimePlugin(
+        manifestJson: String,
+        ruleFiles: Map<String, String>
+    ): PluginInstallResult {
+        val result = appPluginManager.installOrUpdatePlugin(
+            manifestJson = manifestJson,
+            ruleFiles = ruleFiles
+        )
+
+        if (result.success) {
+            ruleEngine.reload()
+            Log.i(TAG, "Runtime plugin installed: ${result.pluginId}@${result.version}")
+        } else {
+            Log.w(TAG, "Runtime plugin install failed: ${result.errorMessage}")
+        }
+
+        return result
+    }
 }

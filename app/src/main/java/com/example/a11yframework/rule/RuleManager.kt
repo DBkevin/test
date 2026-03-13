@@ -159,6 +159,16 @@ class RuleManager(private val context: Context) {
         parser.clearCache()
         Log.i(TAG, "缓存已清除")
     }
+
+    /**
+     * 刷新缓存与索引，供运行时热更新规则后调用。
+     */
+    fun refresh() {
+        clearCache()
+        ruleIndex.clear()
+        loadIndex()
+        Log.i(TAG, "规则状态已刷新")
+    }
     
     /**
      * 获取规则数量

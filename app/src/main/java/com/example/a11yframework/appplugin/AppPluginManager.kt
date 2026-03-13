@@ -89,6 +89,77 @@ class AppPluginManager(
         return pluginsCache.size
     }
 
+    fun installOrUpdatePlugin(
+        manifestJson: String,
+        ruleFiles: Map<String, String>
+    ): PluginInstallResult {
+        return try {
+            val plugin = parser.parse(manifestJson)
+            val pluginDir = File(pluginsDir, plugin.pluginId)
+            val rulesDir = File(pluginDir, RULES_SUB_DIR)
+            val existingRuleFiles = rulesDir.listFiles { file ->
+                file.isFile && file.extension == "json"
+            } ?: emptyArray()
+            val obsoleteRuleFiles = existingRuleFiles.filter { file ->
+                file.name !in plugin.ruleAssets
+            }
+
+            if (!pluginDir.exists()) {
+                pluginDir.mkdirs()
+            }
+            if (!rulesDir.exists()) {
+                rulesDir.mkdirs()
+            }
+
+            val missingRules = plugin.ruleAssets.filter { ruleFileName ->
+                ruleFileName !in ruleFiles && !File(rulesDir, ruleFileName).exists()
+            }
+            if (missingRules.isNotEmpty()) {
+                return PluginInstallResult(
+                    success = false,
+                    pluginId = plugin.pluginId,
+                    pluginName = plugin.pluginName,
+                    version = plugin.version,
+                    errorMessage = "缺少规则文件: ${missingRules.joinToString(", ")}"
+                )
+            }
+
+            File(pluginDir, MANIFEST_FILE_NAME).writeText(manifestJson)
+
+            plugin.ruleAssets.forEach { ruleFileName ->
+                val inlineRule = ruleFiles[ruleFileName] ?: return@forEach
+                File(rulesDir, ruleFileName).writeText(inlineRule)
+            }
+
+            obsoleteRuleFiles.forEach { obsoleteFile ->
+                val obsoleteRuleId = obsoleteFile.nameWithoutExtension
+                if (!ruleManager.deleteRule(obsoleteRuleId)) {
+                    Log.w(TAG, "未删除旧运行时规则: $obsoleteRuleId")
+                }
+
+                if (!obsoleteFile.delete()) {
+                    Log.w(TAG, "未删除旧规则文件: ${obsoleteFile.absolutePath}")
+                }
+            }
+
+            reloadPlugins()
+
+            PluginInstallResult(
+                success = true,
+                pluginId = plugin.pluginId,
+                pluginName = plugin.pluginName,
+                version = plugin.version,
+                installedRuleCount = plugin.ruleAssets.size
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "安装运行时插件失败", e)
+            PluginInstallResult(
+                success = false,
+                errorMessage = e.message ?: "未知错误"
+            )
+        }
+    }
+
     private fun installBundledPlugin(assetPluginId: String) {
         val assetManifestPath = "$ASSET_PLUGINS_DIR/$assetPluginId/$MANIFEST_FILE_NAME"
         val manifestJson = context.assets.open(assetManifestPath).bufferedReader().use { it.readText() }

@@ -62,3 +62,12 @@ enum class StepValueSource {
     HOSPITAL_NAME,
     TARGET_PACKAGE
 }
+
+data class PluginInstallResult(
+    val success: Boolean,
+    val pluginId: String = "",
+    val pluginName: String = "",
+    val version: Int = 0,
+    val installedRuleCount: Int = 0,
+    val errorMessage: String? = null
+)
