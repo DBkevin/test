@@ -3,7 +3,9 @@ package com.example.a11yframework.appplugin
 import android.content.Context
 import android.util.Log
 import com.example.a11yframework.rule.RuleManager
+import com.example.a11yframework.rule.RuleParser
 import java.io.File
+import java.io.InputStream
 
 /**
  * 运行时插件包管理器。
@@ -21,18 +23,28 @@ class AppPluginManager(
         private const val TAG = "AppPluginManager"
         private const val ASSET_PLUGINS_DIR = "app_plugins"
         private const val FILE_PLUGINS_DIR = "app_plugins"
+        private const val BACKUP_PLUGINS_DIR = "app_plugin_backups"
+        private const val EXTERNAL_PLUGINS_DIR = "plugins"
+        private const val IMPORT_INBOX_DIR = "inbox"
         private const val MANIFEST_FILE_NAME = "plugin.json"
         private const val RULES_SUB_DIR = "rules"
+        private const val MAX_BACKUP_COUNT = 5
     }
 
     private val parser = AppPluginParser()
+    private val packageReader = AppPluginPackageReader()
+    private val ruleParser = RuleParser()
     private val ruleManager = RuleManager(context)
     private val pluginsDir = File(context.filesDir, FILE_PLUGINS_DIR)
+    private val backupRootDir = File(context.filesDir, BACKUP_PLUGINS_DIR)
     private val pluginsCache = linkedMapOf<String, AppPluginBundle>()
 
     init {
         if (!pluginsDir.exists()) {
             pluginsDir.mkdirs()
+        }
+        if (!backupRootDir.exists()) {
+            backupRootDir.mkdirs()
         }
     }
 
@@ -89,6 +101,86 @@ class AppPluginManager(
         return pluginsCache.size
     }
 
+    fun getImportInboxDir(): File {
+        val parent = context.getExternalFilesDir(EXTERNAL_PLUGINS_DIR)
+            ?: File(context.filesDir, EXTERNAL_PLUGINS_DIR)
+        val inboxDir = File(parent, IMPORT_INBOX_DIR)
+        if (!inboxDir.exists()) {
+            inboxDir.mkdirs()
+        }
+        return inboxDir
+    }
+
+    fun getRuntimePluginStatuses(): List<PluginRuntimeStatus> {
+        return pluginsCache.values.map { plugin ->
+            PluginRuntimeStatus(
+                pluginId = plugin.pluginId,
+                pluginName = plugin.pluginName,
+                version = plugin.version,
+                enabled = plugin.enabled,
+                appPackages = plugin.appPackages,
+                ruleCount = plugin.ruleAssets.size,
+                backupCount = getBackupDirs(plugin.pluginId).size
+            )
+        }
+    }
+
+    fun importPluginPackage(
+        displayName: String?,
+        inputStream: InputStream
+    ): PluginInstallResult {
+        val bytes = inputStream.readBytes()
+        val packageContents = packageReader.read(displayName, bytes)
+        return installOrUpdatePlugin(
+            manifestJson = packageContents.manifestJson,
+            ruleFiles = packageContents.ruleFiles
+        )
+    }
+
+    fun installPendingPluginPackages(): PluginBatchImportResult {
+        val inboxDir = getImportInboxDir()
+        val packageFiles = inboxDir.listFiles { file ->
+            file.isFile && (file.extension.equals("zip", true) || file.extension.equals("json", true))
+        }?.sortedBy { it.name.lowercase() } ?: emptyList()
+
+        if (packageFiles.isEmpty()) {
+            return PluginBatchImportResult(
+                successCount = 0,
+                failureCount = 0,
+                results = emptyList()
+            )
+        }
+
+        val results = mutableListOf<PluginInstallResult>()
+        packageFiles.forEach { packageFile ->
+            val result = runCatching {
+                packageFile.inputStream().use { input ->
+                    importPluginPackage(packageFile.name, input)
+                }
+            }.getOrElse { error ->
+                Log.e(TAG, "安装收件目录插件失败: ${packageFile.name}", error)
+                PluginInstallResult(
+                    success = false,
+                    errorMessage = error.message ?: "未知错误"
+                )
+            }
+
+            if (result.success) {
+                if (!packageFile.delete()) {
+                    Log.w(TAG, "未删除已安装插件包: ${packageFile.absolutePath}")
+                }
+            }
+
+            results += result
+        }
+
+        return PluginBatchImportResult(
+            successCount = results.count { it.success },
+            failureCount = results.count { !it.success },
+            results = results
+        )
+    }
+
     fun installOrUpdatePlugin(
         manifestJson: String,
         ruleFiles: Map<String, String>
@@ -103,12 +195,9 @@ class AppPluginManager(
             val obsoleteRuleFiles = existingRuleFiles.filter { file ->
                 file.name !in plugin.ruleAssets
             }
-
-            if (!pluginDir.exists()) {
-                pluginDir.mkdirs()
-            }
-            if (!rulesDir.exists()) {
-                rulesDir.mkdirs()
+            plugin.ruleAssets.forEach { ruleFileName ->
+                val ruleJson = ruleFiles[ruleFileName] ?: return@forEach
+                ruleParser.parse(ruleJson)
             }
 
             val missingRules = plugin.ruleAssets.filter { ruleFileName ->
@@ -124,21 +213,19 @@ class AppPluginManager(
                 )
             }
 
-            File(pluginDir, MANIFEST_FILE_NAME).writeText(manifestJson)
-
-            plugin.ruleAssets.forEach { ruleFileName ->
-                val inlineRule = ruleFiles[ruleFileName] ?: return@forEach
-                File(rulesDir, ruleFileName).writeText(inlineRule)
+            val backupCreated = if (pluginDir.exists()) {
+                createBackup(plugin.pluginId, pluginDir) != null
+            } else {
+                false
             }
+
+            val stagedPluginDir = buildStagedPluginDir(plugin, manifestJson, ruleFiles)
+            replacePluginDirectory(stagedPluginDir, pluginDir)
 
             obsoleteRuleFiles.forEach { obsoleteFile ->
                 val obsoleteRuleId = obsoleteFile.nameWithoutExtension
                 if (!ruleManager.deleteRule(obsoleteRuleId)) {
                     Log.w(TAG, "未删除旧运行时规则: $obsoleteRuleId")
-                }
-
-                if (!obsoleteFile.delete()) {
-                    Log.w(TAG, "未删除旧规则文件: ${obsoleteFile.absolutePath}")
                 }
             }
 
@@ -149,12 +236,48 @@ class AppPluginManager(
                 pluginId = plugin.pluginId,
                 pluginName = plugin.pluginName,
                 version = plugin.version,
-                installedRuleCount = plugin.ruleAssets.size
+                installedRuleCount = plugin.ruleAssets.size,
+                backupCreated = backupCreated
             )
         } catch (e: Exception) {
             Log.e(TAG, "安装运行时插件失败", e)
             PluginInstallResult(
                 success = false,
+                errorMessage = e.message ?: "未知错误"
+            )
+        }
+    }
+
+    fun rollbackPlugin(pluginId: String): PluginRollbackResult {
+        return try {
+            val backupDir = getBackupDirs(pluginId).firstOrNull()
+                ?: return PluginRollbackResult(
+                    success = false,
+                    pluginId = pluginId,
+                    errorMessage = "没有可回滚的备份"
+                )
+
+            val currentPluginDir = File(pluginsDir, pluginId)
+            if (currentPluginDir.exists()) {
+                createBackup(pluginId, currentPluginDir)
+            }
+
+            replacePluginDirectory(backupDir, currentPluginDir)
+            reloadPlugins()
+
+            val restoredPlugin = getPlugin(pluginId)
+            PluginRollbackResult(
+                success = restoredPlugin != null,
+                pluginId = pluginId,
+                pluginName = restoredPlugin?.pluginName.orEmpty(),
+                version = restoredPlugin?.version ?: 0,
+                remainingBackupCount = getBackupDirs(pluginId).size
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "插件回滚失败: $pluginId", e)
+            PluginRollbackResult(
+                success = false,
+                pluginId = pluginId,
                 errorMessage = e.message ?: "未知错误"
             )
         }
@@ -218,5 +341,80 @@ class AppPluginManager(
                 Log.e(TAG, "同步插件规则失败: ${plugin.pluginId}/$ruleAsset", error)
             }
         }
+    }
+
+    private fun buildStagedPluginDir(
+        plugin: AppPluginBundle,
+        manifestJson: String,
+        ruleFiles: Map<String, String>
+    ): File {
+        val stagedDir = File(
+            backupRootDir,
+            "staging/${plugin.pluginId}_${System.currentTimeMillis()}"
+        )
+        val stagedRulesDir = File(stagedDir, RULES_SUB_DIR)
+        stagedRulesDir.mkdirs()
+
+        File(stagedDir, MANIFEST_FILE_NAME).writeText(manifestJson)
+        plugin.ruleAssets.forEach { ruleFileName ->
+            val inlineRule = ruleFiles[ruleFileName] ?: return@forEach
+            File(stagedRulesDir, ruleFileName).writeText(inlineRule)
+        }
+
+        return stagedDir
+    }
+
+    private fun replacePluginDirectory(sourceDir: File, targetDir: File) {
+        val sourcePath = sourceDir.toPath()
+        val targetPath = targetDir.toPath()
+
+        if (targetDir.exists()) {
+            targetDir.deleteRecursively()
+        }
+        targetDir.parentFile?.mkdirs()
+
+        runCatching {
+            java.nio.file.Files.move(
+                sourcePath,
+                targetPath,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        }.onFailure {
+            sourceDir.copyRecursively(targetDir, overwrite = true)
+            sourceDir.deleteRecursively()
+        }
+    }
+
+    private fun createBackup(pluginId: String, sourcePluginDir: File): File? {
+        if (!sourcePluginDir.exists()) {
+            return null
+        }
+
+        val pluginBackupRoot = File(backupRootDir, pluginId)
+        if (!pluginBackupRoot.exists()) {
+            pluginBackupRoot.mkdirs()
+        }
+
+        val backupDir = File(pluginBackupRoot, System.currentTimeMillis().toString())
+        sourcePluginDir.copyRecursively(backupDir, overwrite = true)
+        trimOldBackups(pluginId)
+        return backupDir
+    }
+
+    private fun getBackupDirs(pluginId: String): List<File> {
+        val pluginBackupRoot = File(backupRootDir, pluginId)
+        return pluginBackupRoot.listFiles { file -> file.isDirectory }
+            ?.sortedByDescending { it.name }
+            ?: emptyList()
+    }
+
+    private fun trimOldBackups(pluginId: String) {
+        getBackupDirs(pluginId)
+            .drop(MAX_BACKUP_COUNT)
+            .forEach { staleBackup ->
+                if (!staleBackup.deleteRecursively()) {
+                    Log.w(TAG, "未删除旧插件备份: ${staleBackup.absolutePath}")
+                }
+            }
     }
 }

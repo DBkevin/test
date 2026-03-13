@@ -41,6 +41,15 @@ filesDir/app_plugins/<pluginId>/
 2. 远端下发 `reload_plugins`
    适合你先用 ADB 或同步盘把 `filesDir/app_plugins` 覆盖好，再让服务立即重载。
 
+同时，App 侧现在也提供了本地更新主链路：
+
+1. `导入插件包`
+   通过系统文件选择器选择一个 zip 插件包或单独的 `plugin.json`
+2. `扫描导入目录`
+   扫描 `Android/data/<package>/files/plugins/inbox` 里的待安装插件包，适合 `adb push`
+3. `回滚最近插件`
+   每次覆盖安装前都会自动备份旧插件目录，可一键恢复最近一次版本
+
 ## 插件清单字段
 
 ```json
@@ -113,4 +122,31 @@ plugins/
 <manifest_url 所在目录>/rules/<rule_file_name>
 ```
 
-这样以后大多数“按钮文案变化、XPath/规则变化、滚动参数变化”都可以只改 GitHub 上的插件文件，然后下发一条热更新命令。
+这样以后大多数“按钮文案变化、XPath/规则变化、滚动参数变化”都可以只改 GitHub 上的插件文件。
+
+如果日常验证以本地导入为主，推荐把插件目录直接打成 zip，结构如下：
+
+```text
+plugin.zip
+  plugin.json
+  rules/
+    douyin_hospital_v1.json
+```
+
+也支持把整个插件文件夹打包：
+
+```text
+douyin-plugin.zip
+  douyin/
+    plugin.json
+    rules/
+      douyin_hospital_v1.json
+```
+
+ADB 工作流可以直接使用 App 展示的导入目录，例如：
+
+```bash
+adb push douyin-plugin.zip /sdcard/Android/data/com.example.a11yframework/files/plugins/inbox/
+```
+
+然后在 App 里点一次“扫描导入目录”即可完成安装。

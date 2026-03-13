@@ -69,5 +69,31 @@ data class PluginInstallResult(
     val pluginName: String = "",
     val version: Int = 0,
     val installedRuleCount: Int = 0,
+    val backupCreated: Boolean = false,
     val errorMessage: String? = null
+)
+
+data class PluginRollbackResult(
+    val success: Boolean,
+    val pluginId: String = "",
+    val pluginName: String = "",
+    val version: Int = 0,
+    val remainingBackupCount: Int = 0,
+    val errorMessage: String? = null
+)
+
+data class PluginRuntimeStatus(
+    val pluginId: String,
+    val pluginName: String,
+    val version: Int,
+    val enabled: Boolean,
+    val appPackages: List<String>,
+    val ruleCount: Int,
+    val backupCount: Int
+)
+
+data class PluginBatchImportResult(
+    val successCount: Int,
+    val failureCount: Int,
+    val results: List<PluginInstallResult>
 )
