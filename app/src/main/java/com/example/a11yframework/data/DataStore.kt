@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.a11yframework.core.ScrapedData
+import com.example.a11yframework.core.ScrapedRecordIdentity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.LinkedHashMap
@@ -320,39 +321,7 @@ class DataStore(context: Context) {
     }
 
     private fun buildRecordKey(data: ScrapedData): String {
-        val content = data.content
-
-        val merchantName = content["merchant_name"]
-            ?: content["hospital_name"]
-            ?: content["hospitalName"]
-            ?: ""
-        val title = content["groupBuyTitle"]
-            ?: content["title"]
-            ?: ""
-        val price = content["price"].orEmpty()
-        val sales = content["sales"].orEmpty()
-        val rawText = data.rawText.ifBlank {
-            content.entries
-                .sortedBy { it.key }
-                .joinToString("|") { (_, value) -> value }
-        }
-
-        return listOf(
-            data.pluginId,
-            data.pageType,
-            data.dataType,
-            normalizeKeyPart(merchantName),
-            normalizeKeyPart(title),
-            normalizeKeyPart(price),
-            normalizeKeyPart(sales),
-            normalizeKeyPart(rawText)
-        ).joinToString("|")
-    }
-
-    private fun normalizeKeyPart(value: String): String {
-        return value.lowercase()
-            .replace("\\s+".toRegex(), "")
-            .trim()
+        return ScrapedRecordIdentity.buildBusinessKey(data)
     }
     
     /**

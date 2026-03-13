@@ -172,12 +172,22 @@ class FrameworkAccessibilityService : AccessibilityService() {
                     )
 
                     if (preparedRuleData.isNotEmpty()) {
-                        dataStore.saveData(preparedRuleData)
-                        captureCoordinator.onRecordsCaptured(packageName, preparedRuleData)
-                        Log.i(
-                            TAG,
-                            "Rule scraped ${preparedRuleData.size} records from ${ruleResult.ruleId}"
+                        val appendResult = captureCoordinator.onRecordsCaptured(
+                            packageName,
+                            preparedRuleData
                         )
+                        if (captureCoordinator.isCollectingForPackage(packageName)) {
+                            Log.i(
+                                TAG,
+                                "Rule collected ${preparedRuleData.size} records from ${ruleResult.ruleId}, added=${appendResult.addedCount}, updated=${appendResult.updatedCount}"
+                            )
+                        } else {
+                            dataStore.saveData(preparedRuleData)
+                            Log.i(
+                                TAG,
+                                "Rule scraped ${preparedRuleData.size} records from ${ruleResult.ruleId}"
+                            )
+                        }
                         lastScrapeTime = now
                         return
                     } else {
@@ -208,9 +218,19 @@ class FrameworkAccessibilityService : AccessibilityService() {
                     processedData
                 )
                 if (preparedPluginData.isNotEmpty()) {
-                    dataStore.saveData(preparedPluginData)
-                    captureCoordinator.onRecordsCaptured(packageName, preparedPluginData)
-                    Log.i(TAG, "Scraped ${preparedPluginData.size} records")
+                    val appendResult = captureCoordinator.onRecordsCaptured(
+                        packageName,
+                        preparedPluginData
+                    )
+                    if (captureCoordinator.isCollectingForPackage(packageName)) {
+                        Log.i(
+                            TAG,
+                            "Collected ${preparedPluginData.size} plugin records, added=${appendResult.addedCount}, updated=${appendResult.updatedCount}"
+                        )
+                    } else {
+                        dataStore.saveData(preparedPluginData)
+                        Log.i(TAG, "Scraped ${preparedPluginData.size} records")
+                    }
                 }
             }
             

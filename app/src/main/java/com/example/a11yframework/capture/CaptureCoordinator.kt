@@ -5,6 +5,7 @@ import com.example.a11yframework.appplugin.AppPluginBundle
 import com.example.a11yframework.appplugin.CollectionConfig
 import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.core.ScrapedData
+import com.example.a11yframework.core.ScrapedRecordIdentity
 import com.example.a11yframework.remote.HospitalTask
 import com.example.a11yframework.search.SearchController
 import kotlinx.coroutines.delay
@@ -103,6 +104,7 @@ class CaptureCoordinator(
                         attemptResult.errorMessage ?: "等待抓取结果超时或未产出数据"
                     )
                 } else {
+                    service.dataStore.saveData(attemptResult.records)
                     success(task, targetPackage, attemptResult.records)
                 }
             }
@@ -118,19 +120,21 @@ class CaptureCoordinator(
         activeCapture?.lastSeenPackage = packageName
     }
 
-    fun onRecordsCaptured(packageName: String, records: List<ScrapedData>) {
-        val activeExecution = activeCapture ?: return
-        if (records.isEmpty()) return
-        if (packageName != activeExecution.targetPackage) return
-        if (activeExecution.stage != CaptureStage.COLLECTING) return
+    fun onRecordsCaptured(packageName: String, records: List<ScrapedData>): CaptureAppendResult {
+        val activeExecution = activeCapture ?: return CaptureAppendResult()
+        if (records.isEmpty()) return CaptureAppendResult()
+        if (packageName != activeExecution.targetPackage) return CaptureAppendResult()
+        if (activeExecution.stage != CaptureStage.COLLECTING) return CaptureAppendResult()
 
-        val addedCount = activeExecution.appendRecords(records)
-        if (addedCount > 0) {
+        val appendResult = activeExecution.appendRecords(records)
+        if (appendResult.changed) {
             Log.i(
                 TAG,
-                "已接收抓取结果: hospital=${activeExecution.task.hospitalName}, added=$addedCount, total=${activeExecution.recordCount()}"
+                "已接收抓取结果: hospital=${activeExecution.task.hospitalName}, added=${appendResult.addedCount}, updated=${appendResult.updatedCount}, total=${activeExecution.recordCount()}"
             )
         }
+
+        return appendResult
     }
 
     fun cancelActiveCapture(reason: String) {
@@ -312,8 +316,8 @@ class CaptureCoordinator(
         activeExecution: ActiveCapture,
         timeoutMs: Long
     ): List<ScrapedData> {
-        val baseline = activeExecution.recordCount()
-        waitForRecordGrowth(activeExecution, baseline, timeoutMs)
+        val baselineRevision = activeExecution.revision()
+        waitForCaptureProgress(activeExecution, baselineRevision, timeoutMs)
         return activeExecution.snapshotRecords()
     }
 
@@ -332,6 +336,7 @@ class CaptureCoordinator(
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
             val beforeCount = activeExecution.recordCount()
+            val beforeRevision = activeExecution.revision()
             val scrolled = searchController.scrollCurrentPage()
             if (!scrolled) {
                 break
@@ -342,7 +347,8 @@ class CaptureCoordinator(
             collectCurrentViewport(activeExecution, collectionConfig, deadline)
 
             val afterCount = activeExecution.recordCount()
-            if (afterCount <= beforeCount) {
+            val afterRevision = activeExecution.revision()
+            if (afterCount <= beforeCount && afterRevision <= beforeRevision) {
                 idleRounds++
                 if (idleRounds >= maxIdleScrollRounds) {
                     break
@@ -360,15 +366,15 @@ class CaptureCoordinator(
         collectionConfig: CollectionConfig?,
         deadline: Long
     ) {
-        val baselineCount = activeExecution.recordCount()
+        val baselineRevision = activeExecution.revision()
         val expandedCount = expandVisibleSections(collectionConfig)
         if (expandedCount > 0) {
             delay(resolveExpandSettleMs(collectionConfig))
         }
 
-        waitForRecordGrowth(
+        waitForCaptureProgress(
             activeExecution,
-            baselineCount = baselineCount,
+            baselineRevision = baselineRevision,
             timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
         )
     }
@@ -396,24 +402,24 @@ class CaptureCoordinator(
         return expandedCount
     }
 
-    private suspend fun waitForRecordGrowth(
+    private suspend fun waitForCaptureProgress(
         activeExecution: ActiveCapture,
-        baselineCount: Int,
+        baselineRevision: Int,
         timeoutMs: Long
     ): Boolean {
         if (timeoutMs <= 0L) {
-            return activeExecution.recordCount() > baselineCount
+            return activeExecution.revision() > baselineRevision
         }
 
         val startAt = System.currentTimeMillis()
         while (System.currentTimeMillis() - startAt < timeoutMs) {
-            if (activeExecution.recordCount() > baselineCount) {
+            if (activeExecution.revision() > baselineRevision) {
                 return true
             }
             delay(400)
         }
 
-        return activeExecution.recordCount() > baselineCount
+        return activeExecution.revision() > baselineRevision
     }
 
     private fun remainingTime(deadline: Long): Long {
@@ -563,7 +569,8 @@ private data class ActiveCapture(
     val navigationPluginId: String? = null,
     var stage: CaptureStage = CaptureStage.OPENING_APP,
     var lastSeenPackage: String = "",
-    val recordsByKey: LinkedHashMap<String, ScrapedData> = linkedMapOf()
+    val recordsByKey: LinkedHashMap<String, ScrapedData> = linkedMapOf(),
+    var progressRevision: Int = 0
 )
 
 private enum class CaptureStage {
@@ -582,17 +589,36 @@ private data class CaptureAttemptResult(
     val errorMessage: String? = null
 )
 
-private fun ActiveCapture.appendRecords(records: List<ScrapedData>): Int {
+data class CaptureAppendResult(
+    val addedCount: Int = 0,
+    val updatedCount: Int = 0
+) {
+    val changed: Boolean
+        get() = addedCount > 0 || updatedCount > 0
+}
+
+private fun ActiveCapture.appendRecords(records: List<ScrapedData>): CaptureAppendResult {
     synchronized(this) {
         var addedCount = 0
+        var updatedCount = 0
         records.forEach { record ->
-            val key = buildRecordKey(record)
-            if (!recordsByKey.containsKey(key)) {
+            val key = ScrapedRecordIdentity.buildBusinessKey(record)
+            val existing = recordsByKey[key]
+            if (existing == null) {
                 recordsByKey[key] = record
                 addedCount++
+            } else {
+                val merged = ScrapedRecordIdentity.merge(existing, record)
+                if (merged != existing) {
+                    recordsByKey[key] = merged
+                    updatedCount++
+                }
             }
         }
-        return addedCount
+        if (addedCount > 0 || updatedCount > 0) {
+            progressRevision++
+        }
+        return CaptureAppendResult(addedCount = addedCount, updatedCount = updatedCount)
     }
 }
 
@@ -608,36 +634,8 @@ private fun ActiveCapture.snapshotRecords(): List<ScrapedData> {
     }
 }
 
-private fun buildRecordKey(record: ScrapedData): String {
-    val merchantName = record.content["merchant_name"]
-        ?: record.content["hospital_name"]
-        ?: record.content["hospitalName"]
-        ?: ""
-    val title = record.content["groupBuyTitle"]
-        ?: record.content["title"]
-        ?: ""
-    val price = record.content["price"].orEmpty()
-    val sales = record.content["sales"].orEmpty()
-    val rawText = record.rawText.ifBlank {
-        record.content.entries
-            .sortedBy { it.key }
-            .joinToString("|") { (_, value) -> value }
+private fun ActiveCapture.revision(): Int {
+    synchronized(this) {
+        return progressRevision
     }
-
-    return listOf(
-        record.pluginId,
-        record.pageType,
-        record.dataType,
-        normalizeKeyPart(merchantName),
-        normalizeKeyPart(title),
-        normalizeKeyPart(price),
-        normalizeKeyPart(sales),
-        normalizeKeyPart(rawText)
-    ).joinToString("|")
-}
-
-private fun normalizeKeyPart(value: String): String {
-    return value.lowercase()
-        .replace("\\s+".toRegex(), "")
-        .trim()
 }
