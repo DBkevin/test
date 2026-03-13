@@ -41,6 +41,8 @@ data class NavigationStep(
     val targetText: String? = null,
     val targetTexts: List<String> = emptyList(),
     val targetViewId: String? = null,
+    val fallbackTapX: Int? = null,
+    val fallbackTapY: Int? = null,
     val source: StepValueSource? = null,
     val entryKeywords: List<String> = emptyList(),
     val buttonKeywords: List<String> = emptyList(),

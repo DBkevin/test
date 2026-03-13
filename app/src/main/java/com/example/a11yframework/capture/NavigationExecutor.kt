@@ -58,7 +58,9 @@ class NavigationExecutor(
                     val clicked = searchController.clickText(
                         targetText = targetText,
                         exactMatch = step.exactMatch,
-                        maxScrollRounds = step.maxScrollRounds
+                        maxScrollRounds = step.maxScrollRounds,
+                        fallbackTapX = step.fallbackTapX,
+                        fallbackTapY = step.fallbackTapY
                     )
                     logStep(step, "click_text", clicked, targetText)
                     asResult(clicked, "未找到可点击文本: $targetText")

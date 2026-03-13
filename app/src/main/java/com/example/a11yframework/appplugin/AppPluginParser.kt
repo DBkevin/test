@@ -86,6 +86,8 @@ class AppPluginParser {
             targetText = optNullableString(jsonObject, "target_text"),
             targetTexts = parseStringArray(jsonObject.optJSONArray("target_texts") ?: JSONArray()),
             targetViewId = optNullableString(jsonObject, "target_view_id"),
+            fallbackTapX = jsonObject.takeIf { it.has("fallback_tap_x") }?.optInt("fallback_tap_x"),
+            fallbackTapY = jsonObject.takeIf { it.has("fallback_tap_y") }?.optInt("fallback_tap_y"),
             source = optNullableString(jsonObject, "source")?.takeIf { it.isNotBlank() }?.let { parseStepSource(it) },
             entryKeywords = parseStringArray(jsonObject.optJSONArray("entry_keywords") ?: JSONArray()),
             buttonKeywords = parseStringArray(jsonObject.optJSONArray("button_keywords") ?: JSONArray()),

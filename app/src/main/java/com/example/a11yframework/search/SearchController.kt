@@ -163,7 +163,9 @@ class SearchController(
     fun clickText(
         targetText: String,
         exactMatch: Boolean = false,
-        maxScrollRounds: Int = 0
+        maxScrollRounds: Int = 0,
+        fallbackTapX: Int? = null,
+        fallbackTapY: Int? = null
     ): Boolean {
         repeat(maxScrollRounds + 1) { round ->
             val matchedNode = findTextNode(targetText, exactMatch)
@@ -183,6 +185,16 @@ class SearchController(
             }
 
             if (round == maxScrollRounds || !scrollCurrentPage()) {
+                val fallbackTapped = fallbackTapX != null &&
+                    fallbackTapY != null &&
+                    tapScreen(fallbackTapX, fallbackTapY)
+                if (fallbackTapped) {
+                    Log.i(
+                        TAG,
+                        "Click text fallback tap: target=$targetText, x=$fallbackTapX, y=$fallbackTapY"
+                    )
+                    return true
+                }
                 return false
             }
             Thread.sleep(1200)
@@ -666,6 +678,10 @@ class SearchController(
      * 点击坐标
      */
     private fun click(x: Int, y: Int) {
+        tapScreen(x, y)
+    }
+
+    fun tapScreen(x: Int, y: Int): Boolean {
         val path = Path()
         path.moveTo(x.toFloat(), y.toFloat())
         
@@ -673,7 +689,7 @@ class SearchController(
             .addStroke(GestureDescription.StrokeDescription(path, 0, 100))
             .build()
         
-        service.dispatchGesture(gesture, null, null)
+        return service.dispatchGesture(gesture, null, null)
     }
     
     /**
