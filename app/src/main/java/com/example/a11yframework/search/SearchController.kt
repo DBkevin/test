@@ -1085,16 +1085,30 @@ class SearchController(
     ): Boolean {
         val pageText = NodeUtils.getAllNodeText(
             rootNode,
-            maxDepth = 14,
-            maxNodes = 220,
-            maxTextLength = 3000
+            maxDepth = 18,
+            maxNodes = 360,
+            maxTextLength = 5000
         )
         val normalizedPageText = normalizeText(pageText)
         val hasMerchantName = normalizedTarget.isBlank() || normalizedPageText.contains(normalizedTarget)
-        val hasDetailSignal = MERCHANT_DETAIL_PAGE_HINTS.any { hint ->
+        val detailSignalCount = MERCHANT_DETAIL_PAGE_HINTS.count { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
-        return hasMerchantName && hasDetailSignal
+        val hasDetailSignal = detailSignalCount > 0
+        val hasVisibleSearchInput = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node -> isLikelySearchInput(node) },
+            maxDepth = 18
+        )?.let { node ->
+            node.recycle()
+            true
+        } ?: false
+
+        if (hasMerchantName && hasDetailSignal) {
+            return true
+        }
+
+        return hasDetailSignal && !hasVisibleSearchInput
     }
 
     private fun tapMerchantEntryBand(merchantNode: AccessibilityNodeInfo): Boolean {
