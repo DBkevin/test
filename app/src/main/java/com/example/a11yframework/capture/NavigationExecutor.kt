@@ -29,7 +29,7 @@ class NavigationExecutor(
         val flow = plugin.captureFlow ?: return NavigationExecutionResult(success = true)
 
         flow.steps.forEachIndexed { index, step ->
-            val result = executeStep(step, task)
+            val result = executeStep(plugin, step, task)
             if (!result.success) {
                 return NavigationExecutionResult(
                     success = false,
@@ -46,6 +46,7 @@ class NavigationExecutor(
     }
 
     private suspend fun executeStep(
+        plugin: AppPluginBundle,
         step: NavigationStep,
         task: HospitalTask
     ): NavigationExecutionResult {
@@ -100,11 +101,15 @@ class NavigationExecutor(
                 if (keyword.isBlank()) {
                     NavigationExecutionResult(false, "search_keyword 缺少关键字")
                 } else {
-                    val searched = searchController.search(
-                        keyword = keyword,
-                        entryKeywords = step.entryKeywords,
-                        buttonKeywords = step.buttonKeywords
-                    )
+                    val searched = if (plugin.pluginId.equals("douyin", ignoreCase = true)) {
+                        searchController.searchDouyinGroupBuy(keyword)
+                    } else {
+                        searchController.search(
+                            keyword = keyword,
+                            entryKeywords = step.entryKeywords,
+                            buttonKeywords = step.buttonKeywords
+                        )
+                    }
                     logStep(step, "search_keyword", searched, keyword)
                     asResult(searched, "搜索执行失败: $keyword")
                 }

@@ -28,11 +28,20 @@ class SearchController(
         private const val SEARCH_PREPARE_MAX_ATTEMPTS = 6
         private const val SEARCH_RETRY_DELAY_MS = 700L
         private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 1800L
+        private const val DOUYIN_GROUPBUY_TAB_TAP_X = 1016
+        private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
+        private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
+        private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
+        private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
+        private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
+        private const val DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS = 4_000L
+        private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
         private val SEARCH_BUTTON_KEYWORDS = listOf("搜索", "查找", "search", "🔍")
         private val DOUYIN_GROUPBUY_PAGE_KEYWORDS = listOf("附近好店", "美食", "休闲娱乐", "景点/周边游", "酒店民宿", "丽人")
+        private val DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS = listOf("美莱团购", "郑州", "搜索")
         private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
         private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
@@ -97,7 +106,26 @@ class SearchController(
             Log.w(TAG, "Douyin group buy tab not explicitly selected, fallback to direct search")
         }
 
-        return search(keyword)
+        if (!waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)) {
+            Log.w(TAG, "Douyin group buy page not confirmed after tab selection")
+        }
+
+        val searchEntryOpened = openDouyinGroupBuySearchEntry()
+        if (!searchEntryOpened) {
+            Log.e(TAG, "Douyin group buy search entry not found")
+            return false
+        }
+
+        if (!waitForDouyinSearchInputPage(DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS)) {
+            Log.e(TAG, "Douyin dedicated search input page not reached")
+            return false
+        }
+
+        return search(
+            keyword = keyword,
+            entryKeywords = DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS,
+            buttonKeywords = listOf("搜索")
+        )
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
@@ -533,6 +561,14 @@ class SearchController(
                     return true
                 }
             }
+
+            if (isOnDouyinSearchInputPage()) {
+                val tapped = tapScreen(DOUYIN_SEARCH_SUBMIT_TAP_X, DOUYIN_SEARCH_SUBMIT_TAP_Y)
+                if (tapped) {
+                    Log.d(TAG, "Tapped Douyin search submit button with preset tap")
+                    return true
+                }
+            }
             
             // 方法 2: 通过 viewId 查找按钮型搜索控件
             val buttonById = NodeUtils.findNodeByCondition(
@@ -636,7 +672,15 @@ class SearchController(
             if (tabNode != null) {
                 val clicked = NodeUtils.clickNode(tabNode)
                 Log.d(TAG, "Selected Douyin group buy tab: $clicked")
-                return clicked
+                if (clicked) {
+                    return true
+                }
+            }
+
+            val tapped = tapScreen(DOUYIN_GROUPBUY_TAB_TAP_X, DOUYIN_GROUPBUY_TAB_TAP_Y)
+            if (tapped) {
+                Log.d(TAG, "Selected Douyin group buy tab with preset tap")
+                return true
             }
 
             return false
@@ -650,7 +694,146 @@ class SearchController(
         val hitCount = DOUYIN_GROUPBUY_PAGE_KEYWORDS.count { keyword ->
             pageText.contains(keyword, ignoreCase = true)
         }
-        return hitCount >= 2
+        if (hitCount >= 2) {
+            return true
+        }
+
+        val searchEntryNode = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node: AccessibilityNodeInfo ->
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                viewId.contains("et_search_kw") &&
+                    !isLikelySearchInput(node) &&
+                    bounds.top in 280..420 &&
+                    bounds.bottom in 340..460
+            },
+            maxDepth = 16
+        )
+
+        val matched = searchEntryNode != null
+        searchEntryNode?.recycle()
+        return matched
+    }
+
+    private fun waitForDouyinGroupBuyPage(timeoutMs: Long): Boolean {
+        val startAt = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    if (isLikelyDouyinGroupBuyPage(rootNode)) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+            Thread.sleep(300)
+        }
+        return false
+    }
+
+    private fun openDouyinGroupBuySearchEntry(): Boolean {
+        if (isOnDouyinSearchInputPage()) {
+            return true
+        }
+
+        val rootNode = service.rootInActiveWindow ?: return tapScreen(
+            DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
+            DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y
+        )
+
+        try {
+            val entryNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    val nodeText = getComparableNodeText(node)
+                    viewId.contains("et_search_kw") &&
+                        !isLikelySearchInput(node) &&
+                        bounds.top in 280..420 &&
+                        bounds.bottom in 340..460 &&
+                        DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
+                            nodeText.contains(hint, ignoreCase = true)
+                        }
+                },
+                maxDepth = 16
+            )
+
+            if (entryNode != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(entryNode)
+                    if (clicked) {
+                        Log.d(TAG, "Opened Douyin group buy search entry by node click")
+                        return true
+                    }
+
+                    val tapped = tapNodeCenter(entryNode)
+                    if (tapped) {
+                        Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
+                        return true
+                    }
+                } finally {
+                    entryNode.recycle()
+                }
+            }
+
+            val tapped = tapScreen(
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y
+            )
+            if (tapped) {
+                Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
+            }
+            return tapped
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun waitForDouyinSearchInputPage(timeoutMs: Long): Boolean {
+        val startAt = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            if (isOnDouyinSearchInputPage()) {
+                return true
+            }
+            Thread.sleep(250)
+        }
+        return false
+    }
+
+    private fun isOnDouyinSearchInputPage(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            val searchInput = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    viewId.contains("et_search_kw") && isLikelySearchInput(node)
+                },
+                maxDepth = 16
+            )
+
+            val searchButton = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    val nodeText = getComparableNodeText(node)
+                    viewId.contains("4_s") || nodeText.contains("搜索", ignoreCase = true)
+                },
+                maxDepth = 16
+            )
+
+            val matched = searchInput != null && searchButton != null
+            searchInput?.recycle()
+            searchButton?.recycle()
+            return matched
+        } finally {
+            rootNode.recycle()
+        }
     }
 
     private fun findMerchantResultNode(merchantName: String): AccessibilityNodeInfo? {
