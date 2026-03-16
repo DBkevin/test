@@ -35,8 +35,11 @@ class SearchController(
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
+        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_X = 823
+        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y = 516
         private const val DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
+        private const val DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS = 7_000L
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -122,14 +125,28 @@ class SearchController(
             return false
         }
 
-        return search(
+        val submitted = search(
             keyword = keyword,
             entryKeywords = DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS,
             buttonKeywords = listOf("搜索")
         )
+
+        if (!submitted) {
+            return false
+        }
+
+        if (!waitForDouyinMerchantResultPage(keyword, DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS)) {
+            Log.w(TAG, "Douyin merchant result page not confirmed after search submit")
+        }
+
+        return true
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
+        if (!waitForDouyinMerchantResultPage(merchantName, DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS)) {
+            Log.w(TAG, "Merchant result page not ready before opening merchant: $merchantName")
+        }
+
         repeat(3) { settleRound ->
             val merchantNode = findMerchantResultNode(merchantName)
             if (merchantNode != null) {
@@ -141,6 +158,10 @@ class SearchController(
                 } finally {
                     merchantNode.recycle()
                 }
+            }
+
+            if (openMerchantWithPresetEntryBand(merchantName, settleRound, fallbackOnly = true)) {
+                return true
             }
 
             if (settleRound < 2) {
@@ -159,6 +180,10 @@ class SearchController(
                 } finally {
                     merchantNode.recycle()
                 }
+            }
+
+            if (openMerchantWithPresetEntryBand(merchantName, round, fallbackOnly = true)) {
+                return true
             }
 
             if (round == maxScrollRounds) {
@@ -855,6 +880,67 @@ class SearchController(
         }
     }
 
+    private fun waitForDouyinMerchantResultPage(merchantName: String, timeoutMs: Long): Boolean {
+        val startAt = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    if (isLikelyDouyinMerchantResultPage(rootNode, merchantName)) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+            Thread.sleep(300)
+        }
+        return false
+    }
+
+    private fun isLikelyDouyinMerchantResultPage(
+        rootNode: AccessibilityNodeInfo,
+        merchantName: String
+    ): Boolean {
+        val normalizedTarget = normalizeText(merchantName)
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 22,
+            maxNodes = 480,
+            maxTextLength = 7000
+        )
+        val hasResultSignals =
+            Regex("\\d+条评价").containsMatchIn(pageText) ||
+                pageText.contains("/人") ||
+                pageText.contains("消费人数") ||
+                pageText.contains("回头客")
+        val hasTopTabs =
+            pageText.contains("团购") &&
+                pageText.contains("直播") &&
+                pageText.contains("视频")
+
+        val merchantNode = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                if (node.isFocused || isLikelySearchInput(node)) {
+                    return@findNodeByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val text = normalizeText(getComparableNodeText(node))
+                bounds.top in 420..1400 &&
+                    text.isNotBlank() &&
+                    text.contains(normalizedTarget)
+            },
+            maxDepth = MERCHANT_RESULT_NODE_MAX_DEPTH
+        )
+
+        val hasMerchantNode = merchantNode != null
+        merchantNode?.recycle()
+
+        return hasMerchantNode || (hasTopTabs && hasResultSignals)
+    }
+
     private fun findMerchantResultNode(merchantName: String): AccessibilityNodeInfo? {
         val rootNode = service.rootInActiveWindow ?: return null
 
@@ -1056,6 +1142,39 @@ class SearchController(
             "Merchant result did not open detail page: name=$merchantName, round=$round, tappedBand=$tappedBand, clicked=$clicked"
         )
         return false
+    }
+
+    private fun openMerchantWithPresetEntryBand(
+        merchantName: String,
+        round: Int,
+        fallbackOnly: Boolean = false
+    ): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            if (!isLikelyDouyinMerchantResultPage(rootNode, merchantName)) {
+                return false
+            }
+        } finally {
+            rootNode.recycle()
+        }
+
+        val tapped = tapScreen(
+            DOUYIN_MERCHANT_ENTRY_BAND_TAP_X,
+            DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y
+        )
+        if (!tapped) {
+            return false
+        }
+
+        val opened = waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)
+        if (opened) {
+            Log.i(
+                TAG,
+                "Merchant result opened by preset entry band: name=$merchantName, round=$round, fallbackOnly=$fallbackOnly"
+            )
+        }
+        return opened
     }
 
     private fun waitForMerchantDetailPage(merchantName: String, timeoutMs: Long): Boolean {
