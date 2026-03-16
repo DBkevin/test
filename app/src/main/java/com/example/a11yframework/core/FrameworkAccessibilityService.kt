@@ -5,9 +5,9 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.util.Log
 import com.example.a11yframework.appplugin.AppPluginManager
 import com.example.a11yframework.appplugin.PluginInstallResult
 import com.example.a11yframework.capture.CaptureCoordinator
@@ -20,6 +20,7 @@ import com.example.a11yframework.remote.RemoteCommandManager
 import com.example.a11yframework.remote.HospitalTask
 import com.example.a11yframework.remote.TaskStatus
 import com.example.a11yframework.rule.engine.RuleEngine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +34,12 @@ class FrameworkAccessibilityService : AccessibilityService() {
     
     companion object {
         private const val TAG = "A11yFramework"
+        private const val LOCAL_CAPTURE_PREFS = "local_capture_state"
+        private const val KEY_PENDING_HOSPITAL_NAME = "pending_hospital_name"
+        private const val KEY_PENDING_TARGET_PACKAGE = "pending_target_package"
+        private const val KEY_PENDING_LAUNCH_TARGET_APP = "pending_launch_target_app"
+        private const val KEY_PENDING_UPDATED_AT = "pending_updated_at"
+        private const val PENDING_CAPTURE_TTL_MS = 10 * 60 * 1000L
         var instance: FrameworkAccessibilityService? = null
             private set
     }
@@ -66,6 +73,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
     
     private var activePlugin: IAccessibilityPlugin? = null
     private var lastScrapeTime = 0L
+    @Volatile
     private var lastPackageName: String = ""
     private val SCRAPE_COOLDOWN = 3000L
     
@@ -106,6 +114,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
             }
 
             Log.i(TAG, "Rule engine ready, loaded ${ruleEngine.getRuleCount()} rules")
+            resumePendingLocalCaptureIfNeeded()
             setupRemoteCommandFlow()
         } catch (e: Exception) {
             Log.e(TAG, "Error in onServiceConnected", e)
@@ -289,7 +298,21 @@ class FrameworkAccessibilityService : AccessibilityService() {
         }
     }
 
-    fun getCurrentActivePackage(): String = lastPackageName
+    fun getCurrentActivePackage(): String {
+        val rootNode = rootInActiveWindow
+        try {
+            val packageFromRoot = rootNode?.packageName?.toString()?.trim().orEmpty()
+            if (packageFromRoot.isNotEmpty()) {
+                return packageFromRoot
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to inspect active root package", e)
+        } finally {
+            rootNode?.recycle()
+        }
+
+        return lastPackageName
+    }
 
     fun reloadRuntimePlugins(): Int {
         appPluginManager.reloadPlugins()
@@ -328,26 +351,132 @@ class FrameworkAccessibilityService : AccessibilityService() {
             return false
         }
 
-        val task = HospitalTask(
-            id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+        persistPendingLocalCapture(
             hospitalName = normalizedHospitalName,
-            status = TaskStatus.PENDING,
-            createdAt = System.currentTimeMillis(),
-            targetPackage = targetPackage
+            targetPackage = targetPackage,
+            launchTargetApp = launchTargetApp
         )
 
-        serviceScope.launch {
-            val result = captureCoordinator.executeTask(
-                task = task,
+        executePendingLocalCapture(
+            pendingCapture = PendingLocalCapture(
+                hospitalName = normalizedHospitalName,
+                targetPackage = targetPackage,
                 launchTargetApp = launchTargetApp
-            )
-            onCompleted?.let { callback ->
-                Handler(Looper.getMainLooper()).post {
-                    callback(result)
-                }
-            }
-        }
+            ),
+            onCompleted = onCompleted
+        )
 
         return true
     }
+
+    private fun executePendingLocalCapture(
+        pendingCapture: PendingLocalCapture,
+        onCompleted: ((CaptureExecutionResult) -> Unit)? = null
+    ) {
+        val task = HospitalTask(
+            id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+            hospitalName = pendingCapture.hospitalName,
+            status = TaskStatus.PENDING,
+            createdAt = System.currentTimeMillis(),
+            targetPackage = pendingCapture.targetPackage
+        )
+
+        serviceScope.launch {
+            try {
+                val result = captureCoordinator.executeTask(
+                    task = task,
+                    launchTargetApp = pendingCapture.launchTargetApp
+                )
+                clearPendingLocalCapture()
+                onCompleted?.let { callback ->
+                    Handler(Looper.getMainLooper()).post {
+                        callback(result)
+                    }
+                }
+            } catch (e: CancellationException) {
+                Log.i(
+                    TAG,
+                    "Local capture interrupted, keep pending state for resume: ${pendingCapture.hospitalName}"
+                )
+                throw e
+            }
+        }
+    }
+
+    private fun resumePendingLocalCaptureIfNeeded() {
+        if (captureCoordinator.hasActiveCapture()) {
+            return
+        }
+
+        val pendingCapture = readPendingLocalCapture() ?: return
+        Log.i(
+            TAG,
+            "Resuming pending local capture after service reconnect: hospital=${pendingCapture.hospitalName}, target=${pendingCapture.targetPackage}, launch=${pendingCapture.launchTargetApp}"
+        )
+        executePendingLocalCapture(pendingCapture)
+    }
+
+    private fun localCapturePrefs() = getSharedPreferences(LOCAL_CAPTURE_PREFS, MODE_PRIVATE)
+
+    private fun persistPendingLocalCapture(
+        hospitalName: String,
+        targetPackage: String,
+        launchTargetApp: Boolean
+    ) {
+        localCapturePrefs().edit()
+            .putString(KEY_PENDING_HOSPITAL_NAME, hospitalName)
+            .putString(KEY_PENDING_TARGET_PACKAGE, targetPackage)
+            .putBoolean(KEY_PENDING_LAUNCH_TARGET_APP, launchTargetApp)
+            .putLong(KEY_PENDING_UPDATED_AT, System.currentTimeMillis())
+            .apply()
+        Log.i(
+            TAG,
+            "Pending local capture saved: hospital=$hospitalName, target=$targetPackage, launch=$launchTargetApp"
+        )
+    }
+
+    private fun clearPendingLocalCapture() {
+        val prefs = localCapturePrefs()
+        if (!prefs.contains(KEY_PENDING_HOSPITAL_NAME)) {
+            return
+        }
+
+        prefs.edit()
+            .remove(KEY_PENDING_HOSPITAL_NAME)
+            .remove(KEY_PENDING_TARGET_PACKAGE)
+            .remove(KEY_PENDING_LAUNCH_TARGET_APP)
+            .remove(KEY_PENDING_UPDATED_AT)
+            .apply()
+        Log.i(TAG, "Pending local capture cleared")
+    }
+
+    private fun readPendingLocalCapture(): PendingLocalCapture? {
+        val prefs = localCapturePrefs()
+        val hospitalName = prefs.getString(KEY_PENDING_HOSPITAL_NAME, null)?.trim().orEmpty()
+        if (hospitalName.isEmpty()) {
+            return null
+        }
+
+        val updatedAt = prefs.getLong(KEY_PENDING_UPDATED_AT, 0L)
+        if (updatedAt > 0L && System.currentTimeMillis() - updatedAt > PENDING_CAPTURE_TTL_MS) {
+            Log.i(TAG, "Pending local capture expired, clearing stale state: $hospitalName")
+            clearPendingLocalCapture()
+            return null
+        }
+
+        return PendingLocalCapture(
+            hospitalName = hospitalName,
+            targetPackage = prefs.getString(
+                KEY_PENDING_TARGET_PACKAGE,
+                "com.ss.android.ugc.aweme"
+            ) ?: "com.ss.android.ugc.aweme",
+            launchTargetApp = prefs.getBoolean(KEY_PENDING_LAUNCH_TARGET_APP, false)
+        )
+    }
+
+    private data class PendingLocalCapture(
+        val hospitalName: String,
+        val targetPackage: String,
+        val launchTargetApp: Boolean
+    )
 }

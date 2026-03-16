@@ -8,6 +8,7 @@ import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.core.ScrapedRecordIdentity
 import com.example.a11yframework.remote.HospitalTask
 import com.example.a11yframework.search.SearchController
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -125,6 +126,9 @@ class CaptureCoordinator(
                     success(task, targetPackage, attemptResult.records)
                 }
             }
+        } catch (e: CancellationException) {
+            Log.i(TAG, "任务被取消，等待外层决定是否恢复: ${task.hospitalName}")
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "任务执行异常: ${task.hospitalName}", e)
             failure(task, targetPackage, e.message ?: "未知异常")
@@ -132,6 +136,8 @@ class CaptureCoordinator(
             activeCapture = null
         }
     }
+
+    fun hasActiveCapture(): Boolean = activeCapture != null
 
     fun onWindowChanged(packageName: String) {
         activeCapture?.lastSeenPackage = packageName
