@@ -129,6 +129,24 @@ class SearchController(
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
+        repeat(3) { settleRound ->
+            val merchantNode = findMerchantResultNode(merchantName)
+            if (merchantNode != null) {
+                try {
+                    val opened = openMerchantCandidate(merchantNode, merchantName, settleRound)
+                    if (opened) {
+                        return true
+                    }
+                } finally {
+                    merchantNode.recycle()
+                }
+            }
+
+            if (settleRound < 2) {
+                Thread.sleep(1200)
+            }
+        }
+
         repeat(maxScrollRounds + 1) { round ->
             val merchantNode = findMerchantResultNode(merchantName)
             if (merchantNode != null) {

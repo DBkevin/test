@@ -1,7 +1,7 @@
 {
   "plugin_id": "douyin",
   "plugin_name": "抖音团购插件",
-  "version": 111,
+  "version": 112,
   "enabled": true,
   "app_packages": ["com.ss.android.ugc.aweme"],
   "entry_package": "com.ss.android.ugc.aweme",
@@ -10,19 +10,12 @@
     "app_start_delay_ms": 4000,
     "steps": [
       {
-        "type": "click_text",
-        "target_text": "团购",
-        "fallback_tap_x": 1016,
-        "fallback_tap_y": 216,
-        "wait_ms": 1800
-      },
-      {
         "type": "search_keyword",
         "source": "hospital_name"
       },
       {
         "type": "wait",
-        "duration_ms": 2500
+        "duration_ms": 4000
       },
       {
         "type": "click_text_fuzzy",
