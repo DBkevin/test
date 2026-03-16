@@ -1039,12 +1039,6 @@ class SearchController(
         merchantName: String,
         round: Int
     ): Boolean {
-        val tappedTitle = tapNodeCenter(merchantNode)
-        if (tappedTitle && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
-            Log.i(TAG, "Merchant result opened by title tap: name=$merchantName, round=$round")
-            return true
-        }
-
         val tappedBand = tapMerchantEntryBand(merchantNode)
         if (tappedBand && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
             Log.i(TAG, "Merchant result opened by entry band tap: name=$merchantName, round=$round")
@@ -1059,7 +1053,7 @@ class SearchController(
 
         Log.w(
             TAG,
-            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedTitle=$tappedTitle, tappedBand=$tappedBand, clicked=$clicked"
+            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedBand=$tappedBand, clicked=$clicked"
         )
         return false
     }
@@ -1149,7 +1143,7 @@ class SearchController(
             }
 
             val metrics = service.resources.displayMetrics
-            targetX = titleBounds.centerX().coerceIn(targetBounds.left + 24, targetBounds.right - 24)
+            targetX = targetBounds.centerX().coerceIn(targetBounds.left + 24, targetBounds.right - 24)
                 .coerceIn(0, metrics.widthPixels - 1)
             targetY = targetBounds.centerY().coerceIn(0, metrics.heightPixels - 1)
             tapScreen(targetX, targetY)
