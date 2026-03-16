@@ -398,16 +398,34 @@ class SearchController(
      */
     private fun clearSearchBox(searchBox: AccessibilityNodeInfo) {
         try {
-            // 方法 1: 使用 setText（如果支持）
+            // 方法 1: 直接尝试 ACTION_SET_TEXT。部分 ROM 上 actionList/isEditable 不可靠，
+            // 但直接执行仍然能成功。
+            if (trySetText(searchBox, "")) {
+                Log.d(TAG, "Cleared search box with direct setText")
+                return
+            }
+
+            refetchFocusedSearchBox()?.let { refreshedSearchBox ->
+                try {
+                    if (trySetText(refreshedSearchBox, "")) {
+                        Log.d(TAG, "Cleared search box with refreshed setText")
+                        return
+                    }
+                } finally {
+                    refreshedSearchBox.recycle()
+                }
+            }
+
+            // 方法 2: 使用 setText（如果显式声明支持）
             if (supportsSetText(searchBox)) {
                 val arguments = android.os.Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
                 searchBox.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-                Log.d(TAG, "Cleared search box with setText")
+                Log.d(TAG, "Cleared search box with legacy setText")
                 return
             }
             
-            // 方法 2: 长按全选后删除
+            // 方法 3: 长按全选后删除
             val rect = Rect()
             searchBox.getBoundsInScreen(rect)
             
@@ -434,17 +452,34 @@ class SearchController(
      */
     private fun inputText(searchBox: AccessibilityNodeInfo, text: String) {
         try {
-            // 方法 1: 使用 setText（如果支持）
+            // 方法 1: 直接尝试 ACTION_SET_TEXT，再按需要刷新节点重试。
+            if (trySetText(searchBox, text)) {
+                Log.d(TAG, "Input text with direct setText: $text")
+                return
+            }
+
+            refetchFocusedSearchBox()?.let { refreshedSearchBox ->
+                try {
+                    if (trySetText(refreshedSearchBox, text)) {
+                        Log.d(TAG, "Input text with refreshed setText: $text")
+                        return
+                    }
+                } finally {
+                    refreshedSearchBox.recycle()
+                }
+            }
+
+            // 方法 2: 使用 setText（如果显式声明支持）
             if (supportsSetText(searchBox)) {
                 val arguments = android.os.Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
                 searchBox.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
                 searchBox.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-                Log.d(TAG, "Input text with setText: $text")
+                Log.d(TAG, "Input text with legacy setText: $text")
                 return
             }
             
-            // 方法 2: 点击搜索框后使用输入法
+            // 方法 3: 点击搜索框后使用输入法
             val rect = Rect()
             searchBox.getBoundsInScreen(rect)
             
@@ -958,6 +993,39 @@ class SearchController(
 
         return node.actionList.any { action ->
             action.id == AccessibilityNodeInfo.ACTION_SET_TEXT
+        }
+    }
+
+    private fun trySetText(node: AccessibilityNodeInfo, text: String): Boolean {
+        return try {
+            val arguments = android.os.Bundle()
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                text
+            )
+            node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+            node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+        } catch (e: Exception) {
+            Log.w(TAG, "Direct setText failed: ${e.message}")
+            false
+        }
+    }
+
+    private fun refetchFocusedSearchBox(): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val focusedNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    isLikelySearchInput(node) && (node.isFocused || node.isFocusable || node.isEditable)
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
+
+            return focusedNode?.let { AccessibilityNodeInfo.obtain(it) }
+        } finally {
+            rootNode.recycle()
         }
     }
 
