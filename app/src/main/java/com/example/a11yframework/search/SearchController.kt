@@ -802,27 +802,27 @@ class SearchController(
         merchantName: String,
         round: Int
     ): Boolean {
+        val tappedTitle = tapNodeCenter(merchantNode)
+        if (tappedTitle && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by title tap: name=$merchantName, round=$round")
+            return true
+        }
+
+        val tappedBand = tapMerchantEntryBand(merchantNode)
+        if (tappedBand && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by entry band tap: name=$merchantName, round=$round")
+            return true
+        }
+
         val clicked = NodeUtils.clickNode(merchantNode)
         if (clicked && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
             Log.i(TAG, "Merchant result opened by accessibility click: name=$merchantName, round=$round")
             return true
         }
 
-        val tappedCenter = tapNodeCenter(merchantNode)
-        if (tappedCenter && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
-            Log.i(TAG, "Merchant result opened by center tap: name=$merchantName, round=$round")
-            return true
-        }
-
-        val tappedBelow = tapNodeCenterWithOffset(merchantNode, offsetY = 110)
-        if (tappedBelow && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
-            Log.i(TAG, "Merchant result opened by offset tap: name=$merchantName, round=$round")
-            return true
-        }
-
         Log.w(
             TAG,
-            "Merchant result did not open detail page: name=$merchantName, round=$round, clicked=$clicked, tappedCenter=$tappedCenter, tappedBelow=$tappedBelow"
+            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedTitle=$tappedTitle, tappedBand=$tappedBand, clicked=$clicked"
         )
         return false
     }
@@ -866,17 +866,59 @@ class SearchController(
         return hasMerchantName && hasDetailSignal
     }
 
-    private fun tapNodeCenterWithOffset(node: AccessibilityNodeInfo, offsetY: Int): Boolean {
-        val bounds = Rect()
-        node.getBoundsInScreen(bounds)
-        if (bounds.isEmpty) {
+    private fun tapMerchantEntryBand(merchantNode: AccessibilityNodeInfo): Boolean {
+        val titleBounds = Rect()
+        merchantNode.getBoundsInScreen(titleBounds)
+        if (titleBounds.isEmpty) {
             return false
         }
 
-        val metrics = service.resources.displayMetrics
-        val x = bounds.centerX().coerceIn(0, metrics.widthPixels - 1)
-        val y = (bounds.centerY() + offsetY).coerceIn(0, metrics.heightPixels - 1)
-        return tapScreen(x, y)
+        var currentParent = merchantNode.parent
+        var depth = 0
+        var candidateBand: AccessibilityNodeInfo? = null
+
+        while (currentParent != null && depth < 4) {
+            val parentBounds = Rect()
+            currentParent.getBoundsInScreen(parentBounds)
+
+            val isSafeEntryBand =
+                !parentBounds.isEmpty &&
+                    parentBounds.width() >= titleBounds.width() + 200 &&
+                    parentBounds.height() <= maxOf(140, titleBounds.height() + 40) &&
+                    kotlin.math.abs(parentBounds.top - titleBounds.top) <= 24 &&
+                    kotlin.math.abs(parentBounds.bottom - titleBounds.bottom) <= 24
+
+            if (isSafeEntryBand) {
+                candidateBand = AccessibilityNodeInfo.obtain(currentParent)
+                currentParent.recycle()
+                break
+            }
+
+            val nextParent = currentParent.parent
+            currentParent.recycle()
+            currentParent = nextParent
+            depth++
+        }
+
+        val targetBounds = Rect()
+        val targetX: Int
+        val targetY: Int
+
+        return try {
+            val tapTarget = candidateBand ?: merchantNode
+            tapTarget.getBoundsInScreen(targetBounds)
+            if (targetBounds.isEmpty) {
+                return false
+            }
+
+            val metrics = service.resources.displayMetrics
+            targetX = titleBounds.centerX().coerceIn(targetBounds.left + 24, targetBounds.right - 24)
+                .coerceIn(0, metrics.widthPixels - 1)
+            targetY = targetBounds.centerY().coerceIn(0, metrics.heightPixels - 1)
+            tapScreen(targetX, targetY)
+        } finally {
+            candidateBand?.recycle()
+        }
     }
 
     private fun logTopMerchantCandidates(candidates: List<MerchantCandidateScore>) {
