@@ -50,7 +50,8 @@ class SearchController(
         private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
-        
+        private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
+
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
         
@@ -1198,10 +1199,35 @@ class SearchController(
         return false
     }
 
+    fun waitForMerchantHomepageAnchors(merchantName: String, timeoutMs: Long): Boolean {
+        val normalizedTarget = normalizeText(merchantName)
+        val startAt = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    if (hasMerchantHomepageAnchors(rootNode, normalizedTarget)) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+            Thread.sleep(250)
+        }
+
+        return false
+    }
+
     private fun isLikelyMerchantDetailPage(
         rootNode: AccessibilityNodeInfo,
         normalizedTarget: String
     ): Boolean {
+        if (hasMerchantHomepageAnchors(rootNode, normalizedTarget)) {
+            return true
+        }
+
         val pageText = NodeUtils.getAllNodeText(
             rootNode,
             maxDepth = 18,
@@ -1223,11 +1249,84 @@ class SearchController(
             true
         } ?: false
 
-        if (hasMerchantName && hasDetailSignal) {
-            return true
+        return hasMerchantName && hasDetailSignal && !hasVisibleSearchInput
+    }
+
+    private fun hasMerchantHomepageAnchors(
+        rootNode: AccessibilityNodeInfo,
+        normalizedTarget: String
+    ): Boolean {
+        return hasMerchantHeaderAnchor(rootNode, normalizedTarget) &&
+            hasMerchantBottomActionBarAnchor(rootNode)
+    }
+
+    private fun hasMerchantHeaderAnchor(
+        rootNode: AccessibilityNodeInfo,
+        normalizedTarget: String
+    ): Boolean {
+        val nodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val text = NodeUtils.getNodeText(node)
+                if (text.isBlank()) {
+                    false
+                } else {
+                    val bounds = Rect()
+                    node.getBoundsInScreen(bounds)
+                    !bounds.isEmpty &&
+                        bounds.top in 450..1500 &&
+                        bounds.bottom <= 1700
+                }
+            },
+            maxDepth = 24
+        )
+
+        var hasMerchantTitle = normalizedTarget.isBlank()
+        var hintMatches = 0
+
+        try {
+            nodes.forEach { node ->
+                val text = NodeUtils.getNodeText(node)
+                val normalizedText = normalizeText(text)
+                if (!hasMerchantTitle && normalizedTarget.isNotBlank() && normalizedText.contains(normalizedTarget)) {
+                    hasMerchantTitle = true
+                }
+                if (MERCHANT_HOME_TOP_HINTS.any { hint -> text.contains(hint, ignoreCase = true) }) {
+                    hintMatches++
+                }
+            }
+        } finally {
+            NodeUtils.recycleNodes(nodes)
         }
 
-        return hasDetailSignal && !hasVisibleSearchInput
+        return hasMerchantTitle && hintMatches > 0
+    }
+
+    private fun hasMerchantBottomActionBarAnchor(rootNode: AccessibilityNodeInfo): Boolean {
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.88f).toInt()
+        val minWidth = (metrics.widthPixels * 0.98f).toInt()
+
+        val bottomBarNode = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                val bounds = Rect()
+                node.getBoundsInScreen(bounds)
+                !bounds.isEmpty &&
+                    bounds.top >= minTop &&
+                    bounds.left <= 10 &&
+                    bounds.right >= metrics.widthPixels - 10 &&
+                    bounds.width() >= minWidth &&
+                    bounds.height() in 140..260 &&
+                    !node.isScrollable
+            },
+            maxDepth = 18
+        )
+
+        return bottomBarNode?.let { node ->
+            node.recycle()
+            true
+        } ?: false
     }
 
     private fun tapMerchantEntryBand(merchantNode: AccessibilityNodeInfo): Boolean {

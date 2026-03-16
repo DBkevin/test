@@ -325,6 +325,13 @@ class CaptureCoordinator(
 
         activeExecution.stage = CaptureStage.OPENING_DETAIL
         delay(resolveDetailOpenDelayMs())
+        val merchantHomepageReady = searchController.waitForMerchantHomepageAnchors(
+            activeExecution.task.hospitalName,
+            resolveDetailOpenDelayMs() + 1_500L
+        )
+        if (!merchantHomepageReady) {
+            return CaptureAttemptResult(errorMessage = "进入商家详情后未确认店铺首页锚点")
+        }
 
         activeExecution.stage = CaptureStage.COLLECTING
         val records = collectDetailRecords(activeExecution, null)
