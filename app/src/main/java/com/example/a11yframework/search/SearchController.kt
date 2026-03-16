@@ -25,6 +25,7 @@ class SearchController(
     companion object {
         private const val TAG = "SearchController"
         private const val SEARCH_NODE_MAX_DEPTH = 18
+        private const val MERCHANT_RESULT_NODE_MAX_DEPTH = 32
         private const val SEARCH_PREPARE_MAX_ATTEMPTS = 6
         private const val SEARCH_RETRY_DELAY_MS = 700L
         private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 1800L
@@ -885,7 +886,7 @@ class SearchController(
                         text.contains(normalizedTarget) || normalizedTarget.contains(text)
                     )
                 },
-                maxDepth = 20
+                maxDepth = MERCHANT_RESULT_NODE_MAX_DEPTH
             )
 
             val scoredCandidates = candidates
