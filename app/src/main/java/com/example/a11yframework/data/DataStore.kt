@@ -20,7 +20,7 @@ class DataStore(context: Context) {
     companion object {
         private const val TAG = "DataStore"
         private const val DB_NAME = "a11y_scraped_data.db"
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
         
         private const val TABLE_NAME = "scraped_data"
         
@@ -33,7 +33,41 @@ class DataStore(context: Context) {
         private const val COL_CONTENT = "content"  // JSON 字符串
         private const val COL_RAW_TEXT = "raw_text"
         private const val COL_METADATA = "metadata"  // JSON 字符串
+        private const val COL_DEDUP_KEY = "dedup_key"
         private const val COL_CREATED_AT = "created_at"
+
+        internal fun buildDedupKey(data: ScrapedData): String {
+            val merchantName = normalizeKeyPart(
+                data.content["merchantName"]
+                    ?: data.content["hospitalName"]
+                    ?: data.content["shopName"]
+                    ?: ""
+            )
+            val title = normalizeKeyPart(
+                data.content["groupBuyTitle"]
+                    ?: data.content["title"]
+                    ?: ""
+            )
+            val price = normalizeKeyPart(data.content["price"] ?: "")
+            val originalPrice = normalizeKeyPart(data.content["originalPrice"] ?: "")
+
+            return listOf(
+                normalizeKeyPart(data.pluginId),
+                normalizeKeyPart(data.pageType),
+                normalizeKeyPart(data.dataType),
+                merchantName,
+                title,
+                price,
+                originalPrice
+            ).joinToString("|")
+        }
+
+        private fun normalizeKeyPart(value: String): String {
+            return value
+                .trim()
+                .lowercase()
+                .replace("\\s+".toRegex(), " ")
+        }
     }
     
     private val dbHelper: DbHelper
@@ -51,6 +85,8 @@ class DataStore(context: Context) {
         
         try {
             db.beginTransaction()
+            var insertedCount = 0
+            var skippedCount = 0
             
             dataList.forEach { data ->
                 val values = ContentValues().apply {
@@ -61,14 +97,26 @@ class DataStore(context: Context) {
                     put(COL_CONTENT, gson.toJson(data.content))
                     put(COL_RAW_TEXT, data.rawText)
                     put(COL_METADATA, gson.toJson(data.metadata))
+                    put(COL_DEDUP_KEY, buildDedupKey(data))
                     put(COL_CREATED_AT, System.currentTimeMillis())
                 }
                 
-                db.insert(TABLE_NAME, null, values)
+                val rowId = db.insertWithOnConflict(
+                    TABLE_NAME,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_IGNORE
+                )
+
+                if (rowId == -1L) {
+                    skippedCount++
+                } else {
+                    insertedCount++
+                }
             }
             
             db.setTransactionSuccessful()
-            Log.i(TAG, "Saved ${dataList.size} records")
+            Log.i(TAG, "Saved $insertedCount records, skipped $skippedCount duplicates")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving data", e)
         } finally {
@@ -259,6 +307,7 @@ class DataStore(context: Context) {
                     $COL_CONTENT TEXT,
                     $COL_RAW_TEXT TEXT,
                     $COL_METADATA TEXT,
+                    $COL_DEDUP_KEY TEXT,
                     $COL_CREATED_AT INTEGER NOT NULL
                 )
             """.trimIndent()
@@ -268,14 +317,17 @@ class DataStore(context: Context) {
             // 创建索引
             db.execSQL("CREATE INDEX idx_plugin ON $TABLE_NAME($COL_PLUGIN_ID)")
             db.execSQL("CREATE INDEX idx_timestamp ON $TABLE_NAME($COL_TIMESTAMP)")
+            db.execSQL("CREATE UNIQUE INDEX idx_dedup_key ON $TABLE_NAME($COL_DEDUP_KEY)")
             
             Log.i(TAG, "Database created")
         }
         
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
             Log.w(TAG, "Upgrading database from $oldVersion to $newVersion")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
-            onCreate(db)
+            if (oldVersion < 2) {
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COL_DEDUP_KEY TEXT")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_dedup_key ON $TABLE_NAME($COL_DEDUP_KEY)")
+            }
         }
     }
 }
