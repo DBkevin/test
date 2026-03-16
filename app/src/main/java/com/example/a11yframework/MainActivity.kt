@@ -276,7 +276,8 @@ class MainActivity : AppCompatActivity() {
 
         val started = service.startLocalCapture(
             hospitalName = hospitalName,
-            targetPackage = "com.ss.android.ugc.aweme"
+            targetPackage = "com.ss.android.ugc.aweme",
+            launchTargetApp = false
         ) { result ->
             updateStats()
             val message = if (result.success) {
@@ -290,7 +291,7 @@ class MainActivity : AppCompatActivity() {
         if (started) {
             Toast.makeText(
                 this,
-                "已开始抖音采集，请保持手机停留在可操作状态",
+                "已进入待命采集，请手动打开抖音",
                 Toast.LENGTH_LONG
             ).show()
         } else {

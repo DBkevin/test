@@ -35,6 +35,8 @@ class CaptureCoordinator(
         private const val DEFAULT_CAPTURE_TIMEOUT_MS = 60_000L
         private const val KEY_APP_START_DELAY_MS = "app_start_delay_ms"
         private const val DEFAULT_APP_START_DELAY_MS = 2_500L
+        private const val KEY_MANUAL_APP_WAIT_TIMEOUT_MS = "manual_app_wait_timeout_ms"
+        private const val DEFAULT_MANUAL_APP_WAIT_TIMEOUT_MS = 60_000L
         private const val KEY_RESULT_LIST_WAIT_MS = "result_list_wait_ms"
         private const val DEFAULT_RESULT_LIST_WAIT_MS = 2_500L
         private const val KEY_DETAIL_OPEN_DELAY_MS = "detail_open_delay_ms"
@@ -70,7 +72,10 @@ class CaptureCoordinator(
     @Volatile
     private var activeCapture: ActiveCapture? = null
 
-    suspend fun executeTask(task: HospitalTask): CaptureExecutionResult = executionMutex.withLock {
+    suspend fun executeTask(
+        task: HospitalTask,
+        launchTargetApp: Boolean = true
+    ): CaptureExecutionResult = executionMutex.withLock {
         val targetPackage = resolveTargetPackage(task)
         val appPlugin = service.appPluginManager.findPluginForPackage(targetPackage)
 
@@ -79,16 +84,28 @@ class CaptureCoordinator(
         val activeExecution = ActiveCapture(
             task = task,
             targetPackage = targetPackage,
-            navigationPluginId = appPlugin?.pluginId
+            navigationPluginId = appPlugin?.pluginId,
+            stage = if (launchTargetApp) CaptureStage.OPENING_APP else CaptureStage.WAITING_TARGET_APP
         )
         activeCapture = activeExecution
 
         return try {
-            if (!service.launchTargetApp(targetPackage)) {
+            if (!launchTargetApp) {
+                Log.i(TAG, "Waiting for user to open target app manually: $targetPackage")
+            }
+
+            if (launchTargetApp && !service.launchTargetApp(targetPackage)) {
                 failure(task, targetPackage, "无法打开目标 App: $targetPackage")
-            } else if (!waitForPackage(targetPackage, 15_000L)) {
+            } else if (!waitForPackage(
+                    targetPackage,
+                    if (launchTargetApp) 15_000L else resolveManualAppWaitTimeoutMs()
+                )
+            ) {
                 failure(task, targetPackage, "等待目标 App 超时: $targetPackage")
             } else {
+                if (!launchTargetApp) {
+                    Log.i(TAG, "Target app opened manually, continue capture: $targetPackage")
+                }
                 delay(resolveAppStartDelayMs(appPlugin))
 
                 val attemptResult = when {
@@ -475,6 +492,14 @@ class CaptureCoordinator(
             ).toLong()
     }
 
+    private fun resolveManualAppWaitTimeoutMs(): Long {
+        return service.configManager.getPluginConfigInt(
+            "system",
+            KEY_MANUAL_APP_WAIT_TIMEOUT_MS,
+            DEFAULT_MANUAL_APP_WAIT_TIMEOUT_MS.toInt()
+        ).toLong()
+    }
+
     private fun resolveResultListWaitMs(): Long {
         return service.configManager.getPluginConfigInt(
             "system",
@@ -575,6 +600,7 @@ private data class ActiveCapture(
 
 private enum class CaptureStage {
     OPENING_APP,
+    WAITING_TARGET_APP,
     EXECUTING_PLUGIN_FLOW,
     NAVIGATING_GROUPBUY,
     SEARCHING,

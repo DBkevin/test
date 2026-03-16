@@ -320,6 +320,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
     fun startLocalCapture(
         hospitalName: String,
         targetPackage: String = "com.ss.android.ugc.aweme",
+        launchTargetApp: Boolean = false,
         onCompleted: ((CaptureExecutionResult) -> Unit)? = null
     ): Boolean {
         val normalizedHospitalName = hospitalName.trim()
@@ -336,7 +337,10 @@ class FrameworkAccessibilityService : AccessibilityService() {
         )
 
         serviceScope.launch {
-            val result = captureCoordinator.executeTask(task)
+            val result = captureCoordinator.executeTask(
+                task = task,
+                launchTargetApp = launchTargetApp
+            )
             onCompleted?.let { callback ->
                 Handler(Looper.getMainLooper()).post {
                     callback(result)
