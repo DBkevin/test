@@ -33,7 +33,9 @@ data class CollectionConfig(
     val maxIdleScrollRounds: Int = 2,
     val expandKeywords: List<String> = emptyList(),
     val expandSettleMs: Long = 1_000L,
-    val maxExpandClicksPerRound: Int = 0
+    val maxExpandClicksPerRound: Int = 0,
+    val stopTextsAll: List<String> = emptyList(),
+    val stopTextsAny: List<String> = emptyList()
 )
 
 data class NavigationStep(

@@ -21,6 +21,12 @@ import kotlin.math.abs
 class SearchController(
     private val service: AccessibilityService
 ) {
+
+    data class PageTextMatchResult(
+        val matched: Boolean,
+        val matchedAllTexts: List<String> = emptyList(),
+        val matchedAnyTexts: List<String> = emptyList()
+    )
     
     companion object {
         private const val TAG = "SearchController"
@@ -387,6 +393,52 @@ class SearchController(
         }
 
         return false
+    }
+
+    fun matchCurrentPageTexts(
+        requiredAllTexts: List<String> = emptyList(),
+        requiredAnyTexts: List<String> = emptyList()
+    ): PageTextMatchResult {
+        val normalizedAllTexts = requiredAllTexts
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+        val normalizedAnyTexts = requiredAnyTexts
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+
+        if (normalizedAllTexts.isEmpty() && normalizedAnyTexts.isEmpty()) {
+            return PageTextMatchResult(matched = false)
+        }
+
+        val rootNode = service.rootInActiveWindow ?: return PageTextMatchResult(matched = false)
+
+        return try {
+            val pageText = NodeUtils.getAllNodeText(
+                rootNode,
+                maxDepth = 18,
+                maxNodes = 420,
+                maxTextLength = 7000
+            )
+            val matchedAllTexts = normalizedAllTexts.filter { target ->
+                pageText.contains(target, ignoreCase = true)
+            }
+            val matchedAnyTexts = normalizedAnyTexts.filter { target ->
+                pageText.contains(target, ignoreCase = true)
+            }
+            val allMatched = normalizedAllTexts.isEmpty() ||
+                matchedAllTexts.size == normalizedAllTexts.size
+            val anyMatched = normalizedAnyTexts.isEmpty() || matchedAnyTexts.isNotEmpty()
+
+            PageTextMatchResult(
+                matched = allMatched && anyMatched,
+                matchedAllTexts = matchedAllTexts,
+                matchedAnyTexts = matchedAnyTexts
+            )
+        } finally {
+            rootNode.recycle()
+        }
     }
 
     private fun prepareSearchBox(entryKeywords: List<String> = SEARCH_KEYWORDS): AccessibilityNodeInfo? {

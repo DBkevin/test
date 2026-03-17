@@ -70,7 +70,9 @@ class AppPluginParser {
             maxIdleScrollRounds = jsonObject.optInt("max_idle_scroll_rounds", 2),
             expandKeywords = parseStringArray(jsonObject.optJSONArray("expand_keywords") ?: JSONArray()),
             expandSettleMs = jsonObject.optLong("expand_settle_ms", 1_000L),
-            maxExpandClicksPerRound = jsonObject.optInt("max_expand_clicks_per_round", 0)
+            maxExpandClicksPerRound = jsonObject.optInt("max_expand_clicks_per_round", 0),
+            stopTextsAll = parseStringArray(jsonObject.optJSONArray("stop_texts_all") ?: JSONArray()),
+            stopTextsAny = parseStringArray(jsonObject.optJSONArray("stop_texts_any") ?: JSONArray())
         )
     }
 

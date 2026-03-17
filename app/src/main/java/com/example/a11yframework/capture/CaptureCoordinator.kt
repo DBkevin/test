@@ -363,8 +363,17 @@ class CaptureCoordinator(
         var scrollRounds = 0
 
         collectCurrentViewport(activeExecution, collectionConfig, deadline)
+        if (shouldStopCollection(collectionConfig)) {
+            Log.i(TAG, "Stop collection after initial viewport capture")
+            return activeExecution.snapshotRecords()
+        }
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
+            if (shouldStopCollection(collectionConfig)) {
+                Log.i(TAG, "Stop collection before next scroll: round=$scrollRounds")
+                break
+            }
+
             val beforeCount = activeExecution.recordCount()
             val beforeRevision = activeExecution.revision()
             val scrolled = searchController.scrollCurrentPage()
@@ -375,6 +384,11 @@ class CaptureCoordinator(
             scrollRounds++
             delay(resolveScrollSettleMs(collectionConfig))
             collectCurrentViewport(activeExecution, collectionConfig, deadline)
+
+            if (shouldStopCollection(collectionConfig)) {
+                Log.i(TAG, "Stop collection after scroll round=$scrollRounds")
+                break
+            }
 
             val afterCount = activeExecution.recordCount()
             val afterRevision = activeExecution.revision()
@@ -389,6 +403,28 @@ class CaptureCoordinator(
         }
 
         return activeExecution.snapshotRecords()
+    }
+
+    private fun shouldStopCollection(collectionConfig: CollectionConfig?): Boolean {
+        val stopTextsAll = resolveStopTextsAll(collectionConfig)
+        val stopTextsAny = resolveStopTextsAny(collectionConfig)
+        if (stopTextsAll.isEmpty() && stopTextsAny.isEmpty()) {
+            return false
+        }
+
+        val matchResult = searchController.matchCurrentPageTexts(
+            requiredAllTexts = stopTextsAll,
+            requiredAnyTexts = stopTextsAny
+        )
+        if (!matchResult.matched) {
+            return false
+        }
+
+        Log.i(
+            TAG,
+            "Detected end-of-list markers: all=${matchResult.matchedAllTexts.joinToString(",")}, any=${matchResult.matchedAnyTexts.joinToString(",")}"
+        )
+        return true
     }
 
     private suspend fun collectCurrentViewport(
@@ -602,6 +638,22 @@ class CaptureCoordinator(
                 KEY_MAX_EXPAND_CLICKS_PER_ROUND,
                 DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND
             )
+    }
+
+    private fun resolveStopTextsAll(collectionConfig: CollectionConfig? = null): List<String> {
+        return collectionConfig?.stopTextsAll
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.distinct()
+            .orEmpty()
+    }
+
+    private fun resolveStopTextsAny(collectionConfig: CollectionConfig? = null): List<String> {
+        return collectionConfig?.stopTextsAny
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.distinct()
+            .orEmpty()
     }
 }
 

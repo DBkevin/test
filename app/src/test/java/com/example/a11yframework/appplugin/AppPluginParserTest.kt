@@ -34,7 +34,9 @@ class AppPluginParserTest {
                 ],
                 "collection": {
                   "capture_timeout_ms": 30000,
-                  "max_scroll_rounds": 5
+                  "max_scroll_rounds": 5,
+                  "stop_texts_all": ["收起", "预约到店专属礼"],
+                  "stop_texts_any": ["在线咨询", "预约有礼"]
                 }
               }
             }
@@ -51,6 +53,8 @@ class AppPluginParserTest {
         assertEquals(1800L, plugin.captureFlow?.appStartDelayMs)
         assertEquals(30000L, plugin.captureFlow?.collection?.captureTimeoutMs)
         assertEquals(5, plugin.captureFlow?.collection?.maxScrollRounds)
+        assertEquals(listOf("收起", "预约到店专属礼"), plugin.captureFlow?.collection?.stopTextsAll)
+        assertEquals(listOf("在线咨询", "预约有礼"), plugin.captureFlow?.collection?.stopTextsAny)
         assertEquals(NavigationStepType.CLICK_TEXT, plugin.captureFlow?.steps?.first()?.type)
     }
 
