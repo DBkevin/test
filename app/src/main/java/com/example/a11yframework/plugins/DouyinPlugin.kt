@@ -31,6 +31,18 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         private val HOSPITAL_KEYWORDS = listOf("医院", "门诊", "整形", "美容", "医美", "clinic")
         private val SHOP_PAGE_SIGNALS = listOf("收藏", "关注", "回头客", "无隐形消费", "领券抢购", "已售")
+        private val CARD_HINT_KEYWORDS = listOf(
+            "现价",
+            "原价",
+            "已售",
+            "人逛过",
+            "次卡",
+            "周末节假日通用",
+            "随时退",
+            "至少提前",
+            "领券抢购",
+            "券后"
+        )
 
         private const val PAGE_HOSPITAL_DETAIL = "hospital_detail"
         private const val GROUP_BUY_DATA_TYPE = "group_buys"
@@ -38,10 +50,15 @@ class DouyinPlugin : IAccessibilityPlugin {
         private const val MIN_CARD_HEIGHT = 120
         private const val MIN_CARD_TOP = 300
 
-        private val TITLE_REGEX = Regex("""^(.*?)(?=,周|,至少提前|,随时退|,原价|,现价|,已售)""")
+        private val TITLE_REGEX = Regex(
+            """^(.*?)(?=,(?:周|至少提前|随时退|原价|现价|已售|[0-9A-Za-z+\-千wW万]+\s*人逛过|次卡|放心付|券后|周末节假日通用|预约|可用)|$)"""
+        )
         private val ORIGINAL_PRICE_REGEX = Regex("""原价\s*([0-9]+(?:\.[0-9]+)?)元""")
         private val CURRENT_PRICE_REGEX = Regex("""现价\s*([0-9]+(?:\.[0-9]+)?)元""")
         private val SALES_REGEX = Regex("""(已售[0-9A-Za-z+\-千wW万]+)""")
+        private val BROWSE_REGEX = Regex("""([0-9A-Za-z+\-千wW万]+\s*人逛过)""")
+        private val DISPLAY_PRICE_REGEX = Regex("""¥\s*([0-9]+(?:\.[0-9]+)?)""")
+        private val TITLE_TEXT_REGEX = Regex("""[\p{IsHan}A-Za-z]{2,}""")
 
         internal data class ParsedCard(
             val title: String,
@@ -63,7 +80,6 @@ class DouyinPlugin : IAccessibilityPlugin {
         internal fun parseGroupBuyCardText(cardText: String): ParsedCard? {
             val normalized = normalizeCardText(cardText)
             if (normalized.isBlank()) return null
-            if (!normalized.contains("现价") || !normalized.contains("已售")) return null
 
             val title = TITLE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
                 ?.let(::normalizeCardText)
@@ -71,9 +87,25 @@ class DouyinPlugin : IAccessibilityPlugin {
                 .orEmpty()
             if (title.isBlank()) return null
 
-            val price = CURRENT_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1).orEmpty()
-            val originalPrice = ORIGINAL_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1).orEmpty()
-            val sales = SALES_REGEX.find(normalized)?.groupValues?.getOrNull(1).orEmpty()
+            val displayPrices = DISPLAY_PRICE_REGEX.findAll(normalized)
+                .map { it.groupValues.getOrNull(1).orEmpty() }
+                .filter { it.isNotBlank() }
+                .toList()
+
+            val price = CURRENT_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+                ?: displayPrices.getOrNull(0)
+                ?: ""
+            val originalPrice = ORIGINAL_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+                ?: displayPrices.getOrNull(1)
+                ?: ""
+            val sales = SALES_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+                ?: BROWSE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+                ?: ""
+
+            val hasCommerceHint = CARD_HINT_KEYWORDS.any { normalized.contains(it) }
+            if (price.isBlank() || (!hasCommerceHint && sales.isBlank())) {
+                return null
+            }
 
             return ParsedCard(
                 title = title,
@@ -115,7 +147,10 @@ class DouyinPlugin : IAccessibilityPlugin {
         val configManager: ConfigManager? = frameworkService?.configManager
 
         val loadedKeywords = configManager?.getPluginConfigList(pluginId, "keywords")
-        keywords = loadedKeywords?.filter { it.isNotEmpty() } ?: listOf("郑州美莱")
+        keywords = loadedKeywords
+            ?.filter { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: listOf("郑州美莱")
         currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "feed") ?: "feed"
         lastMerchantName = ""
 
@@ -271,13 +306,16 @@ class DouyinPlugin : IAccessibilityPlugin {
 
     private fun extractShopSignals(rootNode: AccessibilityNodeInfo): String {
         val signalNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
-            val label = NodeUtils.getNodeText(node)
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
             if (label.isBlank()) return@findNodesByCondition false
+            if (label.length > 32) return@findNodesByCondition false
+            if (label.contains("原价") || label.contains("现价")) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            rect.top in 500..1700 &&
+            rect.top in 300..1400 &&
+                rect.bottom <= 1500 &&
                 SHOP_PAGE_SIGNALS.any { signal -> label.contains(signal) }
         }, maxDepth = 24)
 
@@ -292,21 +330,25 @@ class DouyinPlugin : IAccessibilityPlugin {
         val cards = findVisibleGroupBuyCards(rootNode)
         if (cards.isEmpty()) return emptyList()
 
+        val skippedSamples = mutableListOf<String>()
         val items = cards.mapNotNull { cardNode ->
-            extractGroupBuyItem(cardNode)
+            extractGroupBuyItem(cardNode, skippedSamples)
         }.distinctBy { item ->
             listOf(item.title, item.price, item.originalPrice).joinToString("|")
         }
 
         Log.d(TAG, "Visible group-buy cards: ${items.size}")
+        if (items.isEmpty() && skippedSamples.isNotEmpty()) {
+            Log.d(TAG, "Skipped group-buy samples: ${skippedSamples.joinToString(" || ")}")
+        }
         return items
     }
 
     private fun findVisibleGroupBuyCards(rootNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
         val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
-            val label = NodeUtils.getNodeText(node)
+            val label = getNodeText(node)
             if (label.isBlank()) return@findNodesByCondition false
-            if (!label.contains("现价") || !label.contains("已售")) return@findNodesByCondition false
+            if (!isLikelyGroupBuyCardLabel(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
@@ -323,10 +365,19 @@ class DouyinPlugin : IAccessibilityPlugin {
             .sortedBy { nodeTop(it) }
     }
 
-    private fun extractGroupBuyItem(cardNode: AccessibilityNodeInfo): GroupBuyInfo? {
+    private fun extractGroupBuyItem(
+        cardNode: AccessibilityNodeInfo,
+        skippedSamples: MutableList<String>
+    ): GroupBuyInfo? {
         val ownLabel = normalizeCardText(NodeUtils.getNodeText(cardNode))
         val rawCardText = if (ownLabel.isNotBlank()) ownLabel else normalizeCardText(getNodeText(cardNode))
-        val parsed = parseGroupBuyCardText(rawCardText) ?: return null
+        val parsed = parseGroupBuyCardText(rawCardText)
+        if (parsed == null) {
+            if (skippedSamples.size < 3 && rawCardText.isNotBlank()) {
+                skippedSamples.add(rawCardText.take(140))
+            }
+            return null
+        }
 
         return GroupBuyInfo(
             title = parsed.title,
@@ -335,6 +386,19 @@ class DouyinPlugin : IAccessibilityPlugin {
             sales = parsed.sales,
             rawText = parsed.rawText
         )
+    }
+
+    private fun isLikelyGroupBuyCardLabel(label: String): Boolean {
+        val normalized = normalizeCardText(label)
+        if (normalized.isBlank()) return false
+
+        val hasPrice = normalized.contains("现价") ||
+            normalized.contains("原价") ||
+            DISPLAY_PRICE_REGEX.containsMatchIn(normalized)
+        val hasHint = CARD_HINT_KEYWORDS.any { normalized.contains(it) }
+        val hasTitleText = TITLE_TEXT_REGEX.containsMatchIn(normalized)
+
+        return hasPrice && hasHint && hasTitleText
     }
 
     private fun nodeBoundsKey(node: AccessibilityNodeInfo): String {

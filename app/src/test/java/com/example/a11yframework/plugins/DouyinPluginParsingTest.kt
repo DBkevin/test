@@ -25,4 +25,17 @@ class DouyinPluginParsingTest {
 
         assertEquals("BB长效水光B润致娃娃针2ml", normalized)
     }
+
+    @Test
+    fun `parse deep list group-buy card text with browse count and display prices`() {
+        val parsed = DouyinPlugin.parseGroupBuyCardText(
+            "美莱 钻石超塑（双下巴）-爆脂+紧致,1000+人逛过,周末节假日通用,¥674.9 ¥718"
+        )
+
+        assertNotNull(parsed)
+        assertEquals("美莱 钻石超塑（双下巴）-爆脂+紧致", parsed?.title)
+        assertEquals("674.9", parsed?.price)
+        assertEquals("718", parsed?.originalPrice)
+        assertEquals("1000+人逛过", parsed?.sales)
+    }
 }
