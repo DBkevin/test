@@ -390,6 +390,14 @@ class CaptureCoordinator(
                 break
             }
 
+            if (
+                activeExecution.recordCount() > 0 &&
+                !service.isCurrentTargetPage(activeExecution.targetPackage)
+            ) {
+                Log.i(TAG, "Stop collection after leaving target page: round=$scrollRounds")
+                break
+            }
+
             val afterCount = activeExecution.recordCount()
             val afterRevision = activeExecution.revision()
             if (afterCount <= beforeCount && afterRevision <= beforeRevision) {

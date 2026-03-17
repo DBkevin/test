@@ -31,14 +31,16 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         private val HOSPITAL_KEYWORDS = listOf("医院", "门诊", "整形", "美容", "医美", "clinic")
         private val SHOP_PAGE_SIGNALS = listOf("收藏", "关注", "回头客", "无隐形消费", "领券抢购", "已售")
-        private val NON_GROUPBUY_MODULE_MARKERS = listOf(
+        private val HARD_NON_GROUPBUY_MODULE_MARKERS = listOf(
             "你可能感兴趣的地点",
             "你可能感兴趣",
-            "预约到店送好礼",
-            "预约到店专属礼",
-            "专属礼",
             "猜你喜欢"
         )
+        private val NON_MERCHANT_TEXT_MARKERS = listOf(
+            "预约到店送好礼",
+            "预约到店专属礼",
+            "专属礼"
+        ) + HARD_NON_GROUPBUY_MODULE_MARKERS
         private val CARD_HINT_KEYWORDS = listOf(
             "现价",
             "原价",
@@ -185,8 +187,8 @@ class DouyinPlugin : IAccessibilityPlugin {
         if (nodeInfo == null) return false
 
         val pageText = getNodeText(nodeInfo)
-        if (containsNonGroupBuyModule(pageText)) {
-            Log.d(TAG, "Detected non-groupbuy module, skip target page")
+        if (containsHardNonGroupBuyModule(pageText)) {
+            Log.d(TAG, "Detected hard non-groupbuy module, skip target page")
             return false
         }
 
@@ -202,7 +204,7 @@ class DouyinPlugin : IAccessibilityPlugin {
         val hasMerchantContext =
             merchantName.isNotBlank() ||
                 signalCount >= 2 ||
-                (lastMerchantName.isNotBlank() && !containsNonGroupBuyModule(pageText))
+                (lastMerchantName.isNotBlank() && !containsHardNonGroupBuyModule(pageText))
         val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
         if (isTarget) {
             Log.i(
@@ -304,7 +306,7 @@ class DouyinPlugin : IAccessibilityPlugin {
             val label = NodeUtils.getNodeText(node)
             if (label.isBlank()) return@findNodesByCondition false
             if (label.contains("现价") || label.contains("已售")) return@findNodesByCondition false
-            if (containsNonGroupBuyModule(label)) return@findNodesByCondition false
+            if (containsNonMerchantTextMarker(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
@@ -327,8 +329,14 @@ class DouyinPlugin : IAccessibilityPlugin {
             .orEmpty()
     }
 
-    private fun containsNonGroupBuyModule(text: String): Boolean {
-        return NON_GROUPBUY_MODULE_MARKERS.any { marker ->
+    private fun containsHardNonGroupBuyModule(text: String): Boolean {
+        return HARD_NON_GROUPBUY_MODULE_MARKERS.any { marker ->
+            text.contains(marker, ignoreCase = true)
+        }
+    }
+
+    private fun containsNonMerchantTextMarker(text: String): Boolean {
+        return NON_MERCHANT_TEXT_MARKERS.any { marker ->
             text.contains(marker, ignoreCase = true)
         }
     }

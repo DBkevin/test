@@ -269,6 +269,21 @@ class FrameworkAccessibilityService : AccessibilityService() {
     fun scrapeCurrentPageNow(packageName: String): Boolean {
         return scrapeCurrentWindow(packageName, force = true)
     }
+
+    fun isCurrentTargetPage(packageName: String): Boolean {
+        val plugin = activePlugin ?: pluginManager.findPluginForPackage(packageName) ?: return false
+        val rootNode = rootInActiveWindow ?: return false
+
+        return try {
+            val rootPackage = rootNode.packageName?.toString().orEmpty()
+            rootPackage == packageName && plugin.isTargetPage(rootNode)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to inspect current target page", e)
+            false
+        } finally {
+            rootNode.recycle()
+        }
+    }
     
     override fun onInterrupt() {
         Log.w(TAG, "Service interrupted")
