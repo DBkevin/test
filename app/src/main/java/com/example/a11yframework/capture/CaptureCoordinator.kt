@@ -353,12 +353,9 @@ class CaptureCoordinator(
 
         activeExecution.stage = CaptureStage.OPENING_DETAIL
         delay(resolveDetailOpenDelayMs())
-        val merchantHomepageReady = searchController.waitForMerchantHomepageAnchors(
-            activeExecution.task.hospitalName,
-            resolveDetailOpenDelayMs() + 1_500L
-        )
-        if (!merchantHomepageReady) {
-            return CaptureAttemptResult(errorMessage = "进入商家详情后未确认店铺首页锚点")
+        val collectableViewportReady = prepareDouyinCollectableViewport(activeExecution)
+        if (!collectableViewportReady) {
+            return CaptureAttemptResult(errorMessage = "进入商家详情后未定位到可采集团购视口")
         }
 
         activeExecution.stage = CaptureStage.COLLECTING
@@ -368,6 +365,45 @@ class CaptureCoordinator(
         } else {
             CaptureAttemptResult(records = records)
         }
+    }
+
+    private suspend fun prepareDouyinCollectableViewport(activeExecution: ActiveCapture): Boolean {
+        val merchantName = activeExecution.task.hospitalName
+        val detailWaitMs = resolveDetailOpenDelayMs() + 1_500L
+
+        if (searchController.waitForMerchantHomepageAnchors(merchantName, detailWaitMs)) {
+            return true
+        }
+
+        if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+            return true
+        }
+
+        repeat(3) { attempt ->
+            if (!searchController.isOnMerchantDetailPage(merchantName)) {
+                return false
+            }
+
+            val movedUp = searchController.scrollCurrentPage(forward = false)
+            if (!movedUp) {
+                return false
+            }
+
+            Log.i(
+                TAG,
+                "Adjust Douyin merchant viewport upward before collection: step=${attempt + 1}"
+            )
+            delay(resolveScrollSettleMs(null))
+
+            if (searchController.waitForMerchantHomepageAnchors(merchantName, 900L)) {
+                return true
+            }
+            if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+                return true
+            }
+        }
+
+        return false
     }
 
     private suspend fun waitForCollectedRecords(
