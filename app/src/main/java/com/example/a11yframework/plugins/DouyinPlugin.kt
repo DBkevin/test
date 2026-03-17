@@ -31,6 +31,14 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         private val HOSPITAL_KEYWORDS = listOf("医院", "门诊", "整形", "美容", "医美", "clinic")
         private val SHOP_PAGE_SIGNALS = listOf("收藏", "关注", "回头客", "无隐形消费", "领券抢购", "已售")
+        private val NON_GROUPBUY_MODULE_MARKERS = listOf(
+            "你可能感兴趣的地点",
+            "你可能感兴趣",
+            "预约到店送好礼",
+            "预约到店专属礼",
+            "专属礼",
+            "猜你喜欢"
+        )
         private val CARD_HINT_KEYWORDS = listOf(
             "现价",
             "原价",
@@ -177,21 +185,29 @@ class DouyinPlugin : IAccessibilityPlugin {
         if (nodeInfo == null) return false
 
         val pageText = getNodeText(nodeInfo)
+        if (containsNonGroupBuyModule(pageText)) {
+            Log.d(TAG, "Detected non-groupbuy module, skip target page")
+            return false
+        }
+
         val visibleCards = findVisibleGroupBuyCards(nodeInfo)
         val signalCount = SHOP_PAGE_SIGNALS.count { signal ->
             pageText.contains(signal, ignoreCase = true)
         }
-        val merchantName = extractMerchantName(nodeInfo).ifBlank { lastMerchantName }
+        val merchantName = extractMerchantName(nodeInfo)
         val hasConfiguredKeyword = keywords.any { keyword ->
             pageText.contains(keyword, ignoreCase = true)
         }
 
-        val hasMerchantContext = merchantName.isNotBlank() || signalCount >= 2
+        val hasMerchantContext =
+            merchantName.isNotBlank() ||
+                signalCount >= 2 ||
+                (lastMerchantName.isNotBlank() && !containsNonGroupBuyModule(pageText))
         val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
         if (isTarget) {
             Log.i(
                 TAG,
-                "Target merchant page detected: merchant=$merchantName, signals=$signalCount, cards=${visibleCards.size}"
+                "Target merchant page detected: merchant=${merchantName.ifBlank { lastMerchantName }}, signals=$signalCount, cards=${visibleCards.size}"
             )
         }
         return isTarget
@@ -279,10 +295,16 @@ class DouyinPlugin : IAccessibilityPlugin {
     }
 
     private fun extractMerchantName(rootNode: AccessibilityNodeInfo): String {
+        val firstCardTop = findVisibleGroupBuyCards(rootNode)
+            .map { nodeTop(it) }
+            .minOrNull()
+            ?: Int.MAX_VALUE
+
         val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
             val label = NodeUtils.getNodeText(node)
             if (label.isBlank()) return@findNodesByCondition false
             if (label.contains("现价") || label.contains("已售")) return@findNodesByCondition false
+            if (containsNonGroupBuyModule(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
@@ -290,6 +312,7 @@ class DouyinPlugin : IAccessibilityPlugin {
             rect.top in 300..1400 &&
                 rect.width() >= 400 &&
                 rect.height() <= 220 &&
+                rect.bottom <= firstCardTop - 40 &&
                 HOSPITAL_KEYWORDS.any { keyword -> label.contains(keyword, ignoreCase = true) }
         }, maxDepth = 24)
 
@@ -302,6 +325,12 @@ class DouyinPlugin : IAccessibilityPlugin {
             .map { it.second }
             .firstOrNull()
             .orEmpty()
+    }
+
+    private fun containsNonGroupBuyModule(text: String): Boolean {
+        return NON_GROUPBUY_MODULE_MARKERS.any { marker ->
+            text.contains(marker, ignoreCase = true)
+        }
     }
 
     private fun extractShopSignals(rootNode: AccessibilityNodeInfo): String {
