@@ -42,17 +42,21 @@ class SearchController(
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
+        private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
+        private const val DOUYIN_HOME_BOTTOM_TAB_TAP_Y = 3020
         private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_X = 823
         private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y = 516
         private const val DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS = 7_000L
+        private const val DOUYIN_HOME_PREPARE_MAX_ATTEMPTS = 4
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
         private val SEARCH_BUTTON_KEYWORDS = listOf("搜索", "查找", "search", "🔍")
         private val DOUYIN_GROUPBUY_PAGE_KEYWORDS = listOf("附近好店", "美食", "休闲娱乐", "景点/周边游", "酒店民宿", "丽人")
         private val DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS = listOf("美莱团购", "郑州", "搜索")
+        private val DOUYIN_HOME_PAGE_KEYWORDS = listOf("团购", "推荐", "搜索", "首页", "我")
         private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
         private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
@@ -111,6 +115,10 @@ class SearchController(
     }
 
     fun searchDouyinGroupBuy(keyword: String): Boolean {
+        if (!prepareDouyinHomePage()) {
+            Log.w(TAG, "Douyin home page not confirmed before selecting group buy tab")
+        }
+
         val tabSelected = selectDouyinGroupBuyTab()
         if (tabSelected) {
             Thread.sleep(1200)
@@ -394,6 +402,39 @@ class SearchController(
         }
 
         return false
+    }
+
+    private fun prepareDouyinHomePage(): Boolean {
+        repeat(DOUYIN_HOME_PREPARE_MAX_ATTEMPTS) { attempt ->
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                try {
+                    if (isLikelyDouyinGroupBuyPage(rootNode) || isLikelyDouyinHomePage(rootNode)) {
+                        return true
+                    }
+                } finally {
+                    rootNode.recycle()
+                }
+            }
+
+            val tappedHome = tapDouyinHomeBottomTab()
+            if (tappedHome) {
+                Log.d(TAG, "Tapped Douyin home bottom tab on attempt=${attempt + 1}")
+                Thread.sleep(1200)
+                return@repeat
+            }
+
+            val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+            Log.d(TAG, "Performed Douyin back to reach home: attempt=${attempt + 1}, success=$backed")
+            Thread.sleep(1200)
+        }
+
+        val rootNode = service.rootInActiveWindow ?: return false
+        return try {
+            isLikelyDouyinGroupBuyPage(rootNode) || isLikelyDouyinHomePage(rootNode)
+        } finally {
+            rootNode.recycle()
+        }
     }
 
     fun matchCurrentPageTexts(
@@ -822,6 +863,76 @@ class SearchController(
         val matched = searchEntryNode != null
         searchEntryNode?.recycle()
         return matched
+    }
+
+    private fun isLikelyDouyinHomePage(rootNode: AccessibilityNodeInfo): Boolean {
+        val minBottomTabTop = (service.resources.displayMetrics.heightPixels * 0.82f).toInt()
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 18,
+            maxNodes = 420,
+            maxTextLength = 7000
+        )
+        val hitCount = DOUYIN_HOME_PAGE_KEYWORDS.count { keyword ->
+            pageText.contains(keyword, ignoreCase = true)
+        }
+        if (hitCount >= 4) {
+            return true
+        }
+
+        val homeTabNode = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                val text = getComparableNodeText(node)
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                text.contains("首页", ignoreCase = true) &&
+                    bounds.top >= minBottomTabTop
+            },
+            maxDepth = 20
+        )
+
+        val matched = homeTabNode != null
+        homeTabNode?.recycle()
+        return matched
+    }
+
+    private fun tapDouyinHomeBottomTab(): Boolean {
+        val minBottomTabTop = (service.resources.displayMetrics.heightPixels * 0.82f).toInt()
+        val rootNode = service.rootInActiveWindow
+        if (rootNode != null) {
+            try {
+                val homeNode = NodeUtils.findNodeByCondition(
+                    rootNode,
+                    condition = { node ->
+                        val text = getComparableNodeText(node)
+                        val bounds = Rect().also { node.getBoundsInScreen(it) }
+                        text.contains("首页", ignoreCase = true) &&
+                            bounds.top >= minBottomTabTop
+                    },
+                    maxDepth = 20
+                )
+
+                if (homeNode != null) {
+                    try {
+                        val clicked = NodeUtils.clickNode(homeNode)
+                        if (clicked) {
+                            return true
+                        }
+
+                        val tapped = tapNodeCenter(homeNode)
+                        if (tapped) {
+                            return true
+                        }
+                    } finally {
+                        homeNode.recycle()
+                    }
+                }
+            } finally {
+                rootNode.recycle()
+            }
+        }
+
+        return tapScreen(DOUYIN_HOME_BOTTOM_TAB_TAP_X, DOUYIN_HOME_BOTTOM_TAB_TAP_Y)
     }
 
     private fun waitForDouyinGroupBuyPage(timeoutMs: Long): Boolean {
