@@ -35,7 +35,8 @@ class SearchController(
         private const val MERCHANT_RESULT_NODE_MAX_DEPTH = 32
         private const val SEARCH_PREPARE_MAX_ATTEMPTS = 6
         private const val SEARCH_RETRY_DELAY_MS = 700L
-        private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 1800L
+        private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 4200L
+        private const val MERCHANT_RESULT_OPEN_GRACE_MS = 1500L
         private const val DOUYIN_GROUPBUY_TAB_TAP_X = 1016
         private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
@@ -1391,7 +1392,14 @@ class SearchController(
             Thread.sleep(250)
         }
 
-        return false
+        val confirmedByGraceAnchors = waitForMerchantHomepageAnchors(
+            merchantName = merchantName,
+            timeoutMs = MERCHANT_RESULT_OPEN_GRACE_MS
+        )
+        if (confirmedByGraceAnchors) {
+            Log.d(TAG, "Merchant detail page confirmed by homepage anchors during grace window")
+        }
+        return confirmedByGraceAnchors
     }
 
     private fun isLikelyMerchantDetailPage(
