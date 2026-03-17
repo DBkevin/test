@@ -408,13 +408,15 @@ class CaptureCoordinator(
     private fun shouldStopCollection(collectionConfig: CollectionConfig?): Boolean {
         val stopTextsAll = resolveStopTextsAll(collectionConfig)
         val stopTextsAny = resolveStopTextsAny(collectionConfig)
-        if (stopTextsAll.isEmpty() && stopTextsAny.isEmpty()) {
+        val stopTextsNone = resolveStopTextsNone(collectionConfig)
+        if (stopTextsAll.isEmpty() && stopTextsAny.isEmpty() && stopTextsNone.isEmpty()) {
             return false
         }
 
         val matchResult = searchController.matchCurrentPageTexts(
             requiredAllTexts = stopTextsAll,
-            requiredAnyTexts = stopTextsAny
+            requiredAnyTexts = stopTextsAny,
+            absentTexts = stopTextsNone
         )
         if (!matchResult.matched) {
             return false
@@ -422,7 +424,7 @@ class CaptureCoordinator(
 
         Log.i(
             TAG,
-            "Detected end-of-list markers: all=${matchResult.matchedAllTexts.joinToString(",")}, any=${matchResult.matchedAnyTexts.joinToString(",")}"
+            "Detected end-of-list markers: all=${matchResult.matchedAllTexts.joinToString(",")}, any=${matchResult.matchedAnyTexts.joinToString(",")}, none=${stopTextsNone.joinToString(",")}"
         )
         return true
     }
@@ -650,6 +652,14 @@ class CaptureCoordinator(
 
     private fun resolveStopTextsAny(collectionConfig: CollectionConfig? = null): List<String> {
         return collectionConfig?.stopTextsAny
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.distinct()
+            .orEmpty()
+    }
+
+    private fun resolveStopTextsNone(collectionConfig: CollectionConfig? = null): List<String> {
+        return collectionConfig?.stopTextsNone
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
             ?.distinct()

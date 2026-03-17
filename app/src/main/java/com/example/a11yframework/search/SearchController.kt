@@ -25,7 +25,8 @@ class SearchController(
     data class PageTextMatchResult(
         val matched: Boolean,
         val matchedAllTexts: List<String> = emptyList(),
-        val matchedAnyTexts: List<String> = emptyList()
+        val matchedAnyTexts: List<String> = emptyList(),
+        val presentNoneTexts: List<String> = emptyList()
     )
     
     companion object {
@@ -397,7 +398,8 @@ class SearchController(
 
     fun matchCurrentPageTexts(
         requiredAllTexts: List<String> = emptyList(),
-        requiredAnyTexts: List<String> = emptyList()
+        requiredAnyTexts: List<String> = emptyList(),
+        absentTexts: List<String> = emptyList()
     ): PageTextMatchResult {
         val normalizedAllTexts = requiredAllTexts
             .map { it.trim() }
@@ -407,8 +409,12 @@ class SearchController(
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
+        val normalizedAbsentTexts = absentTexts
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
 
-        if (normalizedAllTexts.isEmpty() && normalizedAnyTexts.isEmpty()) {
+        if (normalizedAllTexts.isEmpty() && normalizedAnyTexts.isEmpty() && normalizedAbsentTexts.isEmpty()) {
             return PageTextMatchResult(matched = false)
         }
 
@@ -427,14 +433,19 @@ class SearchController(
             val matchedAnyTexts = normalizedAnyTexts.filter { target ->
                 pageText.contains(target, ignoreCase = true)
             }
+            val presentNoneTexts = normalizedAbsentTexts.filter { target ->
+                pageText.contains(target, ignoreCase = true)
+            }
             val allMatched = normalizedAllTexts.isEmpty() ||
                 matchedAllTexts.size == normalizedAllTexts.size
             val anyMatched = normalizedAnyTexts.isEmpty() || matchedAnyTexts.isNotEmpty()
+            val noneMatched = presentNoneTexts.isEmpty()
 
             PageTextMatchResult(
-                matched = allMatched && anyMatched,
+                matched = allMatched && anyMatched && noneMatched,
                 matchedAllTexts = matchedAllTexts,
-                matchedAnyTexts = matchedAnyTexts
+                matchedAnyTexts = matchedAnyTexts,
+                presentNoneTexts = presentNoneTexts
             )
         } finally {
             rootNode.recycle()

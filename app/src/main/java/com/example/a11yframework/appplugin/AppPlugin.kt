@@ -35,7 +35,8 @@ data class CollectionConfig(
     val expandSettleMs: Long = 1_000L,
     val maxExpandClicksPerRound: Int = 0,
     val stopTextsAll: List<String> = emptyList(),
-    val stopTextsAny: List<String> = emptyList()
+    val stopTextsAny: List<String> = emptyList(),
+    val stopTextsNone: List<String> = emptyList()
 )
 
 data class NavigationStep(
