@@ -204,6 +204,7 @@ class DouyinPlugin : IAccessibilityPlugin {
         val hasMerchantContext =
             merchantName.isNotBlank() ||
                 signalCount >= 2 ||
+                (signalCount >= 1 && visibleCards.isNotEmpty()) ||
                 (lastMerchantName.isNotBlank() && !containsHardNonGroupBuyModule(pageText))
         val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
         if (isTarget) {

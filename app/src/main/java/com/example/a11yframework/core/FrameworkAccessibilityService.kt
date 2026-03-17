@@ -167,7 +167,13 @@ class FrameworkAccessibilityService : AccessibilityService() {
         if (!force && now - lastScrapeTime < cooldownMs) return false
 
         val hasRule = ruleEngine.hasRulesForPackage(packageName)
-        val plugin = activePlugin
+        val plugin = activePlugin ?: pluginManager.findPluginForPackage(packageName)?.also { fallbackPlugin ->
+            if (activePlugin == null) {
+                Log.i(TAG, "Activating plugin from current package snapshot: ${fallbackPlugin.pluginName}")
+                activePlugin = fallbackPlugin
+                fallbackPlugin.onActivate()
+            }
+        }
         if (!hasRule && plugin == null) return false
         if (!hasRule && plugin != null && packageName !in plugin.targetPackages) return false
         

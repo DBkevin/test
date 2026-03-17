@@ -63,6 +63,18 @@ class SearchController(
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
+        private val MERCHANT_DETAIL_CARD_HINTS = listOf(
+            "去抢购",
+            "领券抢购",
+            "已售",
+            "现价",
+            "原价",
+            "券后",
+            "人逛过",
+            "至少提前",
+            "随时退",
+            "次卡"
+        )
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -1376,6 +1388,42 @@ class SearchController(
 
     fun waitForMerchantHomepageAnchors(merchantName: String, timeoutMs: Long): Boolean {
         val normalizedTarget = normalizeText(merchantName)
+        if (pollMerchantHomepageAnchors(normalizedTarget, timeoutMs)) {
+            return true
+        }
+
+        val confirmedByGraceAnchors = pollMerchantHomepageAnchors(
+            normalizedTarget = normalizedTarget,
+            timeoutMs = MERCHANT_RESULT_OPEN_GRACE_MS
+        )
+        if (confirmedByGraceAnchors) {
+            Log.d(TAG, "Merchant detail page confirmed by homepage anchors during grace window")
+        }
+        return confirmedByGraceAnchors
+    }
+
+    fun isOnMerchantDetailPage(merchantName: String): Boolean {
+        val normalizedTarget = normalizeText(merchantName)
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        return try {
+            isLikelyMerchantDetailPage(rootNode, normalizedTarget)
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    fun isOnDouyinMerchantResultPage(merchantName: String): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        return try {
+            isLikelyDouyinMerchantResultPage(rootNode, merchantName)
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun pollMerchantHomepageAnchors(normalizedTarget: String, timeoutMs: Long): Boolean {
         val startAt = System.currentTimeMillis()
 
         while (System.currentTimeMillis() - startAt < timeoutMs) {
@@ -1392,14 +1440,7 @@ class SearchController(
             Thread.sleep(250)
         }
 
-        val confirmedByGraceAnchors = waitForMerchantHomepageAnchors(
-            merchantName = merchantName,
-            timeoutMs = MERCHANT_RESULT_OPEN_GRACE_MS
-        )
-        if (confirmedByGraceAnchors) {
-            Log.d(TAG, "Merchant detail page confirmed by homepage anchors during grace window")
-        }
-        return confirmedByGraceAnchors
+        return false
     }
 
     private fun isLikelyMerchantDetailPage(
@@ -1422,6 +1463,12 @@ class SearchController(
             pageText.contains(hint, ignoreCase = true)
         }
         val hasDetailSignal = detailSignalCount > 0
+        val hasCommerceSignal = MERCHANT_DETAIL_CARD_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+        val hasStickyTopBarSignal =
+            pageText.contains("收藏", ignoreCase = true) ||
+                pageText.contains("关注", ignoreCase = true)
         val hasVisibleSearchInput = NodeUtils.findNodeByCondition(
             rootNode,
             condition = { node -> isLikelySearchInput(node) },
@@ -1431,7 +1478,15 @@ class SearchController(
             true
         } ?: false
 
-        return hasMerchantName && hasDetailSignal && !hasVisibleSearchInput
+        if (hasVisibleSearchInput) {
+            return false
+        }
+
+        if (hasMerchantName && hasDetailSignal) {
+            return true
+        }
+
+        return hasStickyTopBarSignal && hasCommerceSignal
     }
 
     private fun hasMerchantHomepageAnchors(

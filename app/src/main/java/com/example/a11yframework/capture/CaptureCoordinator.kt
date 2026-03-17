@@ -306,15 +306,43 @@ class CaptureCoordinator(
     private suspend fun executeDouyinCapture(activeExecution: ActiveCapture): CaptureAttemptResult {
         activeExecution.stage = CaptureStage.NAVIGATING_GROUPBUY
 
-        val searchSuccess = searchController.searchDouyinGroupBuy(activeExecution.task.hospitalName)
-        if (!searchSuccess) {
-            return CaptureAttemptResult(
-                errorMessage = "未能进入抖音团购搜索并提交关键词"
+        if (
+            searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName) ||
+            service.isCurrentTargetPage(activeExecution.targetPackage)
+        ) {
+            Log.i(
+                TAG,
+                "Resume Douyin capture from current merchant detail page: ${activeExecution.task.hospitalName}"
             )
+            activeExecution.stage = CaptureStage.COLLECTING
+            val resumedRecords = collectDetailRecords(activeExecution, null)
+            return if (resumedRecords.isEmpty()) {
+                CaptureAttemptResult(errorMessage = "恢复到商家详情页后未采集到团购数据")
+            } else {
+                CaptureAttemptResult(records = resumedRecords)
+            }
+        }
+
+        val alreadyOnResultPage =
+            searchController.isOnDouyinMerchantResultPage(activeExecution.task.hospitalName)
+        if (alreadyOnResultPage) {
+            Log.i(
+                TAG,
+                "Resume Douyin capture from merchant result page: ${activeExecution.task.hospitalName}"
+            )
+        } else {
+            val searchSuccess = searchController.searchDouyinGroupBuy(activeExecution.task.hospitalName)
+            if (!searchSuccess) {
+                return CaptureAttemptResult(
+                    errorMessage = "未能进入抖音团购搜索并提交关键词"
+                )
+            }
         }
 
         activeExecution.stage = CaptureStage.WAITING_RESULT_LIST
-        delay(resolveResultListWaitMs())
+        if (!alreadyOnResultPage) {
+            delay(resolveResultListWaitMs())
+        }
 
         val merchantOpened = searchController.openMerchantResult(activeExecution.task.hospitalName)
         if (!merchantOpened) {
