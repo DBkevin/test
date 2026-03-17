@@ -155,21 +155,33 @@ class FrameworkAccessibilityService : AccessibilityService() {
     }
     
     private fun handleContentChange(packageName: String) {
+        scrapeCurrentWindow(packageName, force = false)
+    }
+
+    private fun scrapeCurrentWindow(
+        packageName: String,
+        force: Boolean
+    ): Boolean {
         val now = System.currentTimeMillis()
         val cooldownMs = captureCoordinator.getScrapeCooldownMs(packageName, SCRAPE_COOLDOWN)
-        if (now - lastScrapeTime < cooldownMs) return
+        if (!force && now - lastScrapeTime < cooldownMs) return false
 
         val hasRule = ruleEngine.hasRulesForPackage(packageName)
         val plugin = activePlugin
-        if (!hasRule && plugin == null) return
-        if (!hasRule && plugin != null && packageName !in plugin.targetPackages) return
+        if (!hasRule && plugin == null) return false
+        if (!hasRule && plugin != null && packageName !in plugin.targetPackages) return false
         
-        val rootNode = rootInActiveWindow ?: return
+        val rootNode = rootInActiveWindow ?: return false
+        var scraped = false
         
         try {
             if (!captureCoordinator.shouldScrapePage(packageName)) {
                 Log.d(TAG, "Capture stage not ready for scraping: $packageName")
-                return
+                return false
+            }
+
+            if (force) {
+                Log.d(TAG, "Force scraping current page snapshot: $packageName")
             }
 
             if (hasRule) {
@@ -198,22 +210,22 @@ class FrameworkAccessibilityService : AccessibilityService() {
                             )
                         }
                         lastScrapeTime = now
-                        return
+                        return true
                     } else {
                         Log.d(TAG, "Rule matched but no data extracted: ${ruleResult.ruleId}")
                     }
 
                     if (!captureCoordinator.isCollectingForPackage(packageName)) {
                         lastScrapeTime = now
-                        return
+                        return false
                     }
                 }
             }
 
-            val activePlugin = plugin ?: return
+            val activePlugin = plugin ?: return false
             if (!activePlugin.isTargetPage(rootNode)) {
                 Log.d(TAG, "Not a target page, skipping")
-                return
+                return false
             }
             
             Log.d(TAG, "Target page detected, scraping...")
@@ -240,15 +252,22 @@ class FrameworkAccessibilityService : AccessibilityService() {
                         dataStore.saveData(preparedPluginData)
                         Log.i(TAG, "Scraped ${preparedPluginData.size} records")
                     }
+                    scraped = true
                 }
             }
             
             lastScrapeTime = now
+            return scraped
         } catch (e: Exception) {
             Log.e(TAG, "Error scraping data", e)
+            return false
         } finally {
             rootNode.recycle()
         }
+    }
+
+    fun scrapeCurrentPageNow(packageName: String): Boolean {
+        return scrapeCurrentWindow(packageName, force = true)
     }
     
     override fun onInterrupt() {

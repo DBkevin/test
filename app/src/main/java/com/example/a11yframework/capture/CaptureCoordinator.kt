@@ -402,11 +402,23 @@ class CaptureCoordinator(
             delay(resolveExpandSettleMs(collectionConfig))
         }
 
-        waitForCaptureProgress(
+        service.scrapeCurrentPageNow(activeExecution.targetPackage)
+
+        val progressed = waitForCaptureProgress(
             activeExecution,
             baselineRevision = baselineRevision,
             timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
         )
+
+        if (!progressed && remainingTime(deadline) > 0L) {
+            delay(400)
+            service.scrapeCurrentPageNow(activeExecution.targetPackage)
+            waitForCaptureProgress(
+                activeExecution,
+                baselineRevision = baselineRevision,
+                timeoutMs = min(900L, remainingTime(deadline))
+            )
+        }
     }
 
     private suspend fun expandVisibleSections(collectionConfig: CollectionConfig?): Int {
