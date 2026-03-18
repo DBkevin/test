@@ -867,7 +867,12 @@ class SearchController(
     }
 
     private fun isLikelyDouyinGroupBuyPage(rootNode: AccessibilityNodeInfo): Boolean {
-        val pageText = NodeUtils.getAllNodeText(rootNode)
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 22,
+            maxNodes = 480,
+            maxTextLength = 8000
+        )
         val hitCount = DOUYIN_GROUPBUY_PAGE_KEYWORDS.count { keyword ->
             pageText.contains(keyword, ignoreCase = true)
         }
@@ -889,8 +894,9 @@ class SearchController(
             pageText.contains("同城", ignoreCase = true)
         val hasBottomHomeTab = pageText.contains("首页", ignoreCase = true) &&
             pageText.contains("我", ignoreCase = true)
+        val hasSearchSignal = pageText.contains("搜索", ignoreCase = true)
 
-        return hasSelectedGroupBuyTab && hasTopSearchButton && (hasLocationSignal || hasBottomHomeTab)
+        return hasSelectedGroupBuyTab && (hasTopSearchButton || hasSearchSignal) && (hasLocationSignal || hasBottomHomeTab)
     }
 
     private fun isLikelyDouyinHomePage(rootNode: AccessibilityNodeInfo): Boolean {
@@ -989,7 +995,7 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
-            if (!isLikelyDouyinGroupBuyPage(rootNode)) {
+            if (!isLikelyDouyinGroupBuyPage(rootNode) && !hasSelectedDouyinGroupBuyTab(rootNode)) {
                 Log.w(TAG, "Skip Douyin group buy search entry tap: current page is not group-buy home")
                 return false
             }
@@ -1538,7 +1544,7 @@ class SearchController(
                         nodeText.contains(hint, ignoreCase = true)
                     }
             },
-            maxDepth = 16
+            maxDepth = 24
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
@@ -1549,11 +1555,16 @@ class SearchController(
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = getComparableNodeText(node)
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val className = node.className?.toString().orEmpty()
                 bounds.top in 120..320 &&
                     bounds.right >= service.resources.displayMetrics.widthPixels - 260 &&
-                    (text.contains("搜索", ignoreCase = true) || viewId.contains("4_s"))
+                    (
+                        text.contains("搜索", ignoreCase = true) ||
+                            viewId.contains("4_s") ||
+                            (className.contains("Button", ignoreCase = true) && text.isNotBlank())
+                    )
             },
-            maxDepth = 18
+            maxDepth = 24
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
@@ -1566,7 +1577,7 @@ class SearchController(
                     text == "团购" ||
                     text.contains("团购，按钮", ignoreCase = true)
             },
-            maxDepth = 20
+            maxDepth = 24
         )
 
         val matched = groupBuyTabNode != null
