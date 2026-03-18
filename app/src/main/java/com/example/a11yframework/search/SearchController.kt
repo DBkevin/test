@@ -832,6 +832,16 @@ class SearchController(
                 return true
             }
 
+            if (hasSelectedDouyinGroupBuyTab(rootNode)) {
+                Log.d(TAG, "Douyin group buy tab already selected")
+                return true
+            }
+
+            if (hasDouyinGroupBuyShellSignals(rootNode)) {
+                Log.d(TAG, "Douyin group buy shell already visible, skip tab tap")
+                return true
+            }
+
             if (!isSafeToTapDouyinGroupBuyTab(rootNode)) {
                 Log.w(TAG, "Skip Douyin group buy tab tap: current page is not a safe home/group-buy page")
                 return false
@@ -843,14 +853,24 @@ class SearchController(
                     val nodeText = getComparableNodeText(node)
                     nodeText.contains("团购", ignoreCase = true)
                 },
-                maxDepth = 10
+                maxDepth = 24
             )
 
             if (tabNode != null) {
-                val clicked = NodeUtils.clickNode(tabNode)
-                Log.d(TAG, "Selected Douyin group buy tab: $clicked")
-                if (clicked) {
-                    return true
+                try {
+                    val nodeText = getComparableNodeText(tabNode)
+                    if (nodeText.contains("已选中，团购", ignoreCase = true)) {
+                        Log.d(TAG, "Douyin group buy tab already selected by node")
+                        return true
+                    }
+
+                    val clicked = NodeUtils.clickNode(tabNode)
+                    Log.d(TAG, "Selected Douyin group buy tab: $clicked")
+                    if (clicked) {
+                        return true
+                    }
+                } finally {
+                    tabNode.recycle()
                 }
             }
 
@@ -896,7 +916,16 @@ class SearchController(
             pageText.contains("我", ignoreCase = true)
         val hasSearchSignal = pageText.contains("搜索", ignoreCase = true)
 
-        return hasSelectedGroupBuyTab && (hasTopSearchButton || hasSearchSignal) && (hasLocationSignal || hasBottomHomeTab)
+        if (hasSelectedGroupBuyTab && (hasTopSearchButton || hasSearchSignal) && (hasLocationSignal || hasBottomHomeTab)) {
+            return true
+        }
+
+        return hasDouyinGroupBuyShellSignals(
+            rootNode = rootNode,
+            pageText = pageText,
+            hasSelectedGroupBuyTab = hasSelectedGroupBuyTab,
+            hasTopSearchButton = hasTopSearchButton
+        )
     }
 
     private fun isLikelyDouyinHomePage(rootNode: AccessibilityNodeInfo): Boolean {
@@ -975,7 +1004,7 @@ class SearchController(
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
-                    if (isLikelyDouyinGroupBuyPage(rootNode)) {
+                    if (isLikelyDouyinGroupBuyPage(rootNode) || hasSelectedDouyinGroupBuyTab(rootNode)) {
                         return true
                     }
                 } finally {
@@ -995,7 +1024,17 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
-            if (!isLikelyDouyinGroupBuyPage(rootNode) && !hasSelectedDouyinGroupBuyTab(rootNode)) {
+            val hasSelectedGroupBuyTab = hasSelectedDouyinGroupBuyTab(rootNode)
+            val hasTopSearchButton = findDouyinTopSearchButtonNode(rootNode) != null
+
+            if (!isLikelyDouyinGroupBuyPage(rootNode) &&
+                !hasSelectedGroupBuyTab &&
+                !hasDouyinGroupBuyShellSignals(
+                    rootNode = rootNode,
+                    hasSelectedGroupBuyTab = hasSelectedGroupBuyTab,
+                    hasTopSearchButton = hasTopSearchButton
+                )
+            ) {
                 Log.w(TAG, "Skip Douyin group buy search entry tap: current page is not group-buy home")
                 return false
             }
@@ -1564,7 +1603,7 @@ class SearchController(
                             (className.contains("Button", ignoreCase = true) && text.isNotBlank())
                     )
             },
-            maxDepth = 24
+            maxDepth = 32
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
@@ -1577,12 +1616,35 @@ class SearchController(
                     text == "团购" ||
                     text.contains("团购，按钮", ignoreCase = true)
             },
-            maxDepth = 24
+            maxDepth = 32
         )
 
         val matched = groupBuyTabNode != null
         groupBuyTabNode?.recycle()
         return matched
+    }
+
+    private fun hasDouyinGroupBuyShellSignals(
+        rootNode: AccessibilityNodeInfo,
+        pageText: String? = null,
+        hasSelectedGroupBuyTab: Boolean = hasSelectedDouyinGroupBuyTab(rootNode),
+        hasTopSearchButton: Boolean = findDouyinTopSearchButtonNode(rootNode)?.let { node ->
+            node.recycle()
+            true
+        } ?: false
+    ): Boolean {
+        val resolvedPageText = pageText ?: NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 22,
+            maxNodes = 480,
+            maxTextLength = 8000
+        )
+        val hasLocationSignal = resolvedPageText.contains("郑州", ignoreCase = true) ||
+            resolvedPageText.contains("同城", ignoreCase = true)
+        val hasBottomHomeTab = resolvedPageText.contains("首页", ignoreCase = true) &&
+            resolvedPageText.contains("我", ignoreCase = true)
+        val hasGroupBuyText = resolvedPageText.contains("团购", ignoreCase = true)
+        return hasGroupBuyText && (hasSelectedGroupBuyTab || hasTopSearchButton) && (hasLocationSignal || hasBottomHomeTab)
     }
 
     private fun hasMerchantHomepageAnchors(
