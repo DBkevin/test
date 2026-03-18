@@ -68,6 +68,18 @@ class SearchController(
         private val SCROLLABLE_CLASS_KEYWORDS = listOf("RecyclerView", "ListView", "ScrollView", "NestedScrollView", "WebView")
         private val MERCHANT_RESULT_HINTS = listOf("医院", "门诊", "医疗美容", "美容医院", "诊所", "机构")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
+        private val MERCHANT_RESULT_PRODUCT_HINTS = listOf(
+            "已售",
+            "人逛过",
+            "次卡",
+            "券后",
+            "去抢购",
+            "领券抢购",
+            "继续追问",
+            "至少提前",
+            "随时退",
+            "好评率"
+        )
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
         private val MERCHANT_TAIL_SECTION_HINTS = listOf(
@@ -1279,7 +1291,16 @@ class SearchController(
         val hasPricePerPersonContext = contextText.contains("/人") || contextText.contains("人均")
         val hasReviewCountContext = Regex("\\d+条评价").containsMatchIn(contextText)
         val bounds = Rect().also { node.getBoundsInScreen(it) }
-        val isInResultListArea = bounds.top >= 500
+        val merchantEntryBand = findMerchantEntryBand(node)
+        val entryBandBounds = Rect()
+        merchantEntryBand?.getBoundsInScreen(entryBandBounds)
+        merchantEntryBand?.recycle()
+        val hasEntryBand = !entryBandBounds.isEmpty
+        val entryBandInPrimaryZone = hasEntryBand && entryBandBounds.top in 420..1400
+        val entryBandTooLow = hasEntryBand && entryBandBounds.top >= 1800
+        val hasProductContext = MERCHANT_RESULT_PRODUCT_HINTS.any { hint ->
+            contextText.contains(hint, ignoreCase = true)
+        }
 
         var score = 0
         if (comparableText == normalizedTarget) {
@@ -1314,16 +1335,34 @@ class SearchController(
         if (hasPricePerPersonContext) {
             score += 35
         }
-        if (isInResultListArea) {
-            score += 80
+        if (hasEntryBand) {
+            score += 160
+            if (entryBandBounds.width() >= 900) {
+                score += 80
+            }
+            if (entryBandBounds.height() in 40..110) {
+                score += 40
+            }
         } else {
-            score -= 140
+            score -= 220
+        }
+        if (entryBandInPrimaryZone) {
+            score += 140
+        } else if (entryBandTooLow) {
+            score -= 260
+        } else if (bounds.top in 420..1200) {
+            score += 35
+        } else {
+            score -= 120
         }
         if (node.isClickable) {
             score += 10
         }
         if (node.className?.toString()?.contains("TextView", ignoreCase = true) == true) {
             score += 10
+        }
+        if (hasProductContext) {
+            score -= 180
         }
 
         score -= abs(comparableText.length - normalizedTarget.length)
@@ -1369,15 +1408,6 @@ class SearchController(
         merchantName: String,
         round: Int
     ): Boolean {
-        val tappedShoulder = tapMerchantTitleShoulder(
-            merchantNode,
-            "merchant_result_title_shoulder_r$round"
-        )
-        if (tappedShoulder && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
-            Log.i(TAG, "Merchant result opened by title-shoulder tap: name=$merchantName, round=$round")
-            return true
-        }
-
         val tappedBand = tapMerchantEntryBand(
             merchantNode,
             "merchant_result_entry_band_r$round"
@@ -1395,7 +1425,7 @@ class SearchController(
 
         Log.w(
             TAG,
-            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedShoulder=$tappedShoulder, tappedBand=$tappedBand, clicked=$clicked"
+            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedBand=$tappedBand, clicked=$clicked"
         )
         return false
     }
@@ -1712,24 +1742,6 @@ class SearchController(
         } ?: false
     }
 
-    private fun tapMerchantTitleShoulder(
-        merchantNode: AccessibilityNodeInfo,
-        label: String
-    ): Boolean {
-        val titleBounds = Rect()
-        merchantNode.getBoundsInScreen(titleBounds)
-        if (titleBounds.isEmpty) {
-            appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=empty_title_bounds")
-            return false
-        }
-
-        val metrics = service.resources.displayMetrics
-        val targetX = (titleBounds.right + maxOf(96, titleBounds.width() / 4))
-            .coerceIn(titleBounds.left + 24, metrics.widthPixels - 72)
-        val targetY = titleBounds.centerY().coerceIn(0, metrics.heightPixels - 1)
-        return tapScreen(targetX, targetY, label)
-    }
-
     private fun tapMerchantEntryBand(
         merchantNode: AccessibilityNodeInfo,
         label: String
@@ -1741,37 +1753,10 @@ class SearchController(
             return false
         }
 
-        var currentParent = merchantNode.parent
-        var depth = 0
-        var candidateBand: AccessibilityNodeInfo? = null
-        var bestBandHeight = Int.MAX_VALUE
-
-        while (currentParent != null && depth < 8) {
-            val parentBounds = Rect()
-            currentParent.getBoundsInScreen(parentBounds)
-
-            val containsTitle =
-                !parentBounds.isEmpty &&
-                    parentBounds.left <= titleBounds.left &&
-                    parentBounds.right >= titleBounds.right &&
-                    parentBounds.top <= titleBounds.top + 40 &&
-                    parentBounds.bottom >= titleBounds.bottom + 24
-            val widthFits = parentBounds.width() >= titleBounds.width() + 220
-            val heightFits = parentBounds.height() in (titleBounds.height() + 20)..360
-            val topFits = parentBounds.top >= 360
-
-            if (containsTitle && widthFits && heightFits && topFits) {
-                if (parentBounds.height() < bestBandHeight) {
-                    candidateBand?.recycle()
-                    candidateBand = AccessibilityNodeInfo.obtain(currentParent)
-                    bestBandHeight = parentBounds.height()
-                }
-            }
-
-            val nextParent = currentParent.parent
-            currentParent.recycle()
-            currentParent = nextParent
-            depth++
+        val candidateBand = findMerchantEntryBand(merchantNode)
+        if (candidateBand == null) {
+            appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=no_entry_band")
+            return false
         }
 
         val targetBounds = Rect()
@@ -1779,16 +1764,15 @@ class SearchController(
         val targetY: Int
 
         return try {
-            val tapTarget = candidateBand ?: merchantNode
-            tapTarget.getBoundsInScreen(targetBounds)
+            candidateBand.getBoundsInScreen(targetBounds)
             if (targetBounds.isEmpty) {
                 appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=empty_target_bounds")
                 return false
             }
 
             val metrics = service.resources.displayMetrics
-            targetX = (titleBounds.right + maxOf(96, titleBounds.width() / 4))
-                .coerceIn(targetBounds.left + 32, targetBounds.right - 48)
+            targetX = titleBounds.centerX()
+                .coerceIn(targetBounds.left + 48, targetBounds.right - 48)
                 .coerceIn(0, metrics.widthPixels - 1)
             targetY = titleBounds.centerY()
                 .coerceIn(targetBounds.top + 16, targetBounds.bottom - 16)
@@ -1799,8 +1783,55 @@ class SearchController(
                 label
             )
         } finally {
-            candidateBand?.recycle()
+            candidateBand.recycle()
         }
+    }
+
+    private fun findMerchantEntryBand(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val titleBounds = Rect()
+        node.getBoundsInScreen(titleBounds)
+        if (titleBounds.isEmpty) {
+            return null
+        }
+
+        var currentParent = node.parent
+        var depth = 0
+        var candidateBand: AccessibilityNodeInfo? = null
+        var bestBandScore = Int.MIN_VALUE
+
+        while (currentParent != null && depth < 8) {
+            val parentBounds = Rect()
+            currentParent.getBoundsInScreen(parentBounds)
+
+            val containsTitle =
+                !parentBounds.isEmpty &&
+                    parentBounds.left <= titleBounds.left &&
+                    parentBounds.right >= titleBounds.right &&
+                    parentBounds.top <= titleBounds.top + 24 &&
+                    parentBounds.bottom >= titleBounds.bottom
+            val widthFits = parentBounds.width() >= maxOf(titleBounds.width() + 240, 760)
+            val heightFits = parentBounds.height() in 48..140
+            val topFits = parentBounds.top in 420..2200
+
+            if (containsTitle && widthFits && heightFits && topFits) {
+                val bandScore =
+                    parentBounds.width() -
+                        abs(parentBounds.height() - titleBounds.height()) -
+                        (parentBounds.top / 6)
+                if (bandScore > bestBandScore) {
+                    candidateBand?.recycle()
+                    candidateBand = AccessibilityNodeInfo.obtain(currentParent)
+                    bestBandScore = bandScore
+                }
+            }
+
+            val nextParent = currentParent.parent
+            currentParent.recycle()
+            currentParent = nextParent
+            depth++
+        }
+
+        return candidateBand
     }
 
     private fun logTopMerchantCandidates(candidates: List<MerchantCandidateScore>) {
