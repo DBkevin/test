@@ -177,7 +177,12 @@ class FrameworkAccessibilityService : AccessibilityService() {
         if (!hasRule && plugin == null) return false
         if (!hasRule && plugin != null && packageName !in plugin.targetPackages) return false
         
-        val rootNode = rootInActiveWindow ?: return false
+        val rootNode = rootInActiveWindow ?: run {
+            if (force) {
+                Log.d(TAG, "Force scrape skipped: no active root window for $packageName")
+            }
+            return false
+        }
         var scraped = false
         
         try {

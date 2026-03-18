@@ -54,6 +54,8 @@ class CaptureCoordinator(
         private const val DEFAULT_EXPAND_SETTLE_MS = 1_000L
         private const val KEY_MAX_EXPAND_CLICKS_PER_ROUND = "max_expand_clicks_per_round"
         private const val DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND = 4
+        private const val INITIAL_VIEWPORT_MAX_ATTEMPTS = 3
+        private const val INITIAL_VIEWPORT_RETRY_DELAY_MS = 900L
         private const val COLLECTING_SCRAPE_COOLDOWN_MS = 1_200L
         private val DEFAULT_EXPAND_KEYWORDS = listOf(
             "展开更多",
@@ -426,7 +428,16 @@ class CaptureCoordinator(
         var idleRounds = 0
         var scrollRounds = 0
 
-        collectCurrentViewport(activeExecution, collectionConfig, deadline)
+        val initialViewportReady = stabilizeInitialViewport(
+            activeExecution = activeExecution,
+            collectionConfig = collectionConfig,
+            deadline = deadline
+        )
+        if (!initialViewportReady) {
+            Log.w(TAG, "Initial Douyin viewport not stable enough for scrolling, stop current capture")
+            return activeExecution.snapshotRecords()
+        }
+
         if (shouldStopCollection(collectionConfig)) {
             Log.i(TAG, "Stop collection after initial viewport capture")
             return activeExecution.snapshotRecords()
@@ -475,6 +486,48 @@ class CaptureCoordinator(
         }
 
         return activeExecution.snapshotRecords()
+    }
+
+    private suspend fun stabilizeInitialViewport(
+        activeExecution: ActiveCapture,
+        collectionConfig: CollectionConfig?,
+        deadline: Long
+    ): Boolean {
+        repeat(INITIAL_VIEWPORT_MAX_ATTEMPTS) { attempt ->
+            collectCurrentViewport(activeExecution, collectionConfig, deadline)
+
+            if (activeExecution.recordCount() > 0) {
+                Log.i(TAG, "Initial viewport captured records before first scroll: count=${activeExecution.recordCount()}")
+                return true
+            }
+
+            val stillOnTargetPage = service.isCurrentTargetPage(activeExecution.targetPackage)
+            if (stillOnTargetPage) {
+                Log.i(TAG, "Initial viewport confirmed as target page before first scroll: attempt=${attempt + 1}")
+                return true
+            }
+
+            val stillOnMerchantDetail = searchController.isOnMerchantDetailPage(
+                activeExecution.task.hospitalName
+            )
+            if (!stillOnMerchantDetail) {
+                Log.w(
+                    TAG,
+                    "Initial viewport lost merchant detail context before first scroll: attempt=${attempt + 1}"
+                )
+                return false
+            }
+
+            if (attempt < INITIAL_VIEWPORT_MAX_ATTEMPTS - 1 && remainingTime(deadline) > 0L) {
+                Log.i(
+                    TAG,
+                    "Retry initial viewport capture before first scroll: attempt=${attempt + 1}"
+                )
+                delay(min(INITIAL_VIEWPORT_RETRY_DELAY_MS, remainingTime(deadline)))
+            }
+        }
+
+        return activeExecution.recordCount() > 0 || service.isCurrentTargetPage(activeExecution.targetPackage)
     }
 
     private fun shouldStopCollection(collectionConfig: CollectionConfig?): Boolean {

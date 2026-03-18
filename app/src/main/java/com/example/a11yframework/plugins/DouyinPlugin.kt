@@ -58,7 +58,14 @@ class DouyinPlugin : IAccessibilityPlugin {
         private const val GROUP_BUY_DATA_TYPE = "group_buys"
         private const val MIN_CARD_WIDTH = 900
         private const val MIN_CARD_HEIGHT = 120
-        private const val MIN_CARD_TOP = 300
+        private const val MIN_CARD_TOP = 0
+        private val GROUPBUY_TAIL_SIGNALS = listOf(
+            "展开更多",
+            "收起",
+            "预约到店送好礼",
+            "预约到店专属礼",
+            "用户评价"
+        )
 
         private val TITLE_REGEX = Regex(
             """^(.*?)(?=,(?:周|至少提前|随时退|原价|现价|已售|[0-9A-Za-z+\-千wW万]+\s*人逛过|次卡|放心付|券后|周末节假日通用|预约|可用)|$)"""
@@ -186,7 +193,12 @@ class DouyinPlugin : IAccessibilityPlugin {
     override fun isTargetPage(nodeInfo: AccessibilityNodeInfo?): Boolean {
         if (nodeInfo == null) return false
 
-        val pageText = getNodeText(nodeInfo)
+        val pageText = NodeUtils.getAllNodeText(
+            nodeInfo,
+            maxDepth = 24,
+            maxNodes = 520,
+            maxTextLength = 10000
+        )
         if (containsHardNonGroupBuyModule(pageText)) {
             Log.d(TAG, "Detected hard non-groupbuy module, skip target page")
             return false
@@ -194,6 +206,9 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         val visibleCards = findVisibleGroupBuyCards(nodeInfo)
         val signalCount = SHOP_PAGE_SIGNALS.count { signal ->
+            pageText.contains(signal, ignoreCase = true)
+        }
+        val hasTailSignals = GROUPBUY_TAIL_SIGNALS.any { signal ->
             pageText.contains(signal, ignoreCase = true)
         }
         val merchantName = extractMerchantName(nodeInfo)
@@ -205,6 +220,7 @@ class DouyinPlugin : IAccessibilityPlugin {
             merchantName.isNotBlank() ||
                 signalCount >= 2 ||
                 (signalCount >= 1 && visibleCards.isNotEmpty()) ||
+                (hasTailSignals && visibleCards.isNotEmpty()) ||
                 (lastMerchantName.isNotBlank() && !containsHardNonGroupBuyModule(pageText))
         val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
         if (isTarget) {

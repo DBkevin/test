@@ -63,6 +63,13 @@ class SearchController(
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
+        private val MERCHANT_TAIL_SECTION_HINTS = listOf(
+            "展开更多",
+            "收起",
+            "预约到店送好礼",
+            "预约到店专属礼",
+            "用户评价"
+        )
         private val MERCHANT_DETAIL_CARD_HINTS = listOf(
             "去抢购",
             "领券抢购",
@@ -130,6 +137,7 @@ class SearchController(
     fun searchDouyinGroupBuy(keyword: String): Boolean {
         if (!prepareDouyinHomePage()) {
             Log.w(TAG, "Douyin home page not confirmed before selecting group buy tab")
+            return false
         }
 
         val tabSelected = selectDouyinGroupBuyTab()
@@ -822,6 +830,11 @@ class SearchController(
                 return true
             }
 
+            if (!isSafeToTapDouyinGroupBuyTab(rootNode)) {
+                Log.w(TAG, "Skip Douyin group buy tab tap: current page is not a safe home/group-buy page")
+                return false
+            }
+
             val tabNode = NodeUtils.findNodeByCondition(
                 rootNode,
                 condition = { node: AccessibilityNodeInfo ->
@@ -971,12 +984,14 @@ class SearchController(
             return true
         }
 
-        val rootNode = service.rootInActiveWindow ?: return tapScreen(
-            DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
-            DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y
-        )
+        val rootNode = service.rootInActiveWindow ?: return false
 
         try {
+            if (!isLikelyDouyinGroupBuyPage(rootNode)) {
+                Log.w(TAG, "Skip Douyin group buy search entry tap: current page is not group-buy home")
+                return false
+            }
+
             val entryNode = NodeUtils.findNodeByCondition(
                 rootNode,
                 condition = { node: AccessibilityNodeInfo ->
@@ -1463,12 +1478,16 @@ class SearchController(
             pageText.contains(hint, ignoreCase = true)
         }
         val hasDetailSignal = detailSignalCount > 0
+        val hasTailSignal = MERCHANT_TAIL_SECTION_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
         val hasCommerceSignal = MERCHANT_DETAIL_CARD_HINTS.any { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
         val hasStickyTopBarSignal =
             pageText.contains("收藏", ignoreCase = true) ||
                 pageText.contains("关注", ignoreCase = true)
+        val hasBottomActionBar = hasMerchantBottomActionBarAnchor(rootNode)
         val hasVisibleSearchInput = NodeUtils.findNodeByCondition(
             rootNode,
             condition = { node -> isLikelySearchInput(node) },
@@ -1478,7 +1497,7 @@ class SearchController(
             true
         } ?: false
 
-        if (hasVisibleSearchInput) {
+        if (hasVisibleSearchInput && !hasStickyTopBarSignal && !hasBottomActionBar) {
             return false
         }
 
@@ -1486,7 +1505,15 @@ class SearchController(
             return true
         }
 
+        if (hasStickyTopBarSignal && hasBottomActionBar && hasTailSignal && hasCommerceSignal) {
+            return true
+        }
+
         return hasStickyTopBarSignal && hasCommerceSignal
+    }
+
+    private fun isSafeToTapDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
+        return isLikelyDouyinHomePage(rootNode) || isLikelyDouyinGroupBuyPage(rootNode)
     }
 
     private fun hasMerchantHomepageAnchors(
