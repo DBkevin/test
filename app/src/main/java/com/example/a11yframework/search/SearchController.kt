@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.example.a11yframework.utils.NodeUtils
+import java.io.File
 import kotlin.math.abs
 
 /**
@@ -55,6 +56,8 @@ class SearchController(
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS = 7_000L
         private const val DOUYIN_HOME_PREPARE_MAX_ATTEMPTS = 4
+        private const val TAP_TRACE_FILE_NAME = "tap-trace-latest.txt"
+        private const val TAP_TRACE_MAX_BYTES = 64 * 1024L
         
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -139,6 +142,8 @@ class SearchController(
     }
 
     fun searchDouyinGroupBuy(keyword: String): Boolean {
+        beginTapTraceRun("douyin_search:$keyword")
+
         when (getCurrentDouyinPageKind(keyword)) {
             DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
                 Log.d(TAG, "Douyin search input already visible, skip home/group-buy preparation")
@@ -196,6 +201,8 @@ class SearchController(
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
+        appendTapTraceLine("=== open_merchant_result:$merchantName @${System.currentTimeMillis()} ===")
+
         when (getCurrentDouyinPageKind(merchantName)) {
             DouyinPageKind.MERCHANT_HOME,
             DouyinPageKind.MERCHANT_TAIL -> {
@@ -308,7 +315,7 @@ class SearchController(
             val matchedNode = findTextNode(targetText, exactMatch)
             if (matchedNode != null) {
                 try {
-                    val clicked = NodeUtils.clickNode(matchedNode)
+                    val clicked = clickNodeWithTrace("click_text:$targetText", matchedNode)
                     Log.i(
                         TAG,
                         "Click text: target=$targetText, round=$round, exact=$exactMatch, clicked=$clicked"
@@ -324,7 +331,7 @@ class SearchController(
             if (round == maxScrollRounds || !scrollCurrentPage()) {
                 val fallbackTapped = fallbackTapX != null &&
                     fallbackTapY != null &&
-                    tapScreen(fallbackTapX, fallbackTapY)
+                    tapScreen(fallbackTapX, fallbackTapY, "click_text_fallback:$targetText")
                 if (fallbackTapped) {
                     Log.i(
                         TAG,
@@ -374,7 +381,7 @@ class SearchController(
                         continue
                     }
 
-                    val clicked = NodeUtils.clickNode(matchedNode)
+                    val clicked = clickNodeWithTrace("click_any_text:$targetText", matchedNode)
                     Log.i(
                         TAG,
                         "Click any text: target=$targetText, exact=$exactMatch, clicked=$clicked"
@@ -403,7 +410,7 @@ class SearchController(
             val matchedNode = findNodeByViewId(viewId)
             if (matchedNode != null) {
                 try {
-                    val clicked = NodeUtils.clickNode(matchedNode)
+                    val clicked = clickNodeWithTrace("click_view_id:$viewId", matchedNode)
                     Log.i(TAG, "Click viewId: id=$viewId, round=$round, clicked=$clicked")
                     if (clicked) {
                         return true
@@ -779,13 +786,13 @@ class SearchController(
             )
             
             if (button != null) {
-                val clicked = NodeUtils.clickNode(button)
+                val clicked = clickNodeWithTrace("search_submit_keyword", button)
                 Log.d(TAG, "Clicked search button by keyword: $clicked")
                 if (clicked) {
                     return true
                 }
 
-                val tapped = tapNodeCenter(button)
+                val tapped = tapNodeCenter(button, "search_submit_keyword_bounds")
                 if (tapped) {
                     Log.d(TAG, "Tapped search button by keyword bounds")
                     return true
@@ -793,7 +800,11 @@ class SearchController(
             }
 
             if (isOnDouyinSearchInputPage()) {
-                val tapped = tapScreen(DOUYIN_SEARCH_SUBMIT_TAP_X, DOUYIN_SEARCH_SUBMIT_TAP_Y)
+                val tapped = tapScreen(
+                    DOUYIN_SEARCH_SUBMIT_TAP_X,
+                    DOUYIN_SEARCH_SUBMIT_TAP_Y,
+                    "douyin_search_submit_preset"
+                )
                 if (tapped) {
                     Log.d(TAG, "Tapped Douyin search submit button with preset tap")
                     return true
@@ -818,13 +829,13 @@ class SearchController(
             )
             
             if (buttonById != null) {
-                val clicked = NodeUtils.clickNode(buttonById)
+                val clicked = clickNodeWithTrace("search_submit_id", buttonById)
                 Log.d(TAG, "Clicked search button by id: $clicked")
                 if (clicked) {
                     return true
                 }
 
-                val tapped = tapNodeCenter(buttonById)
+                val tapped = tapNodeCenter(buttonById, "search_submit_id_bounds")
                 if (tapped) {
                     Log.d(TAG, "Tapped search button by id bounds")
                     return true
@@ -871,7 +882,7 @@ class SearchController(
             )
 
             if (entryNode != null) {
-                val clicked = NodeUtils.clickNode(entryNode)
+                val clicked = clickNodeWithTrace("open_search_entry", entryNode)
                 Log.d(TAG, "Opened search entry: $clicked")
                 return clicked
             }
@@ -921,6 +932,7 @@ class SearchController(
                     }
 
                     val clicked = NodeUtils.clickNode(tabNode)
+                    recordNodeClickTrace("douyin_groupbuy_tab_node", tabNode, clicked)
                     Log.d(TAG, "Selected Douyin group buy tab: $clicked")
                     if (clicked) {
                         return true
@@ -930,7 +942,11 @@ class SearchController(
                 }
             }
 
-            val tapped = tapScreen(DOUYIN_GROUPBUY_TAB_TAP_X, DOUYIN_GROUPBUY_TAB_TAP_Y)
+            val tapped = tapScreen(
+                DOUYIN_GROUPBUY_TAB_TAP_X,
+                DOUYIN_GROUPBUY_TAB_TAP_Y,
+                "douyin_groupbuy_tab_preset"
+            )
             if (tapped) {
                 Log.d(TAG, "Selected Douyin group buy tab with preset tap")
                 return true
@@ -996,11 +1012,12 @@ class SearchController(
                 if (homeNode != null) {
                     try {
                         val clicked = NodeUtils.clickNode(homeNode)
+                        recordNodeClickTrace("douyin_home_bottom_tab_node", homeNode, clicked)
                         if (clicked) {
                             return true
                         }
 
-                        val tapped = tapNodeCenter(homeNode)
+                        val tapped = tapNodeCenter(homeNode, "douyin_home_bottom_tab_bounds")
                         if (tapped) {
                             return true
                         }
@@ -1013,7 +1030,11 @@ class SearchController(
             }
         }
 
-        return tapScreen(DOUYIN_HOME_BOTTOM_TAB_TAP_X, DOUYIN_HOME_BOTTOM_TAB_TAP_Y)
+        return tapScreen(
+            DOUYIN_HOME_BOTTOM_TAB_TAP_X,
+            DOUYIN_HOME_BOTTOM_TAB_TAP_Y,
+            "douyin_home_bottom_tab_preset"
+        )
     }
 
     private fun waitForDouyinGroupBuyPage(timeoutMs: Long): Boolean {
@@ -1053,12 +1074,13 @@ class SearchController(
             if (entryNode != null) {
                 try {
                     val clicked = NodeUtils.clickNode(entryNode)
+                    recordNodeClickTrace("douyin_groupbuy_search_entry_node", entryNode, clicked)
                     if (clicked) {
                         Log.d(TAG, "Opened Douyin group buy search entry by node click")
                         return true
                     }
 
-                    val tapped = tapNodeCenter(entryNode)
+                    val tapped = tapNodeCenter(entryNode, "douyin_groupbuy_search_entry_bounds")
                     if (tapped) {
                         Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
                         return true
@@ -1072,12 +1094,13 @@ class SearchController(
             if (topSearchButton != null) {
                 try {
                     val clicked = NodeUtils.clickNode(topSearchButton)
+                    recordNodeClickTrace("douyin_groupbuy_top_search_node", topSearchButton, clicked)
                     if (clicked) {
                         Log.d(TAG, "Opened Douyin top search button by node click")
                         return true
                     }
 
-                    val tapped = tapNodeCenter(topSearchButton)
+                    val tapped = tapNodeCenter(topSearchButton, "douyin_groupbuy_top_search_bounds")
                     if (tapped) {
                         Log.d(TAG, "Opened Douyin top search button by node bounds")
                         return true
@@ -1088,9 +1111,17 @@ class SearchController(
             }
 
             val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                tapScreen(DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X, DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y)
+                tapScreen(
+                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X,
+                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y,
+                    "douyin_groupbuy_top_search_preset"
+                )
             } else {
-                tapScreen(DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y)
+                tapScreen(
+                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
+                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y,
+                    "douyin_groupbuy_search_entry_preset"
+                )
             }
             if (tapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
@@ -1338,13 +1369,25 @@ class SearchController(
         merchantName: String,
         round: Int
     ): Boolean {
-        val tappedBand = tapMerchantEntryBand(merchantNode)
+        val tappedShoulder = tapMerchantTitleShoulder(
+            merchantNode,
+            "merchant_result_title_shoulder_r$round"
+        )
+        if (tappedShoulder && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
+            Log.i(TAG, "Merchant result opened by title-shoulder tap: name=$merchantName, round=$round")
+            return true
+        }
+
+        val tappedBand = tapMerchantEntryBand(
+            merchantNode,
+            "merchant_result_entry_band_r$round"
+        )
         if (tappedBand && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
             Log.i(TAG, "Merchant result opened by entry band tap: name=$merchantName, round=$round")
             return true
         }
 
-        val clicked = NodeUtils.clickNode(merchantNode)
+        val clicked = clickNodeWithTrace("merchant_result_accessibility_click_r$round", merchantNode)
         if (clicked && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
             Log.i(TAG, "Merchant result opened by accessibility click: name=$merchantName, round=$round")
             return true
@@ -1352,7 +1395,7 @@ class SearchController(
 
         Log.w(
             TAG,
-            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedBand=$tappedBand, clicked=$clicked"
+            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedShoulder=$tappedShoulder, tappedBand=$tappedBand, clicked=$clicked"
         )
         return false
     }
@@ -1374,7 +1417,8 @@ class SearchController(
 
         val tapped = tapScreen(
             DOUYIN_MERCHANT_ENTRY_BAND_TAP_X,
-            DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y
+            DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y,
+            "merchant_result_preset_band_r$round"
         )
         if (!tapped) {
             return false
@@ -1668,32 +1712,60 @@ class SearchController(
         } ?: false
     }
 
-    private fun tapMerchantEntryBand(merchantNode: AccessibilityNodeInfo): Boolean {
+    private fun tapMerchantTitleShoulder(
+        merchantNode: AccessibilityNodeInfo,
+        label: String
+    ): Boolean {
         val titleBounds = Rect()
         merchantNode.getBoundsInScreen(titleBounds)
         if (titleBounds.isEmpty) {
+            appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=empty_title_bounds")
+            return false
+        }
+
+        val metrics = service.resources.displayMetrics
+        val targetX = (titleBounds.right + maxOf(96, titleBounds.width() / 4))
+            .coerceIn(titleBounds.left + 24, metrics.widthPixels - 72)
+        val targetY = titleBounds.centerY().coerceIn(0, metrics.heightPixels - 1)
+        return tapScreen(targetX, targetY, label)
+    }
+
+    private fun tapMerchantEntryBand(
+        merchantNode: AccessibilityNodeInfo,
+        label: String
+    ): Boolean {
+        val titleBounds = Rect()
+        merchantNode.getBoundsInScreen(titleBounds)
+        if (titleBounds.isEmpty) {
+            appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=empty_title_bounds")
             return false
         }
 
         var currentParent = merchantNode.parent
         var depth = 0
         var candidateBand: AccessibilityNodeInfo? = null
+        var bestBandHeight = Int.MAX_VALUE
 
-        while (currentParent != null && depth < 4) {
+        while (currentParent != null && depth < 8) {
             val parentBounds = Rect()
             currentParent.getBoundsInScreen(parentBounds)
 
-            val isSafeEntryBand =
+            val containsTitle =
                 !parentBounds.isEmpty &&
-                    parentBounds.width() >= titleBounds.width() + 200 &&
-                    parentBounds.height() <= maxOf(140, titleBounds.height() + 40) &&
-                    kotlin.math.abs(parentBounds.top - titleBounds.top) <= 24 &&
-                    kotlin.math.abs(parentBounds.bottom - titleBounds.bottom) <= 24
+                    parentBounds.left <= titleBounds.left &&
+                    parentBounds.right >= titleBounds.right &&
+                    parentBounds.top <= titleBounds.top + 40 &&
+                    parentBounds.bottom >= titleBounds.bottom + 24
+            val widthFits = parentBounds.width() >= titleBounds.width() + 220
+            val heightFits = parentBounds.height() in (titleBounds.height() + 20)..360
+            val topFits = parentBounds.top >= 360
 
-            if (isSafeEntryBand) {
-                candidateBand = AccessibilityNodeInfo.obtain(currentParent)
-                currentParent.recycle()
-                break
+            if (containsTitle && widthFits && heightFits && topFits) {
+                if (parentBounds.height() < bestBandHeight) {
+                    candidateBand?.recycle()
+                    candidateBand = AccessibilityNodeInfo.obtain(currentParent)
+                    bestBandHeight = parentBounds.height()
+                }
             }
 
             val nextParent = currentParent.parent
@@ -1710,14 +1782,22 @@ class SearchController(
             val tapTarget = candidateBand ?: merchantNode
             tapTarget.getBoundsInScreen(targetBounds)
             if (targetBounds.isEmpty) {
+                appendTapTraceLine("${System.currentTimeMillis()} label=$label skipped=empty_target_bounds")
                 return false
             }
 
             val metrics = service.resources.displayMetrics
-            targetX = targetBounds.centerX().coerceIn(targetBounds.left + 24, targetBounds.right - 24)
+            targetX = (titleBounds.right + maxOf(96, titleBounds.width() / 4))
+                .coerceIn(targetBounds.left + 32, targetBounds.right - 48)
                 .coerceIn(0, metrics.widthPixels - 1)
-            targetY = targetBounds.centerY().coerceIn(0, metrics.heightPixels - 1)
-            tapScreen(targetX, targetY)
+            targetY = titleBounds.centerY()
+                .coerceIn(targetBounds.top + 16, targetBounds.bottom - 16)
+                .coerceIn(0, metrics.heightPixels - 1)
+            tapScreen(
+                targetX,
+                targetY,
+                label
+            )
         } finally {
             candidateBand?.recycle()
         }
@@ -1823,32 +1903,91 @@ class SearchController(
         
         Log.d(TAG, "Simulating text input: $text")
     }
+
+    private fun beginTapTraceRun(label: String) {
+        appendTapTraceLine("")
+        appendTapTraceLine("=== $label @${System.currentTimeMillis()} ===")
+    }
+
+    private fun appendTapTraceLine(line: String) {
+        try {
+            val traceFile = File(service.filesDir, TAP_TRACE_FILE_NAME)
+            if (traceFile.exists() && traceFile.length() > TAP_TRACE_MAX_BYTES) {
+                traceFile.writeText("")
+            }
+            traceFile.appendText("$line\n")
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun recordTapTrace(
+        label: String,
+        x: Int,
+        y: Int,
+        dispatched: Boolean? = null,
+        note: String = ""
+    ) {
+        val status = when (dispatched) {
+            true -> "dispatched=true"
+            false -> "dispatched=false"
+            null -> "dispatched=pending"
+        }
+        val suffix = if (note.isBlank()) "" else " note=$note"
+        appendTapTraceLine("${System.currentTimeMillis()} label=$label x=$x y=$y $status$suffix")
+    }
+
+    private fun recordNodeClickTrace(
+        label: String,
+        node: AccessibilityNodeInfo,
+        clicked: Boolean? = null
+    ) {
+        val bounds = Rect().also { node.getBoundsInScreen(it) }
+        val status = when (clicked) {
+            true -> "clicked=true"
+            false -> "clicked=false"
+            null -> "clicked=pending"
+        }
+        val text = getComparableNodeText(node).take(48).replace("\n", " ")
+        appendTapTraceLine(
+            "${System.currentTimeMillis()} label=$label bounds=${bounds.flattenToString()} $status text=$text"
+        )
+    }
+
+    private fun clickNodeWithTrace(label: String, node: AccessibilityNodeInfo): Boolean {
+        recordNodeClickTrace(label, node)
+        val clicked = NodeUtils.clickNode(node)
+        recordNodeClickTrace(label, node, clicked)
+        return clicked
+    }
     
     /**
      * 点击坐标
      */
     private fun click(x: Int, y: Int) {
-        tapScreen(x, y)
+        tapScreen(x, y, "click")
     }
 
-    fun tapScreen(x: Int, y: Int): Boolean {
+    fun tapScreen(x: Int, y: Int, label: String = "tap"): Boolean {
+        recordTapTrace(label, x, y)
         val path = Path()
         path.moveTo(x.toFloat(), y.toFloat())
         
         val gesture = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, 100))
             .build()
-        
-        return service.dispatchGesture(gesture, null, null)
+
+        val dispatched = service.dispatchGesture(gesture, null, null)
+        recordTapTrace(label, x, y, dispatched)
+        return dispatched
     }
 
-    private fun tapNodeCenter(node: AccessibilityNodeInfo): Boolean {
+    private fun tapNodeCenter(node: AccessibilityNodeInfo, label: String = "node_center"): Boolean {
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         if (bounds.isEmpty) {
             return false
         }
-        return tapScreen(bounds.centerX(), bounds.centerY())
+        return tapScreen(bounds.centerX(), bounds.centerY(), label)
     }
 
     private data class MerchantCandidateScore(
