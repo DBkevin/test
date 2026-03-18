@@ -41,6 +41,8 @@ class SearchController(
         private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
+        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X = 1340
+        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y = 219
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
         private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
@@ -873,22 +875,22 @@ class SearchController(
             return true
         }
 
-        val searchEntryNode = NodeUtils.findNodeByCondition(
-            rootNode,
-            condition = { node: AccessibilityNodeInfo ->
-                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                val bounds = Rect().also { node.getBoundsInScreen(it) }
-                viewId.contains("et_search_kw") &&
-                    !isLikelySearchInput(node) &&
-                    bounds.top in 280..420 &&
-                    bounds.bottom in 340..460
-            },
-            maxDepth = 16
-        )
+        findDouyinGroupBuySearchEntryNode(rootNode)?.let { node ->
+            node.recycle()
+            return true
+        }
 
-        val matched = searchEntryNode != null
-        searchEntryNode?.recycle()
-        return matched
+        val hasSelectedGroupBuyTab = hasSelectedDouyinGroupBuyTab(rootNode)
+        val hasTopSearchButton = findDouyinTopSearchButtonNode(rootNode)?.let { node ->
+            node.recycle()
+            true
+        } ?: false
+        val hasLocationSignal = pageText.contains("郑州", ignoreCase = true) ||
+            pageText.contains("同城", ignoreCase = true)
+        val hasBottomHomeTab = pageText.contains("首页", ignoreCase = true) &&
+            pageText.contains("我", ignoreCase = true)
+
+        return hasSelectedGroupBuyTab && hasTopSearchButton && (hasLocationSignal || hasBottomHomeTab)
     }
 
     private fun isLikelyDouyinHomePage(rootNode: AccessibilityNodeInfo): Boolean {
@@ -992,22 +994,7 @@ class SearchController(
                 return false
             }
 
-            val entryNode = NodeUtils.findNodeByCondition(
-                rootNode,
-                condition = { node: AccessibilityNodeInfo ->
-                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                    val bounds = Rect().also { node.getBoundsInScreen(it) }
-                    val nodeText = getComparableNodeText(node)
-                    viewId.contains("et_search_kw") &&
-                        !isLikelySearchInput(node) &&
-                        bounds.top in 280..420 &&
-                        bounds.bottom in 340..460 &&
-                        DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
-                            nodeText.contains(hint, ignoreCase = true)
-                        }
-                },
-                maxDepth = 16
-            )
+            val entryNode = findDouyinGroupBuySearchEntryNode(rootNode)
 
             if (entryNode != null) {
                 try {
@@ -1027,10 +1014,30 @@ class SearchController(
                 }
             }
 
-            val tapped = tapScreen(
-                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
-                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y
-            )
+            val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
+            if (topSearchButton != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(topSearchButton)
+                    if (clicked) {
+                        Log.d(TAG, "Opened Douyin top search button by node click")
+                        return true
+                    }
+
+                    val tapped = tapNodeCenter(topSearchButton)
+                    if (tapped) {
+                        Log.d(TAG, "Opened Douyin top search button by node bounds")
+                        return true
+                    }
+                } finally {
+                    topSearchButton.recycle()
+                }
+            }
+
+            val tapped = if (hasSelectedDouyinGroupBuyTab(rootNode)) {
+                tapScreen(DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X, DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y)
+            } else {
+                tapScreen(DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y)
+            }
             if (tapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
             }
@@ -1514,6 +1521,57 @@ class SearchController(
 
     private fun isSafeToTapDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
         return isLikelyDouyinHomePage(rootNode) || isLikelyDouyinGroupBuyPage(rootNode)
+    }
+
+    private fun findDouyinGroupBuySearchEntryNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        return NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node: AccessibilityNodeInfo ->
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val nodeText = getComparableNodeText(node)
+                viewId.contains("et_search_kw") &&
+                    !isLikelySearchInput(node) &&
+                    bounds.top in 280..420 &&
+                    bounds.bottom in 340..460 &&
+                    DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
+                        nodeText.contains(hint, ignoreCase = true)
+                    }
+            },
+            maxDepth = 16
+        )?.let { AccessibilityNodeInfo.obtain(it) }
+    }
+
+    private fun findDouyinTopSearchButtonNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        return NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val text = getComparableNodeText(node)
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                bounds.top in 120..320 &&
+                    bounds.right >= service.resources.displayMetrics.widthPixels - 260 &&
+                    (text.contains("搜索", ignoreCase = true) || viewId.contains("4_s"))
+            },
+            maxDepth = 18
+        )?.let { AccessibilityNodeInfo.obtain(it) }
+    }
+
+    private fun hasSelectedDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
+        val groupBuyTabNode = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                val text = getComparableNodeText(node)
+                text.contains("已选中，团购", ignoreCase = true) ||
+                    text == "团购" ||
+                    text.contains("团购，按钮", ignoreCase = true)
+            },
+            maxDepth = 20
+        )
+
+        val matched = groupBuyTabNode != null
+        groupBuyTabNode?.recycle()
+        return matched
     }
 
     private fun hasMerchantHomepageAnchors(
