@@ -1752,7 +1752,7 @@ class SearchController(
                     bounds.bottom in 340..460 &&
                     nodeText.isNotBlank()
             },
-            maxDepth = 24
+            maxDepth = 36
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 

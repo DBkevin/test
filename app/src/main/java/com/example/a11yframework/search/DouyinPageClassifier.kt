@@ -173,7 +173,7 @@ internal class DouyinPageClassifier(
                     bounds.bottom in 340..460 &&
                     text.isNotBlank()
             },
-            maxDepth = 28
+            maxDepth = 36
         )?.let { node ->
             node.recycle()
             true
