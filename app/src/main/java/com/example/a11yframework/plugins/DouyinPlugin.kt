@@ -9,6 +9,7 @@ import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.core.IAccessibilityPlugin
 import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.utils.NodeUtils
+import kotlin.math.abs
 
 /**
  * 抖音插件 - 医美店铺团购采集
@@ -68,7 +69,19 @@ class DouyinPlugin : IAccessibilityPlugin {
             "用户评价"
         )
         private val GROUPBUY_TAB_ROW_HINTS = listOf("团购", "服务", "评价", "推荐")
+        private val GROUPBUY_TAB_ROW_EXCLUDE_HINTS = listOf(
+            "收藏",
+            "无隐形消费",
+            "优惠",
+            "活动",
+            "消费返",
+            "超值券",
+            "共享充电宝",
+            "在线咨询",
+            "电话"
+        )
         private val GROUPBUY_SECTION_STOP_MARKERS = listOf("展开更多", "收起", "热门服务", "用户评价")
+        private const val GROUPBUY_TAB_ROW_MIN_SCORE = 120
         private val MERCHANT_NAME_EXCLUDE_HINTS = listOf(
             "现价",
             "原价",
@@ -494,6 +507,7 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         var top = (screenHeight * 0.40f).toInt()
         var bottom = (screenHeight * 0.992f).toInt()
+        val firstCardTop = findFirstVisibleCardTopForViewport(rootNode, screenHeight, screenWidth)
 
         val tabRowNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
             val rect = Rect()
@@ -513,9 +527,34 @@ class DouyinPlugin : IAccessibilityPlugin {
         }, maxDepth = 30)
 
         try {
-            val candidate = tabRowNodes.maxByOrNull { nodeTop(it) }
-            if (candidate != null) {
-                top = maxOf(top, nodeBottom(candidate) + 16)
+            var bestCandidateBottom = -1
+            var bestScore = Int.MIN_VALUE
+
+            tabRowNodes.forEach { node ->
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                if (bounds.isEmpty) {
+                    return@forEach
+                }
+
+                val score = scoreViewportTabRow(
+                    node = node,
+                    bounds = bounds,
+                    firstCardTop = firstCardTop,
+                    screenWidth = screenWidth
+                )
+                if (score > bestScore) {
+                    bestScore = score
+                    bestCandidateBottom = bounds.bottom
+                }
+            }
+
+            if (bestCandidateBottom > 0 && bestScore >= GROUPBUY_TAB_ROW_MIN_SCORE) {
+                top = maxOf(top, bestCandidateBottom + 16)
+            } else {
+                Log.d(
+                    TAG,
+                    "Skip viewport tab-row anchor: low confidence, score=$bestScore, firstCardTop=$firstCardTop"
+                )
             }
         } finally {
             NodeUtils.recycleNodes(tabRowNodes)
@@ -548,6 +587,93 @@ class DouyinPlugin : IAccessibilityPlugin {
             top = top.coerceAtLeast(0),
             bottom = bottom.coerceAtMost(screenHeight)
         )
+    }
+
+    private fun findFirstVisibleCardTopForViewport(
+        rootNode: AccessibilityNodeInfo,
+        screenHeight: Int,
+        screenWidth: Int
+    ): Int? {
+        val minTop = (screenHeight * 0.42f).toInt()
+        val maxBottom = (screenHeight * 0.995f).toInt()
+        val minWidth = (screenWidth * 0.58f).toInt()
+
+        val cardNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val bounds = Rect().also { node.getBoundsInScreen(it) }
+            if (bounds.isEmpty ||
+                bounds.top < minTop ||
+                bounds.bottom > maxBottom ||
+                bounds.width() < minWidth
+            ) {
+                return@findNodesByCondition false
+            }
+
+            val label = normalizeCardText(
+                NodeUtils.getAllNodeText(
+                    node,
+                    maxDepth = 4,
+                    maxNodes = 100,
+                    maxTextLength = 1400
+                )
+            )
+            label.isNotBlank() && isLikelyGroupBuyCardLabel(label)
+        }, maxDepth = 30)
+
+        try {
+            return cardNodes.map { nodeTop(it) }.minOrNull()
+        } finally {
+            NodeUtils.recycleNodes(cardNodes)
+        }
+    }
+
+    private fun scoreViewportTabRow(
+        node: AccessibilityNodeInfo,
+        bounds: Rect,
+        firstCardTop: Int?,
+        screenWidth: Int
+    ): Int {
+        val rowText = normalizeCardText(
+            NodeUtils.getAllNodeText(
+                node,
+                maxDepth = 6,
+                maxNodes = 180,
+                maxTextLength = 2200
+            )
+        )
+        val tabHintCount = GROUPBUY_TAB_ROW_HINTS.count { hint ->
+            rowText.contains(hint, ignoreCase = true)
+        }
+        val excludeCount = GROUPBUY_TAB_ROW_EXCLUDE_HINTS.count { hint ->
+            rowText.contains(hint, ignoreCase = true)
+        }
+
+        var score = tabHintCount * 180 - excludeCount * 140
+        if (rowText.isBlank()) {
+            score -= 180
+        }
+        if (bounds.width() >= (screenWidth * 0.58f).toInt()) {
+            score += 30
+        }
+        if (bounds.height() in 64..150) {
+            score += 25
+        }
+        if (tabHintCount == 0) {
+            score -= 150
+        }
+
+        if (firstCardTop != null) {
+            val gapToCard = firstCardTop - bounds.bottom
+            when {
+                gapToCard in 12..460 -> {
+                    score += 120 - (abs(gapToCard - 140) / 3).coerceAtMost(90)
+                }
+                gapToCard < 0 -> {
+                    score -= 140
+                }
+            }
+        }
+
+        return score
     }
 
     private fun nodeBoundsKey(node: AccessibilityNodeInfo): String {

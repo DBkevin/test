@@ -65,6 +65,7 @@ class CaptureCoordinator(
             "全部团购",
             "全部套餐"
         )
+        private val EXPAND_KEYWORD_EXCLUDES = setOf("展开")
     }
 
     private val executionMutex = Mutex()
@@ -437,9 +438,13 @@ class CaptureCoordinator(
             return activeExecution.snapshotRecords()
         }
 
-        val groupBuyTabReady = searchController.ensureMerchantGroupBuyTab(maxAttempts = 2)
+        var groupBuyTabReady = searchController.hasMerchantGroupBuyContent()
         if (!groupBuyTabReady) {
-            Log.w(TAG, "Merchant group-buy tab not confirmed before collection, continue with guarded fallback")
+            groupBuyTabReady = searchController.ensureMerchantGroupBuyTab(maxAttempts = 2)
+        }
+        if (!groupBuyTabReady && !searchController.hasMerchantGroupBuyContent()) {
+            Log.w(TAG, "Merchant group-buy tab not confirmed before collection, stop current capture")
+            return activeExecution.snapshotRecords()
         }
 
         if (shouldStopCollection(collectionConfig)) {
@@ -453,8 +458,12 @@ class CaptureCoordinator(
                 break
             }
 
-            if (!searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)) {
-                Log.w(TAG, "Merchant group-buy tab not confirmed before scroll, continue with guarded fallback")
+            if (!searchController.hasMerchantGroupBuyContent()) {
+                val ensured = searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)
+                if (!ensured && !searchController.hasMerchantGroupBuyContent()) {
+                    Log.w(TAG, "Merchant group-buy tab not confirmed before scroll, stop current capture")
+                    break
+                }
             }
 
             if (shouldStopCollection(collectionConfig)) {
@@ -607,9 +616,15 @@ class CaptureCoordinator(
     }
 
     private suspend fun expandVisibleSections(collectionConfig: CollectionConfig?): Int {
-        val groupBuyReady = searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)
-        if (!groupBuyReady) {
-            Log.w(TAG, "Merchant group-buy tab not confirmed before expand, continue with guarded fallback")
+        val hasGroupBuyContent = searchController.hasMerchantGroupBuyContent()
+        val groupBuyReady = if (hasGroupBuyContent) {
+            true
+        } else {
+            searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)
+        }
+        if (!groupBuyReady && !searchController.hasMerchantGroupBuyContent()) {
+            Log.w(TAG, "Merchant group-buy tab not confirmed before expand, skip expand for current viewport")
+            return 0
         }
 
         if (searchController.hasMerchantCollapseMarker()) {
@@ -801,6 +816,7 @@ class CaptureCoordinator(
         return collectionConfig?.expandKeywords
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
+            ?.filterNot { EXPAND_KEYWORD_EXCLUDES.contains(it) }
             ?.distinct()
             ?.takeIf { it.isNotEmpty() }
             ?: DEFAULT_EXPAND_KEYWORDS

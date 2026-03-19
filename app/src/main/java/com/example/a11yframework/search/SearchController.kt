@@ -83,6 +83,18 @@ class SearchController(
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
         private val MERCHANT_SECTION_TAB_HINTS = listOf("团购", "服务", "评价", "推荐")
+        private val MERCHANT_TAB_STRUCTURAL_EXCLUDE_HINTS = listOf(
+            "收藏",
+            "无隐形消费",
+            "优惠",
+            "活动",
+            "消费返",
+            "超值券",
+            "券",
+            "共享充电宝",
+            "在线咨询",
+            "电话"
+        )
         private val MERCHANT_TAIL_SECTION_HINTS = listOf(
             "展开更多",
             "收起",
@@ -112,6 +124,7 @@ class SearchController(
         private const val MERCHANT_TAB_ROW_BUCKET_PX = 80
         private const val MERCHANT_GROUPBUY_MIN_CARD_HINTS = 2
         private const val MERCHANT_GROUPBUY_MIN_SOLD_SIGNALS = 1
+        private const val MERCHANT_TAB_STRUCTURAL_MIN_SCORE = 120
     }
     
     /**
@@ -549,6 +562,10 @@ class SearchController(
     }
 
     fun ensureMerchantGroupBuyTab(maxAttempts: Int = 2): Boolean {
+        if (isMerchantGroupBuyContentVisible()) {
+            return true
+        }
+
         val attempts = maxAttempts.coerceAtLeast(1)
         repeat(attempts) { attempt ->
             val rootNode = service.rootInActiveWindow
@@ -562,15 +579,17 @@ class SearchController(
                         }
 
                         val clicked = clickNodeWithTrace("merchant_tab_groupbuy", groupBuyTabNode)
-                        if (clicked) {
-                            Thread.sleep(450)
-                            return true
+                        val dispatched = if (clicked) {
+                            true
+                        } else {
+                            tapNodeCenter(groupBuyTabNode, "merchant_tab_groupbuy_bounds")
                         }
 
-                        val tapped = tapNodeCenter(groupBuyTabNode, "merchant_tab_groupbuy_bounds")
-                        if (tapped) {
+                        if (dispatched) {
                             Thread.sleep(450)
-                            return true
+                            if (isMerchantGroupBuyContentVisible()) {
+                                return true
+                            }
                         }
                     } else {
                         val tappedByStructure = tapMerchantGroupBuyTabByStructure(rootNode)
@@ -606,6 +625,10 @@ class SearchController(
 
         Log.w(TAG, "Merchant group-buy tab not found or not clickable")
         return false
+    }
+
+    fun hasMerchantGroupBuyContent(): Boolean {
+        return isMerchantGroupBuyContentVisible()
     }
 
     fun hasMerchantCollapseMarker(): Boolean {
@@ -1912,14 +1935,18 @@ class SearchController(
         val tabNodes = NodeUtils.findNodesByCondition(
             rootNode,
             condition = { node ->
-                val label = resolveMerchantTabLabel(node) ?: return@findNodesByCondition false
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
-                MERCHANT_SECTION_TAB_HINTS.contains(label) &&
-                    !bounds.isEmpty &&
+                if (!bounds.isEmpty &&
                     bounds.top >= minTop &&
                     bounds.bottom <= maxBottom &&
                     bounds.height() in 36..220 &&
-                    bounds.width() in 48..420
+                    bounds.width() in 48..560
+                ) {
+                    val label = resolveMerchantTabLabel(node) ?: return@findNodesByCondition false
+                    MERCHANT_SECTION_TAB_HINTS.contains(label)
+                } else {
+                    false
+                }
             },
             maxDepth = 32
         )
@@ -1963,6 +1990,16 @@ class SearchController(
     private fun resolveMerchantTabLabel(node: AccessibilityNodeInfo): String? {
         val mergedText = buildString {
             append(getComparableNodeText(node))
+            val subtreeText = NodeUtils.getAllNodeText(
+                node,
+                maxDepth = 3,
+                maxNodes = 60,
+                maxTextLength = 360
+            )
+            if (subtreeText.isNotBlank()) {
+                append(' ')
+                append(subtreeText)
+            }
             val desc = node.contentDescription?.toString().orEmpty()
             if (desc.isNotBlank()) {
                 append(' ')
@@ -2039,6 +2076,7 @@ class SearchController(
         val minTop = (metrics.heightPixels * 0.34f).toInt()
         val maxBottom = (metrics.heightPixels * 0.74f).toInt()
         val minWidth = (metrics.widthPixels * 0.42f).toInt()
+        val firstCardTop = findMerchantFirstCardTop(rootNode)
 
         val rowNodes = NodeUtils.findNodesByCondition(
             rootNode,
@@ -2062,16 +2100,56 @@ class SearchController(
         )
 
         try {
-            val candidate = rowNodes.maxByOrNull { node ->
-                Rect().also { node.getBoundsInScreen(it) }.top
-            } ?: return false
+            var bestCandidate: AccessibilityNodeInfo? = null
+            var bestBounds: Rect? = null
+            var bestScore = Int.MIN_VALUE
 
-            val bounds = Rect().also { candidate.getBoundsInScreen(it) }
-            if (bounds.isEmpty) {
+            rowNodes.forEach { node ->
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                if (bounds.isEmpty) {
+                    return@forEach
+                }
+
+                val score = scoreMerchantTabRow(node, bounds, firstCardTop)
+                if (score > bestScore) {
+                    bestScore = score
+                    bestCandidate = node
+                    bestBounds = Rect(bounds)
+                }
+            }
+
+            val candidate = bestCandidate
+            val bounds = bestBounds
+            if (candidate == null || bounds == null || bestScore < MERCHANT_TAB_STRUCTURAL_MIN_SCORE) {
+                Log.d(
+                    TAG,
+                    "Skip structural tab fallback: low confidence, score=$bestScore, firstCardTop=$firstCardTop"
+                )
                 return false
             }
 
-            val targetX = (bounds.left + bounds.width() * 0.17f).toInt()
+            val groupBuyTabNode = findGroupBuyTabNodeInRow(candidate, bounds)
+            if (groupBuyTabNode != null) {
+                try {
+                    val clicked = clickNodeWithTrace("merchant_tab_groupbuy_struct_node", groupBuyTabNode)
+                    val dispatched = if (clicked) {
+                        true
+                    } else {
+                        tapNodeCenter(groupBuyTabNode, "merchant_tab_groupbuy_struct_bounds")
+                    }
+                    if (dispatched) {
+                        Log.d(
+                            TAG,
+                            "Tapped merchant group-buy tab by structural node: bounds=${bounds.flattenToString()}, score=$bestScore"
+                        )
+                    }
+                    return dispatched
+                } finally {
+                    groupBuyTabNode.recycle()
+                }
+            }
+
+            val targetX = (bounds.left + bounds.width() * 0.12f).toInt()
                 .coerceIn(0, metrics.widthPixels - 1)
             val targetY = bounds.centerY()
                 .coerceIn(0, metrics.heightPixels - 1)
@@ -2079,13 +2157,134 @@ class SearchController(
             if (tapped) {
                 Log.d(
                     TAG,
-                    "Tapped merchant group-buy tab by structural fallback: bounds=${bounds.flattenToString()}"
+                    "Tapped merchant group-buy tab by structural fallback: bounds=${bounds.flattenToString()}, score=$bestScore"
                 )
             }
             return tapped
         } finally {
             NodeUtils.recycleNodes(rowNodes)
         }
+    }
+
+    private fun findMerchantFirstCardTop(rootNode: AccessibilityNodeInfo): Int? {
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.40f).toInt()
+        val maxBottom = (metrics.heightPixels * 0.995f).toInt()
+        val minWidth = (metrics.widthPixels * 0.58f).toInt()
+
+        val cardNodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                if (bounds.isEmpty ||
+                    bounds.top < minTop ||
+                    bounds.bottom > maxBottom ||
+                    bounds.width() < minWidth
+                ) {
+                    return@findNodesByCondition false
+                }
+
+                val text = NodeUtils.getAllNodeText(
+                    node,
+                    maxDepth = 4,
+                    maxNodes = 100,
+                    maxTextLength = 1200
+                )
+                if (text.isBlank()) {
+                    return@findNodesByCondition false
+                }
+
+                val hasCardHint = MERCHANT_DETAIL_CARD_HINTS.any { hint ->
+                    text.contains(hint, ignoreCase = true)
+                }
+                val hasPriceHint = text.contains("现价", ignoreCase = true) ||
+                    text.contains("原价", ignoreCase = true) ||
+                    text.contains("¥")
+                hasCardHint && hasPriceHint
+            },
+            maxDepth = 30
+        )
+
+        try {
+            return cardNodes.map { node ->
+                Rect().also { node.getBoundsInScreen(it) }.top
+            }.minOrNull()
+        } finally {
+            NodeUtils.recycleNodes(cardNodes)
+        }
+    }
+
+    private fun scoreMerchantTabRow(
+        node: AccessibilityNodeInfo,
+        bounds: Rect,
+        firstCardTop: Int?
+    ): Int {
+        val metrics = service.resources.displayMetrics
+        val rowText = NodeUtils.getAllNodeText(
+            node,
+            maxDepth = 6,
+            maxNodes = 160,
+            maxTextLength = 2000
+        )
+        val tabHintCount = MERCHANT_SECTION_TAB_HINTS.count { hint ->
+            rowText.contains(hint, ignoreCase = true)
+        }
+        val excludeCount = MERCHANT_TAB_STRUCTURAL_EXCLUDE_HINTS.count { hint ->
+            rowText.contains(hint, ignoreCase = true)
+        }
+
+        var score = tabHintCount * 180 - excludeCount * 140
+        if (rowText.isBlank()) {
+            score -= 180
+        }
+        if (bounds.width() >= (metrics.widthPixels * 0.58f).toInt()) {
+            score += 30
+        }
+        if (bounds.height() in 64..140) {
+            score += 25
+        }
+        if (tabHintCount == 0) {
+            score -= 150
+        }
+
+        if (firstCardTop != null) {
+            val gapToCard = firstCardTop - bounds.bottom
+            when {
+                gapToCard in 12..460 -> {
+                    score += 120 - (abs(gapToCard - 140) / 3).coerceAtMost(90)
+                }
+                gapToCard < 0 -> {
+                    score -= 140
+                }
+            }
+        }
+
+        return score
+    }
+
+    private fun findGroupBuyTabNodeInRow(
+        rowNode: AccessibilityNodeInfo,
+        rowBounds: Rect
+    ): AccessibilityNodeInfo? {
+        val matchedNode = NodeUtils.findNodeByCondition(
+            rowNode,
+            condition = { node ->
+                val label = resolveMerchantTabLabel(node) ?: return@findNodeByCondition false
+                if (label != "团购") {
+                    return@findNodeByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                !bounds.isEmpty &&
+                    bounds.top >= rowBounds.top - 32 &&
+                    bounds.bottom <= rowBounds.bottom + 32 &&
+                    bounds.left >= rowBounds.left - 24 &&
+                    bounds.right <= rowBounds.right + 24
+            },
+            maxDepth = 10
+        ) ?: return null
+
+        return AccessibilityNodeInfo.obtain(matchedNode)
     }
 
     private fun hasMerchantHomepageAnchors(

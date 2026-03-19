@@ -1,7 +1,7 @@
 {
   "plugin_id": "douyin",
   "plugin_name": "抖音团购插件",
-  "version": 117,
+  "version": 118,
   "enabled": true,
   "app_packages": ["com.ss.android.ugc.aweme"],
   "entry_package": "com.ss.android.ugc.aweme",
@@ -36,7 +36,7 @@
     "collection": {
       "capture_timeout_ms": 60000,
       "capture_round_wait_ms": 2800,
-      "expand_keywords": ["展开更多", "查看全部", "更多团购", "更多套餐", "全部团购", "全部套餐", "展开"],
+      "expand_keywords": ["展开更多", "查看全部", "更多团购", "更多套餐", "全部团购", "全部套餐"],
       "expand_settle_ms": 1200,
       "max_expand_clicks_per_round": 4,
       "stop_texts_all": ["收起"],
