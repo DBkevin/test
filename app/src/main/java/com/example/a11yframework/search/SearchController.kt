@@ -196,7 +196,23 @@ class SearchController(
         }
         dismissCommonPopupActions(maxActions = 1)
 
-        val searchEntryOpened = openDouyinGroupBuySearchEntry()
+        var searchEntryOpened = openDouyinGroupBuySearchEntry()
+        if (!searchEntryOpened) {
+            Log.w(TAG, "Douyin group buy search entry not found, retry after reselecting group buy tab")
+            dismissCommonPopupActions(maxActions = 1)
+
+            if (selectDouyinGroupBuyTab()) {
+                Thread.sleep(900)
+            }
+
+            if (getCurrentDouyinPageKind(keyword) != DouyinPageKind.GROUPBUY_SEARCH_INPUT) {
+                waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)
+            }
+
+            dismissCommonPopupActions(maxActions = 1)
+            searchEntryOpened = openDouyinGroupBuySearchEntry()
+        }
+
         if (!searchEntryOpened) {
             Log.e(TAG, "Douyin group buy search entry not found")
             return false
