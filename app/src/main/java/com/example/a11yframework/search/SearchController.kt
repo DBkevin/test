@@ -480,8 +480,8 @@ class SearchController(
 
         val rootNode = service.rootInActiveWindow ?: return 0
         val metrics = service.resources.displayMetrics
-        val minTop = (metrics.heightPixels * 0.48f).toInt()
-        val maxBottom = (metrics.heightPixels * 0.93f).toInt()
+        val minTop = (metrics.heightPixels * 0.42f).toInt()
+        val maxBottom = (metrics.heightPixels * 0.975f).toInt()
 
         try {
             val candidates = NodeUtils.findNodesByCondition(
@@ -509,7 +509,7 @@ class SearchController(
                     !bounds.isEmpty &&
                         bounds.top >= minTop &&
                         bounds.bottom <= maxBottom &&
-                        bounds.height() in 36..220
+                        bounds.height() in 32..280
                 },
                 maxDepth = 28
             )
@@ -543,7 +543,12 @@ class SearchController(
                     }
 
                     val clicked = clickNodeWithTrace("merchant_expand", candidate)
-                    if (clicked) {
+                    val dispatched = if (clicked) {
+                        true
+                    } else {
+                        tapNodeCenter(candidate, "merchant_expand_bounds")
+                    }
+                    if (dispatched) {
                         clickCount++
                         Thread.sleep(500)
                     }

@@ -57,6 +57,8 @@ class CaptureCoordinator(
         private const val INITIAL_VIEWPORT_MAX_ATTEMPTS = 3
         private const val INITIAL_VIEWPORT_RETRY_DELAY_MS = 900L
         private const val COLLECTING_SCRAPE_COOLDOWN_MS = 1_200L
+        private const val MERCHANT_CONTEXT_RECOVER_SCROLL_ATTEMPTS = 2
+        private const val MERCHANT_CONTEXT_RECOVER_SCROLL_SETTLE_MS = 850L
         private val DEFAULT_EXPAND_KEYWORDS = listOf(
             "展开更多",
             "查看全部",
@@ -657,11 +659,19 @@ class CaptureCoordinator(
         activeExecution: ActiveCapture,
         phase: String
     ): Boolean {
+        if (searchController.hasMerchantGroupBuyContent()) {
+            return true
+        }
+
         if (searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName)) {
             return true
         }
 
         if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+            return true
+        }
+
+        if (tryRecoverMerchantGroupBuyContext(activeExecution, phase)) {
             return true
         }
 
@@ -674,9 +684,56 @@ class CaptureCoordinator(
             return false
         }
 
+        if (tryRecoverMerchantGroupBuyContext(activeExecution, "$phase:after_back")) {
+            return true
+        }
+
         delay(700)
         return searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName) ||
-            service.isCurrentTargetPage(activeExecution.targetPackage)
+            service.isCurrentTargetPage(activeExecution.targetPackage) ||
+            searchController.hasMerchantGroupBuyContent()
+    }
+
+    private suspend fun tryRecoverMerchantGroupBuyContext(
+        activeExecution: ActiveCapture,
+        phase: String
+    ): Boolean {
+        if (searchController.hasMerchantGroupBuyContent()) {
+            return true
+        }
+
+        val directEnsured = searchController.ensureMerchantGroupBuyTab(maxAttempts = 2)
+        if (directEnsured && searchController.hasMerchantGroupBuyContent()) {
+            Log.i(TAG, "Recovered merchant group-buy context by direct tab ensure: phase=$phase")
+            return true
+        }
+
+        repeat(MERCHANT_CONTEXT_RECOVER_SCROLL_ATTEMPTS) { attempt ->
+            val movedUp = searchController.scrollCurrentPage(forward = false)
+            if (!movedUp) {
+                return@repeat
+            }
+
+            delay(min(MERCHANT_CONTEXT_RECOVER_SCROLL_SETTLE_MS, resolveScrollSettleMs()))
+            if (searchController.hasMerchantGroupBuyContent()) {
+                Log.i(
+                    TAG,
+                    "Recovered merchant group-buy context by upward scroll: phase=$phase, attempt=${attempt + 1}"
+                )
+                return true
+            }
+
+            val ensured = searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)
+            if (ensured && searchController.hasMerchantGroupBuyContent()) {
+                Log.i(
+                    TAG,
+                    "Recovered merchant group-buy context by upward scroll + tab ensure: phase=$phase, attempt=${attempt + 1}"
+                )
+                return true
+            }
+        }
+
+        return false
     }
 
     private suspend fun waitForCaptureProgress(
