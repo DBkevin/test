@@ -169,7 +169,6 @@ internal class DouyinPageClassifier(
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = NodeUtils.getNodeText(node)
                 viewId.contains("et_search_kw") &&
-                    !isLikelySearchInput(node) &&
                     bounds.top in 280..420 &&
                     bounds.bottom in 340..460 &&
                     GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->

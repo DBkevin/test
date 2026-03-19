@@ -1748,7 +1748,6 @@ class SearchController(
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val nodeText = getComparableNodeText(node)
                 viewId.contains("et_search_kw") &&
-                    !isLikelySearchInput(node) &&
                     bounds.top in 280..420 &&
                     bounds.bottom in 340..460 &&
                     DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
