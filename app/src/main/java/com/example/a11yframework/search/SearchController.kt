@@ -44,8 +44,6 @@ class SearchController(
         private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
-        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X = 1340
-        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y = 219
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
         private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
@@ -157,9 +155,6 @@ class SearchController(
         beginTapTraceRun("douyin_search:$keyword")
 
         when (getCurrentDouyinPageKind(keyword)) {
-            DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
-                Log.d(TAG, "Douyin search input already visible, skip home/group-buy preparation")
-            }
             DouyinPageKind.GROUPBUY_HOME -> {
                 Log.d(TAG, "Douyin group-buy home already visible, skip tab selection")
             }
@@ -173,15 +168,14 @@ class SearchController(
                 if (tabSelected) {
                     Thread.sleep(1200)
                 } else {
-                    Log.w(TAG, "Douyin group buy tab not explicitly selected, fallback to direct search")
+                    Log.w(TAG, "Douyin group buy tab not explicitly selected")
                 }
             }
         }
 
-        if (getCurrentDouyinPageKind(keyword) != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
-            !waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)
-        ) {
-            Log.w(TAG, "Douyin group buy page not confirmed after tab selection")
+        if (!waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)) {
+            Log.e(TAG, "Douyin group buy page not confirmed after tab selection")
+            return false
         }
 
         val searchEntryOpened = openDouyinGroupBuySearchEntry()
@@ -1102,39 +1096,11 @@ class SearchController(
                 }
             }
 
-            val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
-            if (topSearchButton != null) {
-                try {
-                    val clicked = NodeUtils.clickNode(topSearchButton)
-                    recordNodeClickTrace("douyin_groupbuy_top_search_node", topSearchButton, clicked)
-                    if (clicked) {
-                        Log.d(TAG, "Opened Douyin top search button by node click")
-                        return true
-                    }
-
-                    val tapped = tapNodeCenter(topSearchButton, "douyin_groupbuy_top_search_bounds")
-                    if (tapped) {
-                        Log.d(TAG, "Opened Douyin top search button by node bounds")
-                        return true
-                    }
-                } finally {
-                    topSearchButton.recycle()
-                }
-            }
-
-            val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                tapScreen(
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X,
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y,
-                    "douyin_groupbuy_top_search_preset"
-                )
-            } else {
-                tapScreen(
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y,
-                    "douyin_groupbuy_search_entry_preset"
-                )
-            }
+            val tapped = tapScreen(
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y,
+                "douyin_groupbuy_search_entry_preset"
+            )
             if (tapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
             }
@@ -1628,25 +1594,6 @@ class SearchController(
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
-    private fun findDouyinTopSearchButtonNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-        return NodeUtils.findNodeByCondition(
-            rootNode,
-            condition = { node ->
-                val bounds = Rect().also { node.getBoundsInScreen(it) }
-                val text = getComparableNodeText(node)
-                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                val className = node.className?.toString().orEmpty()
-                bounds.top in 120..320 &&
-                    bounds.right >= service.resources.displayMetrics.widthPixels - 260 &&
-                    (
-                        text.contains("搜索", ignoreCase = true) ||
-                            viewId.contains("4_s") ||
-                            (className.contains("Button", ignoreCase = true) && text.isNotBlank())
-                    )
-            },
-            maxDepth = 32
-        )?.let { AccessibilityNodeInfo.obtain(it) }
-    }
 
     private fun hasSelectedDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
         val groupBuyTabNode = NodeUtils.findNodeByCondition(
@@ -2209,3 +2156,4 @@ class SearchController(
         return score
     }
 }
+
