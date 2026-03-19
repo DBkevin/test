@@ -417,6 +417,101 @@ class SearchController(
         return clickCount
     }
 
+    fun clickMerchantExpandTexts(
+        targetTexts: List<String>,
+        maxClicks: Int = targetTexts.size
+    ): Int {
+        val normalizedTargets = targetTexts
+            .map { normalizeText(it) }
+            .filter { it.isNotBlank() }
+            .distinct()
+        if (normalizedTargets.isEmpty() || maxClicks <= 0) {
+            return 0
+        }
+
+        val rootNode = service.rootInActiveWindow ?: return 0
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.48f).toInt()
+        val maxBottom = (metrics.heightPixels * 0.93f).toInt()
+
+        try {
+            val candidates = NodeUtils.findNodesByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val rawText = getComparableNodeText(node)
+                    if (rawText.isBlank()) {
+                        return@findNodesByCondition false
+                    }
+                    if (rawText.contains("你可能感兴趣", ignoreCase = true) ||
+                        rawText.contains("猜你喜欢", ignoreCase = true)
+                    ) {
+                        return@findNodesByCondition false
+                    }
+
+                    val normalizedText = normalizeText(rawText)
+                    val keywordMatched = normalizedTargets.any { target ->
+                        normalizedText.contains(target)
+                    }
+                    if (!keywordMatched) {
+                        return@findNodesByCondition false
+                    }
+
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    !bounds.isEmpty &&
+                        bounds.top >= minTop &&
+                        bounds.bottom <= maxBottom &&
+                        bounds.height() in 36..220
+                },
+                maxDepth = 28
+            )
+
+            try {
+                val sortedCandidates = candidates.sortedWith(
+                    compareBy<AccessibilityNodeInfo>({ node ->
+                        Rect().also { node.getBoundsInScreen(it) }.top
+                    }, { node ->
+                        Rect().also { node.getBoundsInScreen(it) }.left
+                    })
+                )
+
+                val clickedKeys = mutableSetOf<String>()
+                var clickCount = 0
+
+                for (candidate in sortedCandidates) {
+                    if (clickCount >= maxClicks) {
+                        break
+                    }
+
+                    val bounds = Rect()
+                    candidate.getBoundsInScreen(bounds)
+                    if (bounds.isEmpty) {
+                        continue
+                    }
+
+                    val clickKey = "${bounds.left},${bounds.top},${bounds.right},${bounds.bottom}"
+                    if (!clickedKeys.add(clickKey)) {
+                        continue
+                    }
+
+                    val clicked = clickNodeWithTrace("merchant_expand", candidate)
+                    if (clicked) {
+                        clickCount++
+                        Thread.sleep(500)
+                    }
+                }
+
+                if (clickCount > 0) {
+                    Log.i(TAG, "Merchant expand taps: count=$clickCount")
+                }
+                return clickCount
+            } finally {
+                NodeUtils.recycleNodes(candidates)
+            }
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
     fun clickViewId(viewId: String, maxScrollRounds: Int = 0): Boolean {
         repeat(maxScrollRounds + 1) { round ->
             val matchedNode = findNodeByViewId(viewId)
@@ -1515,6 +1610,32 @@ class SearchController(
         } finally {
             rootNode.recycle()
         }
+    }
+
+    fun recoverMerchantDetailPage(
+        merchantName: String,
+        maxBackAttempts: Int = 2
+    ): Boolean {
+        if (isOnMerchantDetailPage(merchantName)) {
+            return true
+        }
+
+        repeat(maxBackAttempts) { attempt ->
+            val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+            appendTapTraceLine("${System.currentTimeMillis()} label=recover_merchant_back attempt=${attempt + 1} success=$backed")
+            if (!backed) {
+                return@repeat
+            }
+
+            if (waitForMerchantDetailPage(merchantName, 1_800L)) {
+                Log.i(TAG, "Recovered merchant detail page by back action: attempt=${attempt + 1}")
+                return true
+            }
+
+            Thread.sleep(350)
+        }
+
+        return isOnMerchantDetailPage(merchantName)
     }
 
     fun isOnDouyinMerchantResultPage(merchantName: String): Boolean {

@@ -63,8 +63,7 @@ class CaptureCoordinator(
             "更多团购",
             "更多套餐",
             "全部团购",
-            "全部套餐",
-            "展开"
+            "全部套餐"
         )
     }
 
@@ -444,6 +443,11 @@ class CaptureCoordinator(
         }
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
+            if (!ensureMerchantDetailContext(activeExecution, "before_scroll:$scrollRounds")) {
+                Log.i(TAG, "Stop collection after losing merchant detail context before scroll")
+                break
+            }
+
             if (shouldStopCollection(collectionConfig)) {
                 Log.i(TAG, "Stop collection before next scroll: round=$scrollRounds")
                 break
@@ -460,16 +464,13 @@ class CaptureCoordinator(
             delay(resolveScrollSettleMs(collectionConfig))
             collectCurrentViewport(activeExecution, collectionConfig, deadline)
 
-            if (shouldStopCollection(collectionConfig)) {
-                Log.i(TAG, "Stop collection after scroll round=$scrollRounds")
+            if (!ensureMerchantDetailContext(activeExecution, "after_scroll:$scrollRounds")) {
+                Log.i(TAG, "Stop collection after losing merchant detail context after scroll")
                 break
             }
 
-            if (
-                activeExecution.recordCount() > 0 &&
-                !service.isCurrentTargetPage(activeExecution.targetPackage)
-            ) {
-                Log.i(TAG, "Stop collection after leaving target page: round=$scrollRounds")
+            if (shouldStopCollection(collectionConfig)) {
+                Log.i(TAG, "Stop collection after scroll round=$scrollRounds")
                 break
             }
 
@@ -511,6 +512,18 @@ class CaptureCoordinator(
                 activeExecution.task.hospitalName
             )
             if (!stillOnMerchantDetail) {
+                val recovered = searchController.recoverMerchantDetailPage(
+                    merchantName = activeExecution.task.hospitalName,
+                    maxBackAttempts = 2
+                )
+                if (recovered) {
+                    Log.i(
+                        TAG,
+                        "Recovered merchant detail context during initial viewport stabilization: attempt=${attempt + 1}"
+                    )
+                    delay(min(INITIAL_VIEWPORT_RETRY_DELAY_MS, remainingTime(deadline)))
+                    return@repeat
+                }
                 Log.w(
                     TAG,
                     "Initial viewport lost merchant detail context before first scroll: attempt=${attempt + 1}"
@@ -591,9 +604,8 @@ class CaptureCoordinator(
             return 0
         }
 
-        val expandedCount = searchController.clickAnyText(
+        val expandedCount = searchController.clickMerchantExpandTexts(
             targetTexts = expandKeywords,
-            exactMatch = false,
             maxClicks = maxClicks
         )
 
@@ -605,6 +617,32 @@ class CaptureCoordinator(
         }
 
         return expandedCount
+    }
+
+    private suspend fun ensureMerchantDetailContext(
+        activeExecution: ActiveCapture,
+        phase: String
+    ): Boolean {
+        if (searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName)) {
+            return true
+        }
+
+        if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+            return true
+        }
+
+        val recovered = searchController.recoverMerchantDetailPage(
+            merchantName = activeExecution.task.hospitalName,
+            maxBackAttempts = 2
+        )
+        if (!recovered) {
+            Log.w(TAG, "Lost merchant detail context and failed to recover: phase=$phase")
+            return false
+        }
+
+        delay(700)
+        return searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName) ||
+            service.isCurrentTargetPage(activeExecution.targetPackage)
     }
 
     private suspend fun waitForCaptureProgress(

@@ -199,12 +199,12 @@ class DouyinPlugin : IAccessibilityPlugin {
             maxNodes = 520,
             maxTextLength = 10000
         )
-        if (containsHardNonGroupBuyModule(pageText)) {
+        val visibleCards = findVisibleGroupBuyCards(nodeInfo)
+        if (containsHardNonGroupBuyModule(pageText) && visibleCards.isEmpty()) {
             Log.d(TAG, "Detected hard non-groupbuy module, skip target page")
             return false
         }
 
-        val visibleCards = findVisibleGroupBuyCards(nodeInfo)
         val signalCount = SHOP_PAGE_SIGNALS.count { signal ->
             pageText.contains(signal, ignoreCase = true)
         }
