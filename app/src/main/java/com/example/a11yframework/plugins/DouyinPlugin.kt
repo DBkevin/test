@@ -58,6 +58,7 @@ class DouyinPlugin : IAccessibilityPlugin {
         private const val GROUP_BUY_DATA_TYPE = "group_buys"
         private const val MIN_CARD_WIDTH = 900
         private const val MIN_CARD_HEIGHT = 120
+        private const val MAX_CARD_HEIGHT = 620
         private const val MIN_CARD_TOP = 0
         private val GROUPBUY_TAIL_SIGNALS = listOf(
             "展开更多",
@@ -65,6 +66,19 @@ class DouyinPlugin : IAccessibilityPlugin {
             "预约到店送好礼",
             "预约到店专属礼",
             "用户评价"
+        )
+        private val GROUPBUY_TAB_ROW_HINTS = listOf("团购", "服务", "评价", "推荐")
+        private val GROUPBUY_SECTION_STOP_MARKERS = listOf("展开更多", "收起", "热门服务", "用户评价")
+        private val MERCHANT_NAME_EXCLUDE_HINTS = listOf(
+            "现价",
+            "原价",
+            "已售",
+            "领券抢购",
+            "去抢购",
+            "在线咨询",
+            "电话",
+            "详情",
+            "热门服务"
         )
 
         private val TITLE_REGEX = Regex(
@@ -145,6 +159,11 @@ class DouyinPlugin : IAccessibilityPlugin {
         val originalPrice: String = "",
         val sales: String = "",
         val rawText: String = ""
+    )
+
+    private data class GroupBuyViewport(
+        val top: Int,
+        val bottom: Int
     )
 
     private var service: AccessibilityService? = null
@@ -314,24 +333,31 @@ class DouyinPlugin : IAccessibilityPlugin {
     }
 
     private fun extractMerchantName(rootNode: AccessibilityNodeInfo): String {
+        val viewport = resolveGroupBuyViewport(rootNode)
         val firstCardTop = findVisibleGroupBuyCards(rootNode)
             .map { nodeTop(it) }
             .minOrNull()
-            ?: Int.MAX_VALUE
+        val candidateBottom = when {
+            firstCardTop == null -> viewport.top - 12
+            firstCardTop > viewport.top + 120 -> firstCardTop - 12
+            else -> viewport.top - 12
+        }.coerceAtLeast(760)
 
         val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
-            val label = NodeUtils.getNodeText(node)
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
             if (label.isBlank()) return@findNodesByCondition false
-            if (label.contains("现价") || label.contains("已售")) return@findNodesByCondition false
+            if (MERCHANT_NAME_EXCLUDE_HINTS.any { hint -> label.contains(hint, ignoreCase = true) }) {
+                return@findNodesByCondition false
+            }
             if (containsNonMerchantTextMarker(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            rect.top in 300..1400 &&
+            rect.top in 220..1500 &&
                 rect.width() >= 400 &&
                 rect.height() <= 220 &&
-                rect.bottom <= firstCardTop - 40 &&
+                rect.bottom <= candidateBottom &&
                 HOSPITAL_KEYWORDS.any { keyword -> label.contains(keyword, ignoreCase = true) }
         }, maxDepth = 24)
 
@@ -399,19 +425,23 @@ class DouyinPlugin : IAccessibilityPlugin {
     }
 
     private fun findVisibleGroupBuyCards(rootNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
+        val viewport = resolveGroupBuyViewport(rootNode)
         val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
-            val label = getNodeText(node)
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
             if (label.isBlank()) return@findNodesByCondition false
             if (!isLikelyGroupBuyCardLabel(label)) return@findNodesByCondition false
+            if (containsNonMerchantTextMarker(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            rect.top >= MIN_CARD_TOP &&
+            rect.top >= maxOf(MIN_CARD_TOP, viewport.top) &&
+                rect.bottom <= viewport.bottom &&
                 rect.width() >= MIN_CARD_WIDTH &&
                 rect.height() >= MIN_CARD_HEIGHT &&
+                rect.height() <= MAX_CARD_HEIGHT &&
                 rect.left <= 120 &&
-                rect.right >= 1180
+                rect.right >= 1100
         }, maxDepth = 32)
 
         return candidates
@@ -451,8 +481,73 @@ class DouyinPlugin : IAccessibilityPlugin {
             DISPLAY_PRICE_REGEX.containsMatchIn(normalized)
         val hasHint = CARD_HINT_KEYWORDS.any { normalized.contains(it) }
         val hasTitleText = TITLE_TEXT_REGEX.containsMatchIn(normalized)
+        val hasActionSignal = normalized.contains("领券抢购") || normalized.contains("去抢购")
+        val hasSalesSignal = SALES_REGEX.containsMatchIn(normalized) || BROWSE_REGEX.containsMatchIn(normalized)
 
-        return hasPrice && hasHint && hasTitleText
+        return hasPrice && hasHint && hasTitleText && (hasActionSignal || hasSalesSignal)
+    }
+
+    private fun resolveGroupBuyViewport(rootNode: AccessibilityNodeInfo): GroupBuyViewport {
+        val metrics = service?.resources?.displayMetrics
+        val screenHeight = metrics?.heightPixels ?: 3200
+        val screenWidth = metrics?.widthPixels ?: 1440
+
+        var top = (screenHeight * 0.40f).toInt()
+        var bottom = (screenHeight * 0.992f).toInt()
+
+        val tabRowNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            if (rect.isEmpty) return@findNodesByCondition false
+
+            val className = node.className?.toString().orEmpty()
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
+            val hasTabHint = GROUPBUY_TAB_ROW_HINTS.any { hint -> label.contains(hint, ignoreCase = true) }
+            val isTabLikeScrollRow =
+                className.contains("ScrollView", ignoreCase = true) &&
+                    rect.width() >= (screenWidth * 0.30f).toInt() &&
+                    rect.height() in 48..220 &&
+                    rect.top in ((screenHeight * 0.22f).toInt()..(screenHeight * 0.78f).toInt())
+
+            hasTabHint || isTabLikeScrollRow
+        }, maxDepth = 30)
+
+        try {
+            val candidate = tabRowNodes.maxByOrNull { nodeTop(it) }
+            if (candidate != null) {
+                top = maxOf(top, nodeBottom(candidate) + 16)
+            }
+        } finally {
+            NodeUtils.recycleNodes(tabRowNodes)
+        }
+
+        val stopMarkerNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
+            if (label.isBlank() || label.length > 24) return@findNodesByCondition false
+            GROUPBUY_SECTION_STOP_MARKERS.any { marker -> label.contains(marker, ignoreCase = true) }
+        }, maxDepth = 32)
+
+        try {
+            val stopTop = stopMarkerNodes
+                .map { nodeTop(it) }
+                .filter { markerTop -> markerTop > top + 140 }
+                .minOrNull()
+            if (stopTop != null) {
+                bottom = minOf(bottom, stopTop - 12)
+            }
+        } finally {
+            NodeUtils.recycleNodes(stopMarkerNodes)
+        }
+
+        if (bottom - top < 260) {
+            top = (screenHeight * 0.42f).toInt()
+            bottom = (screenHeight * 0.992f).toInt()
+        }
+
+        return GroupBuyViewport(
+            top = top.coerceAtLeast(0),
+            bottom = bottom.coerceAtMost(screenHeight)
+        )
     }
 
     private fun nodeBoundsKey(node: AccessibilityNodeInfo): String {
@@ -465,6 +560,12 @@ class DouyinPlugin : IAccessibilityPlugin {
         val rect = Rect()
         node.getBoundsInScreen(rect)
         return rect.top
+    }
+
+    private fun nodeBottom(node: AccessibilityNodeInfo): Int {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        return rect.bottom
     }
 
     private fun getNodeText(node: AccessibilityNodeInfo): String {
