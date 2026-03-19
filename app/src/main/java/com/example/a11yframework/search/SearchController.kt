@@ -50,7 +50,7 @@ class SearchController(
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
         private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
         private const val DOUYIN_HOME_BOTTOM_TAB_TAP_Y = 3020
-        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_X = 823
+        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_X = 508
         private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y = 516
         private const val DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
@@ -1302,6 +1302,17 @@ class SearchController(
             contextText.contains(hint, ignoreCase = true)
         }
 
+        // 抖音结果页里同名文本很多，只有位于上半屏入口带的候选才允许参与点击。
+        if (!hasEntryBand || !entryBandInPrimaryZone) {
+            return 0
+        }
+        if (entryBandTooLow) {
+            return 0
+        }
+        if (hasProductContext && !hasStructuredContext && !hasReviewContext && !hasRepeatCustomerContext) {
+            return 0
+        }
+
         var score = 0
         if (comparableText == normalizedTarget) {
             score += 30
@@ -1417,15 +1428,9 @@ class SearchController(
             return true
         }
 
-        val clicked = clickNodeWithTrace("merchant_result_accessibility_click_r$round", merchantNode)
-        if (clicked && waitForMerchantDetailPage(merchantName, MERCHANT_RESULT_OPEN_TIMEOUT_MS)) {
-            Log.i(TAG, "Merchant result opened by accessibility click: name=$merchantName, round=$round")
-            return true
-        }
-
         Log.w(
             TAG,
-            "Merchant result did not open detail page: name=$merchantName, round=$round, tappedBand=$tappedBand, clicked=$clicked"
+            "Merchant result did not open detail page by entry band: name=$merchantName, round=$round, tappedBand=$tappedBand"
         )
         return false
     }
