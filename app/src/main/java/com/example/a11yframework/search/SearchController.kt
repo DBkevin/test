@@ -1571,13 +1571,13 @@ class SearchController(
 
     private fun waitForMerchantDetailPage(merchantName: String, timeoutMs: Long): Boolean {
         val startAt = System.currentTimeMillis()
+        val normalizedTarget = normalizeText(merchantName)
 
         while (System.currentTimeMillis() - startAt < timeoutMs) {
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
-                    val kind = douyinPageClassifier.classify(rootNode, merchantName).kind
-                    if (kind == DouyinPageKind.MERCHANT_HOME || kind == DouyinPageKind.MERCHANT_TAIL) {
+                    if (isLikelyMerchantDetailPage(rootNode, normalizedTarget)) {
                         return true
                     }
                 } finally {
