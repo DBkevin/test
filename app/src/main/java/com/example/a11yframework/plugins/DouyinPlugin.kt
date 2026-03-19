@@ -37,12 +37,21 @@ class DouyinPlugin : IAccessibilityPlugin {
         private const val PAGE_HOSPITAL_DETAIL = "hospital_detail"
         private const val GROUP_BUY_DATA_TYPE = "hospital_group_buy"
 
-        private const val MAX_CAPTURE_SCROLLS = 12
-        private const val MAX_STALE_SCROLLS = 2
-        private const val SCROLL_GUARD_MS = 1200L
+        private const val MAX_CAPTURE_SCROLLS = 30
+        private const val MAX_STALE_SCROLLS = 3
+        private const val SCROLL_GUARD_MS = 900L
         private const val MIN_CARD_WIDTH = 900
         private const val MIN_CARD_HEIGHT = 140
-        private const val MIN_CARD_TOP = 1500
+        private const val MIN_CARD_TOP = 40
+        private const val MIN_CONTROL_WIDTH = 1200
+        private const val MIN_CONTROL_HEIGHT = 70
+        private const val MAX_CONTROL_HEIGHT = 220
+        private const val MIN_CONTROL_TOP = 1000
+        private const val MIN_ICON_SIZE = 28
+        private const val MAX_ICON_SIZE = 120
+        private const val SWIPE_DISTANCE_MIN = 320
+        private const val SWIPE_DISTANCE_MAX = 760
+        private const val SWIPE_GESTURE_DURATION_MS = 280L
 
         private val TITLE_REGEX = Regex("""^(.*?)(?=,周|,至少提前|,随时退|,原价|,现价|,已售)""")
         private val ORIGINAL_PRICE_REGEX = Regex("""原价\s*([0-9]+(?:\.[0-9]+)?)元""")
@@ -117,13 +126,29 @@ class DouyinPlugin : IAccessibilityPlugin {
         }
     }
 
+    private enum class ExpandControlType {
+        EXPAND_MORE,
+        EXPAND_ALL,
+        COLLAPSE
+    }
+
+    private data class ExpandControl(
+        val type: ExpandControlType,
+        val centerX: Int,
+        val centerY: Int,
+        val bounds: String,
+        val source: String
+    )
+
     private data class CaptureSession(
         var merchantName: String = "",
         val seenItemKeys: MutableSet<String> = linkedSetOf(),
         var staleScrolls: Int = 0,
         var scrollCount: Int = 0,
+        var expandClicks: Int = 0,
+        var collapseSeen: Boolean = false,
         var completed: Boolean = false,
-        var lastScrollAt: Long = 0L
+        var lastActionAt: Long = 0L
     )
 
     private var service: AccessibilityService? = null
@@ -202,7 +227,9 @@ class DouyinPlugin : IAccessibilityPlugin {
 
             val visibleItems = extractGroupBuyList(nodeInfo, hospitalInfo.hospitalName)
             if (visibleItems.isEmpty()) {
-                Log.d(TAG, "No visible group-buy cards on current screen")
+                captureSession.staleScrolls += 1
+                Log.d(TAG, "No visible group-buy cards on current screen, stale=${captureSession.staleScrolls}")
+                continueCaptureIfNeeded(nodeInfo)
                 return emptyList()
             }
 
@@ -241,7 +268,8 @@ class DouyinPlugin : IAccessibilityPlugin {
                     metadata = mapOf(
                         "merchantName" to hospitalInfo.hospitalName,
                         "captureMode" to "auto_scroll",
-                        "scrollCount" to captureSession.scrollCount
+                        "scrollCount" to captureSession.scrollCount,
+                        "expandClicks" to captureSession.expandClicks
                     )
                 )
             }
@@ -290,20 +318,61 @@ class DouyinPlugin : IAccessibilityPlugin {
             return
         }
 
-        if (captureSession.staleScrolls > MAX_STALE_SCROLLS) {
+        if (captureSession.expandClicks >= 2 && captureSession.staleScrolls > MAX_STALE_SCROLLS) {
             captureSession.completed = true
-            Log.i(TAG, "Capture session finished: no new cards after repeated scrolls")
+            Log.i(
+                TAG,
+                "Capture session finished: no new cards after full expansion, stale=${captureSession.staleScrolls}"
+            )
+            return
+        }
+
+        if (captureSession.staleScrolls > MAX_STALE_SCROLLS + 3) {
+            captureSession.completed = true
+            Log.i(TAG, "Capture session finished: repeated stale screens without progress")
             return
         }
 
         val now = System.currentTimeMillis()
-        if (now - captureSession.lastScrollAt < SCROLL_GUARD_MS) return
+        if (now - captureSession.lastActionAt < SCROLL_GUARD_MS) return
 
-        val scrolled = scrollMainContentList(rootNode)
+        val control = findExpandControl(rootNode)
+        if (control != null) {
+            when (control.type) {
+                ExpandControlType.EXPAND_MORE,
+                ExpandControlType.EXPAND_ALL -> {
+                    if (captureSession.expandClicks < 2 && tapExpandControl(control)) {
+                        captureSession.expandClicks += 1
+                        captureSession.staleScrolls = 0
+                        captureSession.lastActionAt = now
+                        Log.i(
+                            TAG,
+                            "Clicked ${if (control.type == ExpandControlType.EXPAND_MORE) "展开更多" else "展开全部"} control " +
+                                "(#${captureSession.expandClicks}) bounds=${control.bounds} source=${control.source}"
+                        )
+                        return
+                    }
+                }
+                ExpandControlType.COLLAPSE -> {
+                    captureSession.collapseSeen = true
+                    if (captureSession.expandClicks >= 2 && captureSession.staleScrolls > 0) {
+                        captureSession.completed = true
+                        Log.i(TAG, "Capture session finished: collapse control detected after full expansion")
+                        return
+                    }
+                }
+            }
+        }
+
+        val scrolled = scrollMainContentList(rootNode, findVisibleGroupBuyCards(rootNode))
         if (scrolled) {
             captureSession.scrollCount += 1
-            captureSession.lastScrollAt = now
-            Log.i(TAG, "Triggered scroll ${captureSession.scrollCount}/$MAX_CAPTURE_SCROLLS")
+            captureSession.lastActionAt = now
+            Log.i(
+                TAG,
+                "Triggered small-step scroll ${captureSession.scrollCount}/$MAX_CAPTURE_SCROLLS " +
+                    "(expandClicks=${captureSession.expandClicks})"
+            )
         } else {
             captureSession.completed = true
             Log.i(TAG, "Capture session finished: main list can no longer scroll")
@@ -413,18 +482,15 @@ class DouyinPlugin : IAccessibilityPlugin {
         )
     }
 
-    private fun scrollMainContentList(rootNode: AccessibilityNodeInfo): Boolean {
+    private fun scrollMainContentList(
+        rootNode: AccessibilityNodeInfo,
+        visibleCards: List<AccessibilityNodeInfo>
+    ): Boolean {
         val listNode = findMainScrollableList(rootNode) ?: return false
-
-        if (NodeUtils.scrollNode(listNode, forward = true)) {
-            Log.d(TAG, "Scrolled main list via ACTION_SCROLL_FORWARD")
-            return true
-        }
-
         val rect = Rect()
         listNode.getBoundsInScreen(rect)
-        val gestureResult = performSwipeUp(rect)
-        Log.d(TAG, "Scrolled main list via gesture: $gestureResult")
+        val gestureResult = performSwipeUp(rect, visibleCards)
+        Log.d(TAG, "Scrolled main list via small-step gesture: $gestureResult")
         return gestureResult
     }
 
@@ -446,22 +512,172 @@ class DouyinPlugin : IAccessibilityPlugin {
         )
     }
 
-    private fun performSwipeUp(rect: Rect): Boolean {
+    private fun performSwipeUp(rect: Rect, visibleCards: List<AccessibilityNodeInfo>): Boolean {
         val currentService = service ?: return false
 
         val startX = rect.centerX().toFloat()
-        val startY = (rect.bottom - rect.height() * 0.18f)
-        val endY = (rect.top + rect.height() * 0.25f)
+        val startY = (rect.bottom - rect.height() * 0.22f).toInt()
+        val cardHeights = visibleCards.mapNotNull { node ->
+            val cardRect = Rect()
+            node.getBoundsInScreen(cardRect)
+            val height = cardRect.height()
+            if (height >= MIN_CARD_HEIGHT) height else null
+        }.sorted()
+        val baseCardHeight = when {
+            cardHeights.isNotEmpty() -> cardHeights[cardHeights.size / 2]
+            else -> (rect.height() * 0.16f).toInt()
+        }
+        val multiplier = if (captureSession.scrollCount % 2 == 0) 1.15f else 1.75f
+        val swipeDistance = (baseCardHeight * multiplier).toInt().coerceIn(SWIPE_DISTANCE_MIN, SWIPE_DISTANCE_MAX)
+        val endY = (startY - swipeDistance).coerceAtLeast(rect.top + (rect.height() * 0.18f).toInt())
+
+        if (startY - endY < 80) return false
 
         val path = Path().apply {
-            moveTo(startX, startY)
-            lineTo(startX, endY)
+            moveTo(startX, startY.toFloat())
+            lineTo(startX, endY.toFloat())
         }
 
         val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 350))
+            .addStroke(GestureDescription.StrokeDescription(path, 0, SWIPE_GESTURE_DURATION_MS))
             .build()
 
+        return currentService.dispatchGesture(gesture, null, null)
+    }
+
+    private fun findExpandControl(rootNode: AccessibilityNodeInfo): ExpandControl? {
+        findTextExpandControl(rootNode)?.let { return it }
+        return findStructuralExpandControl(rootNode)
+    }
+
+    private fun findTextExpandControl(rootNode: AccessibilityNodeInfo): ExpandControl? {
+        val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
+            label.contains("展开更多") || label.contains("展开全部") || label.contains("收起")
+        }, maxDepth = 30)
+
+        val matched = candidates
+            .mapNotNull { node ->
+                val rect = Rect()
+                node.getBoundsInScreen(rect)
+                if (rect.width() <= 0 || rect.height() <= 0) return@mapNotNull null
+                val label = normalizeCardText(NodeUtils.getNodeText(node))
+                val type = when {
+                    label.contains("展开更多") -> ExpandControlType.EXPAND_MORE
+                    label.contains("展开全部") -> ExpandControlType.EXPAND_ALL
+                    label.contains("收起") -> ExpandControlType.COLLAPSE
+                    else -> null
+                } ?: return@mapNotNull null
+
+                ExpandControl(
+                    type = type,
+                    centerX = rect.centerX(),
+                    centerY = rect.centerY(),
+                    bounds = "${rect.left},${rect.top},${rect.right},${rect.bottom}",
+                    source = "text"
+                )
+            }
+            .sortedBy { control ->
+                control.bounds.split(",").getOrNull(1)?.toIntOrNull() ?: Int.MAX_VALUE
+            }
+
+        return matched.lastOrNull()
+    }
+
+    private fun findStructuralExpandControl(rootNode: AccessibilityNodeInfo): ExpandControl? {
+        val groupBuyCards = findVisibleGroupBuyCards(rootNode)
+        if (groupBuyCards.isEmpty()) return null
+
+        val maxGroupBuyBottom = groupBuyCards.maxOfOrNull { node ->
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            rect.bottom
+        } ?: return null
+
+        val consultTop = findConsultAreaTop(rootNode)
+
+        val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
+            if (label.isNotBlank()) return@findNodesByCondition false
+
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            if (rect.width() < MIN_CONTROL_WIDTH) return@findNodesByCondition false
+            if (rect.height() !in MIN_CONTROL_HEIGHT..MAX_CONTROL_HEIGHT) return@findNodesByCondition false
+            if (rect.left > 100 || rect.right < 1200) return@findNodesByCondition false
+            if (rect.top < MIN_CONTROL_TOP) return@findNodesByCondition false
+            if (rect.top < maxGroupBuyBottom - 260) return@findNodesByCondition false
+            if (consultTop != Int.MAX_VALUE && rect.bottom > consultTop + 180) return@findNodesByCondition false
+
+            hasCenterIcon(node, rect)
+        }, maxDepth = 34)
+
+        val best = candidates
+            .mapNotNull { node ->
+                val rect = Rect()
+                node.getBoundsInScreen(rect)
+                val score = kotlin.math.abs(rect.top - (maxGroupBuyBottom - 120)) +
+                    if (consultTop != Int.MAX_VALUE) kotlin.math.abs(rect.bottom - (consultTop + 40)) else 0
+                rect to score
+            }
+            .minByOrNull { it.second }
+            ?.first
+            ?: return null
+
+        val inferredType = when {
+            captureSession.expandClicks == 0 -> ExpandControlType.EXPAND_MORE
+            captureSession.expandClicks == 1 -> ExpandControlType.EXPAND_ALL
+            else -> ExpandControlType.COLLAPSE
+        }
+
+        return ExpandControl(
+            type = inferredType,
+            centerX = best.centerX(),
+            centerY = best.centerY(),
+            bounds = "${best.left},${best.top},${best.right},${best.bottom}",
+            source = "structure"
+        )
+    }
+
+    private fun findConsultAreaTop(rootNode: AccessibilityNodeInfo): Int {
+        val consultNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
+            val label = normalizeCardText(NodeUtils.getNodeText(node))
+            label.contains("咨询") || label.contains("热门服务")
+        }, maxDepth = 28)
+
+        return consultNodes.minOfOrNull { node ->
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            rect.top
+        } ?: Int.MAX_VALUE
+    }
+
+    private fun hasCenterIcon(node: AccessibilityNodeInfo, parentRect: Rect): Boolean {
+        val iconNodes = NodeUtils.findNodesByCondition(node, { child ->
+            val className = child.className?.toString().orEmpty()
+            className.contains("ImageView")
+        }, maxDepth = 6)
+
+        return iconNodes.any { icon ->
+            val rect = Rect()
+            icon.getBoundsInScreen(rect)
+            val width = rect.width()
+            val height = rect.height()
+            val centerX = rect.centerX()
+            width in MIN_ICON_SIZE..MAX_ICON_SIZE &&
+                height in MIN_ICON_SIZE..MAX_ICON_SIZE &&
+                centerX in (parentRect.left + parentRect.width() / 3)..(parentRect.right - parentRect.width() / 3)
+        }
+    }
+
+    private fun tapExpandControl(control: ExpandControl): Boolean {
+        val currentService = service ?: return false
+        val path = Path().apply {
+            moveTo(control.centerX.toFloat(), control.centerY.toFloat())
+        }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 80))
+            .build()
         return currentService.dispatchGesture(gesture, null, null)
     }
 
