@@ -439,8 +439,7 @@ class CaptureCoordinator(
 
         val groupBuyTabReady = searchController.ensureMerchantGroupBuyTab(maxAttempts = 2)
         if (!groupBuyTabReady) {
-            Log.w(TAG, "Merchant group-buy tab not ready before collection, stop current capture")
-            return activeExecution.snapshotRecords()
+            Log.w(TAG, "Merchant group-buy tab not confirmed before collection, continue with guarded fallback")
         }
 
         if (shouldStopCollection(collectionConfig)) {
@@ -455,8 +454,7 @@ class CaptureCoordinator(
             }
 
             if (!searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)) {
-                Log.i(TAG, "Stop collection because merchant group-buy tab is not active before scroll")
-                break
+                Log.w(TAG, "Merchant group-buy tab not confirmed before scroll, continue with guarded fallback")
             }
 
             if (shouldStopCollection(collectionConfig)) {
@@ -611,8 +609,7 @@ class CaptureCoordinator(
     private suspend fun expandVisibleSections(collectionConfig: CollectionConfig?): Int {
         val groupBuyReady = searchController.ensureMerchantGroupBuyTab(maxAttempts = 1)
         if (!groupBuyReady) {
-            Log.w(TAG, "Skip expand section taps: merchant group-buy tab not active")
-            return 0
+            Log.w(TAG, "Merchant group-buy tab not confirmed before expand, continue with guarded fallback")
         }
 
         if (searchController.hasMerchantCollapseMarker()) {
