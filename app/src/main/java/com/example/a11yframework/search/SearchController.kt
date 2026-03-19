@@ -110,6 +110,8 @@ class SearchController(
         // 美团搜索页面特征
         private const val MEITUAN_SEARCH_ACTIVITY = "com.sankuai.meituan.search.activity.SearchActivity"
         private const val MERCHANT_TAB_ROW_BUCKET_PX = 80
+        private const val MERCHANT_GROUPBUY_MIN_CARD_HINTS = 2
+        private const val MERCHANT_GROUPBUY_MIN_SOLD_SIGNALS = 1
     }
     
     /**
@@ -570,6 +572,20 @@ class SearchController(
                             Thread.sleep(450)
                             return true
                         }
+                    } else {
+                        val tappedByStructure = tapMerchantGroupBuyTabByStructure(rootNode)
+                        if (tappedByStructure) {
+                            Thread.sleep(450)
+                            if (isMerchantGroupBuyContentVisible()) {
+                                Log.i(TAG, "Merchant group-buy tab accepted by structural fallback")
+                                return true
+                            }
+                        }
+                    }
+
+                    if (hasMerchantGroupBuyContentSignals(rootNode)) {
+                        Log.i(TAG, "Merchant group-buy tab text not exposed, continue by commerce signals")
+                        return true
                     }
                 } finally {
                     groupBuyTabNode?.recycle()
@@ -581,6 +597,11 @@ class SearchController(
                 scrollCurrentPage(forward = false)
                 Thread.sleep(600)
             }
+        }
+
+        if (isMerchantGroupBuyContentVisible()) {
+            Log.i(TAG, "Merchant group-buy tab fallback accepted by visible commerce signals")
+            return true
         }
 
         Log.w(TAG, "Merchant group-buy tab not found or not clickable")
@@ -1968,6 +1989,101 @@ class SearchController(
             text.contains("团购", ignoreCase = true) ||
                 desc.contains("团购", ignoreCase = true)
         return hasSelectedSignal && hasGroupBuySignal
+    }
+
+    private fun hasMerchantGroupBuyContentSignals(rootNode: AccessibilityNodeInfo): Boolean {
+        val kind = douyinPageClassifier.classify(rootNode).kind
+        if (kind != DouyinPageKind.MERCHANT_HOME && kind != DouyinPageKind.MERCHANT_TAIL) {
+            return false
+        }
+
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 22,
+            maxNodes = 520,
+            maxTextLength = 9000
+        )
+        val cardHintCount = MERCHANT_DETAIL_CARD_HINTS.count { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+        if (cardHintCount < MERCHANT_GROUPBUY_MIN_CARD_HINTS) {
+            return false
+        }
+
+        val soldSignalCount = Regex("已售\\s*\\d+[+]?").findAll(pageText).count()
+        val offerTitleCount = Regex("【[^】]{2,}】").findAll(pageText).count()
+        val hasExpandSignal = pageText.contains("展开更多", ignoreCase = true) ||
+            pageText.contains("收起", ignoreCase = true)
+        val hasCouponSignal = pageText.contains("领券抢购", ignoreCase = true) ||
+            pageText.contains("去抢购", ignoreCase = true)
+
+        return soldSignalCount >= MERCHANT_GROUPBUY_MIN_SOLD_SIGNALS ||
+            offerTitleCount > 0 ||
+            hasExpandSignal ||
+            hasCouponSignal
+    }
+
+    private fun isMerchantGroupBuyContentVisible(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+        return try {
+            hasMerchantGroupBuyContentSignals(rootNode)
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun tapMerchantGroupBuyTabByStructure(rootNode: AccessibilityNodeInfo): Boolean {
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.34f).toInt()
+        val maxBottom = (metrics.heightPixels * 0.74f).toInt()
+        val minWidth = (metrics.widthPixels * 0.42f).toInt()
+
+        val rowNodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val className = node.className?.toString().orEmpty()
+                val isScrollableRow =
+                    className.contains("ScrollView", ignoreCase = true) ||
+                        className.contains("HorizontalScrollView", ignoreCase = true)
+                if (!isScrollableRow) {
+                    return@findNodesByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                !bounds.isEmpty &&
+                    bounds.top >= minTop &&
+                    bounds.bottom <= maxBottom &&
+                    bounds.height() in 56..180 &&
+                    bounds.width() >= minWidth
+            },
+            maxDepth = 30
+        )
+
+        try {
+            val candidate = rowNodes.maxByOrNull { node ->
+                Rect().also { node.getBoundsInScreen(it) }.top
+            } ?: return false
+
+            val bounds = Rect().also { candidate.getBoundsInScreen(it) }
+            if (bounds.isEmpty) {
+                return false
+            }
+
+            val targetX = (bounds.left + bounds.width() * 0.17f).toInt()
+                .coerceIn(0, metrics.widthPixels - 1)
+            val targetY = bounds.centerY()
+                .coerceIn(0, metrics.heightPixels - 1)
+            val tapped = tapScreen(targetX, targetY, "merchant_tab_groupbuy_struct")
+            if (tapped) {
+                Log.d(
+                    TAG,
+                    "Tapped merchant group-buy tab by structural fallback: bounds=${bounds.flattenToString()}"
+                )
+            }
+            return tapped
+        } finally {
+            NodeUtils.recycleNodes(rowNodes)
+        }
     }
 
     private fun hasMerchantHomepageAnchors(
