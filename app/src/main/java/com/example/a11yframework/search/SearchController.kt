@@ -101,6 +101,7 @@ class SearchController(
             "随时退",
             "次卡"
         )
+        private val POPUP_DISMISS_KEYWORDS = listOf("允许", "同意", "我知道了", "稍后", "关闭")
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -155,6 +156,7 @@ class SearchController(
 
     fun searchDouyinGroupBuy(keyword: String): Boolean {
         beginTapTraceRun("douyin_search:$keyword")
+        dismissCommonPopupActions(maxActions = 2)
 
         when (getCurrentDouyinPageKind(keyword)) {
             DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
@@ -170,19 +172,29 @@ class SearchController(
                 }
 
                 val tabSelected = selectDouyinGroupBuyTab()
-                if (tabSelected) {
-                    Thread.sleep(1200)
-                } else {
-                    Log.w(TAG, "Douyin group buy tab not explicitly selected, fallback to direct search")
+                if (!tabSelected) {
+                    Log.w(TAG, "Douyin group buy tab not explicitly selected, stop search to avoid path deviation")
+                    return false
                 }
+                Thread.sleep(1200)
             }
         }
 
-        if (getCurrentDouyinPageKind(keyword) != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
+        val currentKind = getCurrentDouyinPageKind(keyword)
+        if (currentKind != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
+            currentKind != DouyinPageKind.GROUPBUY_HOME
+        ) {
+            Log.w(TAG, "Current page is not group-buy path: kind=$currentKind")
+            return false
+        }
+
+        if (currentKind != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
             !waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)
         ) {
-            Log.w(TAG, "Douyin group buy page not confirmed after tab selection")
+            Log.w(TAG, "Douyin group buy page not confirmed after tab selection, stop search")
+            return false
         }
+        dismissCommonPopupActions(maxActions = 1)
 
         val searchEntryOpened = openDouyinGroupBuySearchEntry()
         if (!searchEntryOpened) {
@@ -194,6 +206,7 @@ class SearchController(
             Log.e(TAG, "Douyin dedicated search input page not reached")
             return false
         }
+        dismissCommonPopupActions(maxActions = 1)
 
         val submitted = search(
             keyword = keyword,
@@ -212,8 +225,9 @@ class SearchController(
         return true
     }
 
-    fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
+    fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 0): Boolean {
         appendTapTraceLine("=== open_merchant_result:$merchantName @${System.currentTimeMillis()} ===")
+        dismissCommonPopupActions(maxActions = 1)
 
         when (getCurrentDouyinPageKind(merchantName)) {
             DouyinPageKind.MERCHANT_HOME,
@@ -229,6 +243,7 @@ class SearchController(
         }
 
         repeat(3) { settleRound ->
+            dismissCommonPopupActions(maxActions = 1)
             val merchantNode = findMerchantResultNode(merchantName)
             if (merchantNode != null) {
                 try {
@@ -251,6 +266,7 @@ class SearchController(
         }
 
         repeat(maxScrollRounds + 1) { round ->
+            dismissCommonPopupActions(maxActions = 1)
             val merchantNode = findMerchantResultNode(merchantName)
             if (merchantNode != null) {
                 try {
@@ -575,6 +591,7 @@ class SearchController(
 
     private fun prepareDouyinHomePage(): Boolean {
         repeat(DOUYIN_HOME_PREPARE_MAX_ATTEMPTS) { attempt ->
+            dismissCommonPopupActions(maxActions = 1)
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
@@ -880,6 +897,39 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
         
         try {
+            if (isOnDouyinSearchInputPage()) {
+                dismissCommonPopupActions(maxActions = 1)
+
+                val douyinSubmitNode = findDouyinSearchSubmitButtonNode(rootNode)
+                if (douyinSubmitNode != null) {
+                    try {
+                        val clicked = clickNodeWithTrace("douyin_search_submit_node", douyinSubmitNode)
+                        if (clicked) {
+                            Log.d(TAG, "Clicked Douyin search submit button by node")
+                            return true
+                        }
+
+                        val tapped = tapNodeCenter(douyinSubmitNode, "douyin_search_submit_node_bounds")
+                        if (tapped) {
+                            Log.d(TAG, "Tapped Douyin search submit button by node bounds")
+                            return true
+                        }
+                    } finally {
+                        douyinSubmitNode.recycle()
+                    }
+                }
+
+                val tapped = tapScreen(
+                    DOUYIN_SEARCH_SUBMIT_TAP_X,
+                    DOUYIN_SEARCH_SUBMIT_TAP_Y,
+                    "douyin_search_submit_preset"
+                )
+                if (tapped) {
+                    Log.d(TAG, "Tapped Douyin search submit button with preset tap")
+                }
+                return tapped
+            }
+
             // 方法 1: 通过关键词查找搜索按钮，允许点击父节点
             val button = NodeUtils.findNodeByCondition(
                 rootNode,
@@ -902,18 +952,6 @@ class SearchController(
                 val tapped = tapNodeCenter(button, "search_submit_keyword_bounds")
                 if (tapped) {
                     Log.d(TAG, "Tapped search button by keyword bounds")
-                    return true
-                }
-            }
-
-            if (isOnDouyinSearchInputPage()) {
-                val tapped = tapScreen(
-                    DOUYIN_SEARCH_SUBMIT_TAP_X,
-                    DOUYIN_SEARCH_SUBMIT_TAP_Y,
-                    "douyin_search_submit_preset"
-                )
-                if (tapped) {
-                    Log.d(TAG, "Tapped Douyin search submit button with preset tap")
                     return true
                 }
             }
@@ -1196,44 +1234,8 @@ class SearchController(
                     entryNode.recycle()
                 }
             }
-
-            val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
-            if (topSearchButton != null) {
-                try {
-                    val clicked = NodeUtils.clickNode(topSearchButton)
-                    recordNodeClickTrace("douyin_groupbuy_top_search_node", topSearchButton, clicked)
-                    if (clicked) {
-                        Log.d(TAG, "Opened Douyin top search button by node click")
-                        return true
-                    }
-
-                    val tapped = tapNodeCenter(topSearchButton, "douyin_groupbuy_top_search_bounds")
-                    if (tapped) {
-                        Log.d(TAG, "Opened Douyin top search button by node bounds")
-                        return true
-                    }
-                } finally {
-                    topSearchButton.recycle()
-                }
-            }
-
-            val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                tapScreen(
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X,
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y,
-                    "douyin_groupbuy_top_search_preset"
-                )
-            } else {
-                tapScreen(
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y,
-                    "douyin_groupbuy_search_entry_preset"
-                )
-            }
-            if (tapped) {
-                Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
-            }
-            return tapped
+            Log.w(TAG, "Douyin group-buy search entry node not found, stop to avoid wrong search path")
+            return false
         } finally {
             rootNode.recycle()
         }
@@ -1774,6 +1776,30 @@ class SearchController(
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
+    private fun findDouyinSearchSubmitButtonNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val width = service.resources.displayMetrics.widthPixels
+        return NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                if (isLikelySearchInput(node)) {
+                    return@findNodeByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                if (bounds.isEmpty || bounds.top !in 100..360 || bounds.right < width - 280) {
+                    return@findNodeByCondition false
+                }
+
+                val text = getComparableNodeText(node)
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                viewId.contains("4_s") ||
+                    text.equals("搜索", ignoreCase = true) ||
+                    (node.isClickable && text.contains("搜索", ignoreCase = true))
+            },
+            maxDepth = 24
+        )?.let { AccessibilityNodeInfo.obtain(it) }
+    }
+
     private fun hasSelectedDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
         val groupBuyTabNode = NodeUtils.findNodeByCondition(
             rootNode,
@@ -2145,6 +2171,80 @@ class SearchController(
             return false
         }
         return tapScreen(bounds.centerX(), bounds.centerY(), label)
+    }
+
+    private fun dismissCommonPopupActions(maxActions: Int = 2): Int {
+        if (maxActions <= 0) {
+            return 0
+        }
+
+        var dismissedCount = 0
+        repeat(maxActions) {
+            val dismissed = clickPopupActionByKeyword()
+            if (!dismissed) {
+                return dismissedCount
+            }
+            dismissedCount++
+            Thread.sleep(450)
+        }
+        return dismissedCount
+    }
+
+    private fun clickPopupActionByKeyword(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        try {
+            val metrics = service.resources.displayMetrics
+            val minTop = (metrics.heightPixels * 0.12f).toInt()
+            val maxBottom = (metrics.heightPixels * 0.98f).toInt()
+
+            for (keyword in POPUP_DISMISS_KEYWORDS) {
+                val actionNode = NodeUtils.findNodeByCondition(
+                    rootNode,
+                    condition = { node ->
+                        val text = getComparableNodeText(node)
+                        if (text.isBlank()) {
+                            return@findNodeByCondition false
+                        }
+
+                        val matchedKeyword =
+                            text.equals(keyword, ignoreCase = true) ||
+                                text.contains(keyword, ignoreCase = true)
+                        if (!matchedKeyword) {
+                            return@findNodeByCondition false
+                        }
+
+                        val bounds = Rect().also { node.getBoundsInScreen(it) }
+                        !bounds.isEmpty &&
+                            bounds.top >= minTop &&
+                            bounds.bottom <= maxBottom &&
+                            (node.isClickable || node.isFocusable)
+                    },
+                    maxDepth = 26
+                )
+
+                if (actionNode != null) {
+                    try {
+                        val clicked = clickNodeWithTrace("popup_action_$keyword", actionNode)
+                        val dispatched = if (clicked) {
+                            true
+                        } else {
+                            tapNodeCenter(actionNode, "popup_action_${keyword}_bounds")
+                        }
+                        if (dispatched) {
+                            Log.i(TAG, "Popup action dismissed by keyword: $keyword")
+                            return true
+                        }
+                    } finally {
+                        actionNode.recycle()
+                    }
+                }
+            }
+        } finally {
+            rootNode.recycle()
+        }
+
+        return false
     }
 
     private data class MerchantCandidateScore(

@@ -20,7 +20,7 @@
       {
         "type": "click_text_fuzzy",
         "source": "hospital_name",
-        "max_scroll_rounds": 3
+        "max_scroll_rounds": 0
       },
       {
         "type": "wait_for_text",
