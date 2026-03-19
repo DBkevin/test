@@ -1992,17 +1992,19 @@ class SearchController(
     }
 
     private fun hasMerchantGroupBuyContentSignals(rootNode: AccessibilityNodeInfo): Boolean {
-        val kind = douyinPageClassifier.classify(rootNode).kind
-        if (kind != DouyinPageKind.MERCHANT_HOME && kind != DouyinPageKind.MERCHANT_TAIL) {
-            return false
-        }
-
         val pageText = NodeUtils.getAllNodeText(
             rootNode,
             maxDepth = 22,
             maxNodes = 520,
             maxTextLength = 9000
         )
+        val hasMerchantHeaderSignal =
+            pageText.contains("关注", ignoreCase = true) ||
+                pageText.contains("收藏", ignoreCase = true)
+        if (!hasMerchantHeaderSignal) {
+            return false
+        }
+
         val cardHintCount = MERCHANT_DETAIL_CARD_HINTS.count { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
