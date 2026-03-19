@@ -171,9 +171,7 @@ internal class DouyinPageClassifier(
                 viewId.contains("et_search_kw") &&
                     bounds.top in 280..420 &&
                     bounds.bottom in 340..460 &&
-                    GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
-                        text.contains(hint, ignoreCase = true)
-                    }
+                    text.isNotBlank()
             },
             maxDepth = 28
         )?.let { node ->

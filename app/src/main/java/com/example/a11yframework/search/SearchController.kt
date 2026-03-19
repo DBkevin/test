@@ -1750,9 +1750,7 @@ class SearchController(
                 viewId.contains("et_search_kw") &&
                     bounds.top in 280..420 &&
                     bounds.bottom in 340..460 &&
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
-                        nodeText.contains(hint, ignoreCase = true)
-                    }
+                    nodeText.isNotBlank()
             },
             maxDepth = 24
         )?.let { AccessibilityNodeInfo.obtain(it) }
