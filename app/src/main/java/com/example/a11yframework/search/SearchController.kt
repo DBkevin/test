@@ -82,6 +82,7 @@ class SearchController(
         )
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
+        private val MERCHANT_SECTION_TAB_HINTS = listOf("团购", "服务", "评价", "推荐")
         private val MERCHANT_TAIL_SECTION_HINTS = listOf(
             "展开更多",
             "收起",
@@ -108,6 +109,7 @@ class SearchController(
         
         // 美团搜索页面特征
         private const val MEITUAN_SEARCH_ACTIVITY = "com.sankuai.meituan.search.activity.SearchActivity"
+        private const val MERCHANT_TAB_ROW_BUCKET_PX = 80
     }
     
     /**
@@ -542,6 +544,51 @@ class SearchController(
         } finally {
             rootNode.recycle()
         }
+    }
+
+    fun ensureMerchantGroupBuyTab(maxAttempts: Int = 2): Boolean {
+        val attempts = maxAttempts.coerceAtLeast(1)
+        repeat(attempts) { attempt ->
+            val rootNode = service.rootInActiveWindow
+            if (rootNode != null) {
+                var groupBuyTabNode: AccessibilityNodeInfo? = null
+                try {
+                    groupBuyTabNode = findMerchantGroupBuyTabNode(rootNode)
+                    if (groupBuyTabNode != null) {
+                        if (isMerchantGroupBuyTabSelected(groupBuyTabNode)) {
+                            return true
+                        }
+
+                        val clicked = clickNodeWithTrace("merchant_tab_groupbuy", groupBuyTabNode)
+                        if (clicked) {
+                            Thread.sleep(450)
+                            return true
+                        }
+
+                        val tapped = tapNodeCenter(groupBuyTabNode, "merchant_tab_groupbuy_bounds")
+                        if (tapped) {
+                            Thread.sleep(450)
+                            return true
+                        }
+                    }
+                } finally {
+                    groupBuyTabNode?.recycle()
+                    rootNode.recycle()
+                }
+            }
+
+            if (attempt < attempts - 1) {
+                scrollCurrentPage(forward = false)
+                Thread.sleep(600)
+            }
+        }
+
+        Log.w(TAG, "Merchant group-buy tab not found or not clickable")
+        return false
+    }
+
+    fun hasMerchantCollapseMarker(): Boolean {
+        return matchCurrentPageTexts(requiredAnyTexts = listOf("收起")).matched
     }
 
     fun clickViewId(viewId: String, maxScrollRounds: Int = 0): Boolean {
@@ -1834,6 +1881,93 @@ class SearchController(
         val matched = groupBuyTabNode != null
         groupBuyTabNode?.recycle()
         return matched
+    }
+
+    private fun findMerchantGroupBuyTabNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.18f).toInt()
+        val maxBottom = (metrics.heightPixels * 0.84f).toInt()
+
+        val tabNodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val label = resolveMerchantTabLabel(node) ?: return@findNodesByCondition false
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                MERCHANT_SECTION_TAB_HINTS.contains(label) &&
+                    !bounds.isEmpty &&
+                    bounds.top >= minTop &&
+                    bounds.bottom <= maxBottom &&
+                    bounds.height() in 36..220 &&
+                    bounds.width() in 48..420
+            },
+            maxDepth = 32
+        )
+
+        try {
+            if (tabNodes.isEmpty()) {
+                return null
+            }
+
+            val rowBuckets = linkedMapOf<Int, MutableList<AccessibilityNodeInfo>>()
+            tabNodes.forEach { node ->
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val bucket = bounds.centerY() / MERCHANT_TAB_ROW_BUCKET_PX
+                rowBuckets.getOrPut(bucket) { mutableListOf() }.add(node)
+            }
+
+            val bestRow = rowBuckets.values
+                .map { row ->
+                    val labels = row.mapNotNull { resolveMerchantTabLabel(it) }.distinct()
+                    val rowTop = row.minOf { candidate ->
+                        Rect().also { candidate.getBoundsInScreen(it) }.top
+                    }
+                    Triple(row, labels, labels.size * 100 - rowTop / 4)
+                }
+                .filter { (_, labels, _) ->
+                    labels.size >= 3 && labels.contains("团购")
+                }
+                .maxByOrNull { it.third }
+                ?: return null
+
+            val groupBuyNode = bestRow.first.firstOrNull { node ->
+                resolveMerchantTabLabel(node) == "团购"
+            } ?: return null
+
+            return AccessibilityNodeInfo.obtain(groupBuyNode)
+        } finally {
+            NodeUtils.recycleNodes(tabNodes)
+        }
+    }
+
+    private fun resolveMerchantTabLabel(node: AccessibilityNodeInfo): String? {
+        val mergedText = buildString {
+            append(getComparableNodeText(node))
+            val desc = node.contentDescription?.toString().orEmpty()
+            if (desc.isNotBlank()) {
+                append(' ')
+                append(desc)
+            }
+        }
+
+        return MERCHANT_SECTION_TAB_HINTS.firstOrNull { hint ->
+            mergedText.contains(hint, ignoreCase = true)
+        }
+    }
+
+    private fun isMerchantGroupBuyTabSelected(node: AccessibilityNodeInfo): Boolean {
+        if (node.isSelected || node.isChecked) {
+            return true
+        }
+
+        val text = getComparableNodeText(node)
+        val desc = node.contentDescription?.toString().orEmpty()
+        val hasSelectedSignal =
+            text.contains("已选中", ignoreCase = true) ||
+                desc.contains("已选中", ignoreCase = true)
+        val hasGroupBuySignal =
+            text.contains("团购", ignoreCase = true) ||
+                desc.contains("团购", ignoreCase = true)
+        return hasSelectedSignal && hasGroupBuySignal
     }
 
     private fun hasMerchantHomepageAnchors(
