@@ -1069,9 +1069,12 @@ class SearchController(
             if (tabNode != null) {
                 try {
                     val nodeText = getComparableNodeText(tabNode)
-                    if (nodeText.contains("已选中，团购", ignoreCase = true) ||
-                        nodeText.contains("团购，按钮", ignoreCase = true)
-                    ) {
+                    val isSelectedGroupBuyTab =
+                        (tabNode.isSelected || tabNode.isChecked) &&
+                            nodeText.contains("团购", ignoreCase = true) ||
+                            (nodeText.contains("团购", ignoreCase = true) &&
+                                nodeText.contains("已选中", ignoreCase = true))
+                    if (isSelectedGroupBuyTab) {
                         Log.d(TAG, "Douyin group buy tab already selected by node")
                         return true
                     }
@@ -1805,9 +1808,12 @@ class SearchController(
             rootNode,
             condition = { node ->
                 val text = getComparableNodeText(node)
-                text.contains("已选中，团购", ignoreCase = true) ||
-                    text == "团购" ||
-                    text.contains("团购，按钮", ignoreCase = true)
+                val hasGroupBuyLabel = text.contains("团购", ignoreCase = true)
+                hasGroupBuyLabel &&
+                    (
+                        (node.isSelected || node.isChecked) ||
+                            text.contains("已选中", ignoreCase = true)
+                        )
             },
             maxDepth = 32
         )

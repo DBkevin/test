@@ -128,9 +128,12 @@ internal class DouyinPageClassifier(
             rootNode,
             condition = { node ->
                 val text = NodeUtils.getNodeText(node)
-                text.contains("已选中，团购", ignoreCase = true) ||
-                    text == "团购" ||
-                    text.contains("团购，按钮", ignoreCase = true)
+                val hasGroupBuyLabel = text.contains("团购", ignoreCase = true)
+                hasGroupBuyLabel &&
+                    (
+                        (node.isSelected || node.isChecked) ||
+                            text.contains("已选中", ignoreCase = true)
+                        )
             },
             maxDepth = 32
         )?.let { node ->
