@@ -25,6 +25,9 @@ jobs:
     - name: Create local.properties
       run: echo "sdk.dir=/usr/local/lib/android/sdk" > local.properties
 
+    - name: Ensure Gradle wrapper is executable
+      run: chmod +x ./gradlew
+
     - name: Build APK
       run: ./gradlew assembleDebug --no-daemon --no-parallel
 
