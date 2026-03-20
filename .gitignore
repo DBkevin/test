@@ -57,3 +57,13 @@ Thumbs.db
 *.key
 *.pem
 *secret*
+
+# Local debug artifacts kept outside normal source control flow.
+# Curated baseline assets under artifacts/ root may still be tracked manually.
+artifacts_archive/
+artifacts/backup-before-*/
+artifacts/backup-runtime-plugin-*/
+artifacts/run_*/
+artifacts/flow_boundary_seek/
+artifacts/flow_boundary_seek_next/
+artifacts/flow_expand_chain/
