@@ -1582,13 +1582,21 @@ class SearchController(
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val nodeText = getComparableNodeText(node)
-                viewId.contains("et_search_kw") &&
-                    !isLikelySearchInput(node) &&
-                    bounds.top in 280..420 &&
-                    bounds.bottom in 340..460 &&
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
-                        nodeText.contains(hint, ignoreCase = true)
-                    }
+                val isSearchEntryId = viewId.contains("et_search_kw") || viewId.contains("search_kw")
+                val isTopSearchBand = bounds.top in 120..460 &&
+                    bounds.bottom in 180..520 &&
+                    bounds.width() >= 460
+                val hasSearchEntryHint = DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
+                    nodeText.contains(hint, ignoreCase = true)
+                }
+
+                // 仅在团购首页识别“伪搜索框入口”，排除真正可输入的搜索框节点。
+                val looksLikeEntry = !node.isFocused && !node.isEditable && !supportsSetText(node)
+
+                isSearchEntryId &&
+                    isTopSearchBand &&
+                    looksLikeEntry &&
+                    (hasSearchEntryHint || nodeText.isNotBlank())
             },
             maxDepth = 24
         )?.let { AccessibilityNodeInfo.obtain(it) }
