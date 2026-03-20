@@ -1,0 +1,26 @@
+
+=== douyin_search:郑州美莱 @1773806585004 ===
+1773806585954 label=douyin_groupbuy_top_search_node bounds=1258 138 1440 292 clicked=true text=搜索
+1773806587575 label=search_submit_keyword bounds=1222 138 1440 292 clicked=pending text=搜索
+1773806587575 label=search_submit_keyword bounds=1222 138 1440 292 clicked=false text=搜索
+1773806587575 label=search_submit_keyword_bounds x=1331 y=215 dispatched=pending
+1773806587576 label=search_submit_keyword_bounds x=1331 y=215 dispatched=true
+
+=== douyin_search:郑州美莱 @1773806602663 ===
+1773806603339 label=search_submit_keyword bounds=1222 138 1440 292 clicked=pending text=搜索
+1773806603340 label=search_submit_keyword bounds=1222 138 1440 292 clicked=false text=搜索
+1773806603341 label=search_submit_keyword_bounds x=1331 y=215 dispatched=pending
+1773806603348 label=search_submit_keyword_bounds x=1331 y=215 dispatched=true
+=== open_merchant_result:郑州美莱 @1773806614555 ===
+1773806622149 label=merchant_result_title_shoulder_r0 x=1368 y=2308 dispatched=pending
+1773806622151 label=merchant_result_title_shoulder_r0 x=1368 y=2308 dispatched=true
+1773806626413 label=merchant_result_entry_band_r0 x=1264 y=2308 dispatched=pending
+1773806626414 label=merchant_result_entry_band_r0 x=1264 y=2308 dispatched=true
+1773806631158 label=merchant_result_accessibility_click_r0 bounds=962 2284 1312 2333 clicked=pending text=郑州美莱医疗美容医院
+1773806631159 label=merchant_result_accessibility_click_r0 bounds=962 2284 1312 2333 clicked=false text=郑州美莱医疗美容医院
+1773806637143 label=merchant_result_title_shoulder_r1 x=958 y=215 dispatched=pending
+1773806637144 label=merchant_result_title_shoulder_r1 x=958 y=215 dispatched=true
+1773806641406 label=merchant_result_entry_band_r1 x=780 y=215 dispatched=pending
+1773806641407 label=merchant_result_entry_band_r1 x=780 y=215 dispatched=true
+1773806645775 label=merchant_result_accessibility_click_r1 bounds=308 180 828 250 clicked=pending text=郑州美莱医疗美容医院
+1773806645777 label=merchant_result_accessibility_click_r1 bounds=308 180 828 250 clicked=false text=郑州美莱医疗美容医院

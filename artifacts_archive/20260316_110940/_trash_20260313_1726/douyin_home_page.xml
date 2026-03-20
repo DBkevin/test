@@ -1,0 +1,306 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<hierarchy rotation="0">
+	<node index="0" text="" resource-id="" class="android.widget.FrameLayout"
+		package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+		clickable="false" enabled="true" focusable="false" focused="false" scrollable="false"
+		long-clickable="false" password="false" selected="false" bounds="[0,0][1440,3200]"
+		drawing-order="0" hint="">
+		<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/wxd"
+			class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme" content-desc=""
+			checkable="false" checked="false" clickable="false" enabled="true" focusable="false"
+			focused="false" scrollable="false" long-clickable="false" password="false"
+			selected="false" bounds="[0,0][1440,2972]" drawing-order="1" hint="">
+			<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/j1q"
+				class="android.widget.Button" package="com.ss.android.ugc.aweme" content-desc="关注"
+				checkable="false" checked="false" clickable="true" enabled="true" focusable="true"
+				focused="false" scrollable="false" long-clickable="false" password="false"
+				selected="false" bounds="[1226,1700][1439,1802]" drawing-order="14" hint="" />
+			<node index="1" text="" resource-id="com.ss.android.ugc.aweme:id/user_avatar"
+				class="android.widget.ImageView" package="com.ss.android.ugc.aweme"
+				content-desc="书言知社" checkable="false" checked="false" clickable="true"
+				enabled="true" focusable="true" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1247,1582][1415,1750]" drawing-order="9" hint="" />
+			<node index="2" text="" resource-id="com.ss.android.ugc.aweme:id/gm1"
+				class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme"
+				content-desc="未点赞，喜欢436，按钮" checkable="false" checked="false" clickable="true"
+				enabled="true" focusable="true" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1229,1802][1439,2044]" drawing-order="16" hint="" />
+			<node index="3" text="" resource-id="com.ss.android.ugc.aweme:id/ev9"
+				class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme"
+				content-desc="评论71，按钮" checkable="false" checked="false" clickable="true"
+				enabled="true" focusable="true" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1229,2044][1439,2286]" drawing-order="17" hint="">
+				<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/eqf"
+					class="android.widget.ImageView" package="com.ss.android.ugc.aweme"
+					content-desc="评论71，按钮" checkable="false" checked="false" clickable="false"
+					enabled="true" focusable="false" focused="false" scrollable="false"
+					long-clickable="false" password="false" selected="false"
+					bounds="[1271,2072][1397,2198]" drawing-order="1" hint="" />
+				<node index="1" text="71" resource-id="" class="android.widget.TextView"
+					package="com.ss.android.ugc.aweme" content-desc="" checkable="false"
+					checked="false" clickable="false" enabled="true" focusable="false"
+					focused="false" scrollable="false" long-clickable="false" password="false"
+					selected="false" bounds="[1313,2198][1354,2254]" drawing-order="2" hint="" />
+			</node>
+			<node index="4" text="" resource-id="com.ss.android.ugc.aweme:id/d-d"
+				class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme"
+				content-desc="未选中，收藏115，按钮" checkable="false" checked="false" clickable="true"
+				enabled="true" focusable="true" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1226,2286][1439,2522]" drawing-order="18" hint="" />
+			<node index="5" text="" resource-id="com.ss.android.ugc.aweme:id/zzp"
+				class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme"
+				content-desc="分享9，按钮" checkable="false" checked="false" clickable="true"
+				enabled="true" focusable="true" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1229,2522][1439,2764]" drawing-order="19" hint="" />
+			<node index="6" text="" resource-id="com.ss.android.ugc.aweme:id/s3="
+				class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+				content-desc="" checkable="false" checked="false" clickable="false" enabled="true"
+				focusable="true" focused="false" scrollable="false" long-clickable="false"
+				password="false" selected="false" bounds="[1254,2793][1408,2947]" drawing-order="21"
+				hint="">
+				<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/s3+"
+					class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+					content-desc="音乐，@溱洧风创作的原声，按钮" checkable="false" checked="false"
+					clickable="false" enabled="true" focusable="false" focused="false"
+					scrollable="false" long-clickable="false" password="false" selected="false"
+					bounds="[1254,2793][1408,2947]" drawing-order="1" hint="" />
+			</node>
+			<node index="7" text="" resource-id="com.ss.android.ugc.aweme:id/nua"
+				class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+				content-desc="" checkable="false" checked="false" clickable="true" enabled="true"
+				focusable="true" focused="false" scrollable="false" long-clickable="false"
+				password="false" selected="false" bounds="[42,2674][338,2762]" drawing-order="4"
+				hint="">
+				<node index="0" text="@书言知社" resource-id="com.ss.android.ugc.aweme:id/title"
+					class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+					content-desc="" checkable="false" checked="false" clickable="true"
+					enabled="true" focusable="true" focused="false" scrollable="false"
+					long-clickable="false" password="false" selected="false"
+					bounds="[42,2674][331,2762]" drawing-order="2" hint="" />
+			</node>
+			<node index="8" text="" resource-id="com.ss.android.ugc.aweme:id/6pe"
+				class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+				content-desc="" checkable="false" checked="false" clickable="false" enabled="true"
+				focusable="false" focused="false" scrollable="false" long-clickable="false"
+				password="false" selected="false" bounds="[0,2762][1440,2940]" drawing-order="5"
+				hint="">
+				<node NAF="true" index="0" text="" resource-id="com.ss.android.ugc.aweme:id/gb0"
+					class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+					content-desc="" checkable="false" checked="false" clickable="true"
+					enabled="true" focusable="true" focused="false" scrollable="false"
+					long-clickable="false" password="false" selected="false"
+					bounds="[0,2762][1079,2940]" drawing-order="1" hint="" />
+				<node index="1" text="" resource-id="com.ss.android.ugc.aweme:id/gc4"
+					class="android.widget.FrameLayout" package="com.ss.android.ugc.aweme"
+					content-desc="" checkable="false" checked="false" clickable="true"
+					enabled="true" focusable="true" focused="false" scrollable="false"
+					long-clickable="false" password="false" selected="false"
+					bounds="[42,2762][1079,2926]" drawing-order="2" hint="">
+					<node index="0" text="空印案真相#历史冷知识 #空印案 #明朝那些事#历史#中国历史 &gt;"
+						resource-id="com.ss.android.ugc.aweme:id/desc"
+						class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+						content-desc="" checkable="false" checked="false" clickable="false"
+						enabled="true" focusable="true" focused="false" scrollable="false"
+						long-clickable="false" password="false" selected="false"
+						bounds="[42,2762][1079,2926]" drawing-order="1" hint="" />
+				</node>
+			</node>
+			<node index="10" text="" resource-id="com.ss.android.ugc.aweme:id/qde"
+				class="android.view.View" package="com.ss.android.ugc.aweme" content-desc="暂停视频，按钮"
+				checkable="false" checked="false" clickable="true" enabled="true" focusable="true"
+				focused="false" scrollable="false" long-clickable="false" password="false"
+				selected="false" bounds="[0,0][1440,2972]" drawing-order="1" hint="" />
+		</node>
+		<node index="2" text="" resource-id="com.ss.android.ugc.aweme:id/q1c"
+			class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme" content-desc=""
+			checkable="false" checked="false" clickable="false" enabled="true" focusable="false"
+			focused="false" scrollable="false" long-clickable="false" password="false"
+			selected="false" bounds="[0,0][1440,3144]" drawing-order="4" hint="">
+			<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/uci"
+				class="android.widget.LinearLayout" package="com.ss.android.ugc.aweme"
+				content-desc="" checkable="false" checked="false" clickable="true" enabled="true"
+				focusable="true" focused="false" scrollable="false" long-clickable="false"
+				password="false" selected="false" bounds="[0,0][1440,292]" drawing-order="1" hint="">
+				<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/lnu"
+					class="android.widget.HorizontalScrollView" package="com.ss.android.ugc.aweme"
+					content-desc="" checkable="false" checked="false" clickable="false"
+					enabled="true" focusable="true" focused="false" scrollable="true"
+					long-clickable="false" password="false" selected="false"
+					bounds="[173,136][1256,290]" drawing-order="2" hint="">
+					<node index="2" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="经验，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[173,136][296,290]" drawing-order="7" hint="">
+						<node index="0" text="经验" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[173,175][272,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="3" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="关注，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[296,136][456,290]" drawing-order="6" hint="">
+						<node index="0" text="关注" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[320,175][432,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="4" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="郑州，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[456,136][616,290]" drawing-order="5" hint="">
+						<node index="0" text="郑州" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[480,175][592,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="5" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="直播，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[616,136][776,290]" drawing-order="4" hint="">
+						<node index="0" text="直播" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[640,175][752,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="6" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="商城，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[776,136][936,290]" drawing-order="3" hint="">
+						<node index="0" text="商城" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[800,175][912,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="7" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="团购，按钮" checkable="false"
+						checked="false" clickable="true" enabled="true" focusable="true"
+						focused="false" scrollable="false" long-clickable="false" password="false"
+						selected="false" bounds="[936,136][1096,290]" drawing-order="2" hint="">
+						<node index="0" text="团购" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[960,175][1072,250]" drawing-order="1" hint="" />
+					</node>
+					<node index="8" text="" resource-id="" class="android.widget.TextView"
+						package="com.ss.android.ugc.aweme" content-desc="已选中，推荐，按钮"
+						checkable="false" checked="false" clickable="true" enabled="true"
+						focusable="true" focused="false" scrollable="false" long-clickable="false"
+						password="false" selected="false" bounds="[1096,136][1256,290]"
+						drawing-order="1" hint="">
+						<node index="0" text="推荐" resource-id="com.ss.android.ugc.aweme:id/5j4"
+							class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+							content-desc="" checkable="false" checked="false" clickable="false"
+							enabled="true" focusable="false" focused="false" scrollable="false"
+							long-clickable="false" password="false" selected="false"
+							bounds="[1120,175][1232,250]" drawing-order="1" hint="" />
+					</node>
+				</node>
+				<node index="1" text="" resource-id="" class="android.widget.Button"
+					package="com.ss.android.ugc.aweme" content-desc="侧边栏" checkable="false"
+					checked="false" clickable="true" enabled="true" focusable="true" focused="false"
+					scrollable="false" long-clickable="false" password="false" selected="false"
+					bounds="[0,136][152,290]" drawing-order="4" hint="" />
+				<node index="2" text="" resource-id="" class="android.widget.Button"
+					package="com.ss.android.ugc.aweme" content-desc="搜索" checkable="false"
+					checked="false" clickable="true" enabled="true" focusable="true" focused="false"
+					scrollable="false" long-clickable="false" password="false" selected="false"
+					bounds="[1256,136][1438,290]" drawing-order="3" hint="">
+					<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/2ua"
+						class="android.widget.Button" package="com.ss.android.ugc.aweme"
+						content-desc="搜索" checkable="false" checked="false" clickable="false"
+						enabled="true" focusable="false" focused="false" scrollable="false"
+						long-clickable="false" password="false" selected="false"
+						bounds="[1284,157][1396,269]" drawing-order="1" hint="" />
+				</node>
+			</node>
+		</node>
+		<node index="3" text="" resource-id="com.ss.android.ugc.aweme:id/v_6"
+			class="android.widget.SeekBar" package="com.ss.android.ugc.aweme" content-desc="进度条"
+			checkable="false" checked="false" clickable="false" enabled="true" focusable="true"
+			focused="false" scrollable="false" long-clickable="false" password="false"
+			selected="false" bounds="[0,2937][1440,3007]" drawing-order="10" hint="" />
+		<node index="4" text="" resource-id="" class="android.widget.FrameLayout"
+			package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+			clickable="true" enabled="true" focusable="true" focused="false" scrollable="false"
+			long-clickable="false" password="false" selected="true" bounds="[0,2972][286,3142]"
+			drawing-order="5" hint="">
+			<node index="0" text="首页" resource-id="com.ss.android.ugc.aweme:id/0tn"
+				class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+				content-desc="首页，按钮" checkable="false" checked="false" clickable="false"
+				enabled="true" focusable="false" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[83,3017][201,3097]" drawing-order="1" hint="" />
+		</node>
+		<node index="5" text="" resource-id="" class="android.widget.FrameLayout"
+			package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+			clickable="true" enabled="true" focusable="true" focused="false" scrollable="false"
+			long-clickable="false" password="false" selected="false" bounds="[286,2972][574,3142]"
+			drawing-order="6" hint="">
+			<node index="0" text="朋友" resource-id="com.ss.android.ugc.aweme:id/0tn"
+				class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+				content-desc="朋友，按钮" checkable="false" checked="false" clickable="false"
+				enabled="true" focusable="false" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[371,3017][489,3097]" drawing-order="1" hint="" />
+		</node>
+		<node index="6" text="" resource-id="" class="android.widget.FrameLayout"
+			package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+			clickable="true" enabled="true" focusable="true" focused="false" scrollable="false"
+			long-clickable="true" password="false" selected="false" bounds="[574,2972][862,3142]"
+			drawing-order="7" hint="">
+			<node index="0" text="" resource-id="com.ss.android.ugc.aweme:id/1ps"
+				class="android.widget.ImageView" package="com.ss.android.ugc.aweme"
+				content-desc="拍摄，按钮" checkable="false" checked="false" clickable="false"
+				enabled="true" focusable="false" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[581,2972][854,3142]" drawing-order="2" hint="" />
+		</node>
+		<node index="7" text="" resource-id="" class="android.widget.FrameLayout"
+			package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+			clickable="true" enabled="true" focusable="true" focused="false" scrollable="false"
+			long-clickable="false" password="false" selected="false" bounds="[862,2972][1150,3142]"
+			drawing-order="8" hint="">
+			<node index="0" text="消息" resource-id="com.ss.android.ugc.aweme:id/0tn"
+				class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+				content-desc="消息，按钮" checkable="false" checked="false" clickable="false"
+				enabled="true" focusable="false" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[947,3017][1065,3097]" drawing-order="1" hint="" />
+		</node>
+		<node index="8" text="" resource-id="" class="android.widget.FrameLayout"
+			package="com.ss.android.ugc.aweme" content-desc="" checkable="false" checked="false"
+			clickable="true" enabled="true" focusable="true" focused="false" scrollable="false"
+			long-clickable="false" password="false" selected="false" bounds="[1150,2972][1438,3142]"
+			drawing-order="9" hint="">
+			<node index="0" text="我" resource-id="com.ss.android.ugc.aweme:id/0tn"
+				class="android.widget.TextView" package="com.ss.android.ugc.aweme"
+				content-desc="我，按钮" checkable="false" checked="false" clickable="false"
+				enabled="true" focusable="false" focused="false" scrollable="false"
+				long-clickable="false" password="false" selected="false"
+				bounds="[1264,3017][1323,3097]" drawing-order="1" hint="" />
+		</node>
+	</node>
+</hierarchy>

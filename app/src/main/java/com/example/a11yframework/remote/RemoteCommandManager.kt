@@ -5,6 +5,7 @@ import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.core.FrameworkAccessibilityService
 import kotlinx.coroutines.*
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -316,8 +317,8 @@ class RemoteCommandManager(
         val json = gson.toJson(result)
         
         try {
-            val mediaType = okhttp3.MediaType.get("application/json; charset=utf-8")
-            val body = okhttp3.RequestBody.create(mediaType, json)
+            val mediaType = okhttp3.MediaType.parse("application/json; charset=utf-8")
+            val body = json.toRequestBody(mediaType)
             
             val request = Request.Builder()
                 .url(url)

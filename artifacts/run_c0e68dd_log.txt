@@ -1,0 +1,6 @@
+03-18 10:08:43.670 I/DouyinPlugin(  528): Plugin activated
+03-18 10:08:45.382 I/DouyinPlugin(  528): Plugin deactivated
+03-18 10:08:45.382 I/DouyinPlugin(  528): Plugin activated
+03-18 10:08:47.624 I/DouyinPlugin(  528): Plugin deactivated
+03-18 10:08:47.625 I/DouyinPlugin(  528): Plugin activated
+03-18 10:09:24.422 I/SmartPower: com.example.a11yframework/10385(528)( 2792): idle->background(36897ms) R(service unbind com.example.a11yframework/.core.FrameworkAccessibilityService) adj=200.

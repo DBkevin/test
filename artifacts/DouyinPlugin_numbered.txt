@@ -1,0 +1,490 @@
+1:package com.example.a11yframework.plugins
+2:
+3:import android.accessibilityservice.AccessibilityService
+4:import android.graphics.Rect
+5:import android.util.Log
+6:import android.view.accessibility.AccessibilityNodeInfo
+7:import com.example.a11yframework.config.ConfigManager
+8:import com.example.a11yframework.core.FrameworkAccessibilityService
+9:import com.example.a11yframework.core.IAccessibilityPlugin
+10:import com.example.a11yframework.core.ScrapedData
+11:import com.example.a11yframework.utils.NodeUtils
+12:
+13:/**
+14: * 抖音插件 - 医美店铺团购采集
+15: *
+16: * 当前职责只做两件事：
+17: * 1. 识别当前是否是店铺首页/团购列表页
+18: * 2. 提取当前视口内可见的团购卡
+19: *
+20: * 滚动、展开、聚合由 CaptureCoordinator 统一负责。
+21: */
+22:class DouyinPlugin : IAccessibilityPlugin {
+23:
+24:    companion object {
+25:        private const val TAG = "DouyinPlugin"
+26:
+27:        val DOUYIN_PACKAGES = listOf(
+28:            "com.ss.android.ugc.aweme",
+29:            "com.ss.android.ugc.aweme.lite"
+30:        )
+31:
+32:        private val HOSPITAL_KEYWORDS = listOf("医院", "门诊", "整形", "美容", "医美", "clinic")
+33:        private val SHOP_PAGE_SIGNALS = listOf("收藏", "关注", "回头客", "无隐形消费", "领券抢购", "已售")
+34:        private val HARD_NON_GROUPBUY_MODULE_MARKERS = listOf(
+35:            "你可能感兴趣的地点",
+36:            "你可能感兴趣",
+37:            "猜你喜欢"
+38:        )
+39:        private val NON_MERCHANT_TEXT_MARKERS = listOf(
+40:            "预约到店送好礼",
+41:            "预约到店专属礼",
+42:            "专属礼"
+43:        ) + HARD_NON_GROUPBUY_MODULE_MARKERS
+44:        private val CARD_HINT_KEYWORDS = listOf(
+45:            "现价",
+46:            "原价",
+47:            "已售",
+48:            "人逛过",
+49:            "次卡",
+50:            "周末节假日通用",
+51:            "随时退",
+52:            "至少提前",
+53:            "领券抢购",
+54:            "券后"
+55:        )
+56:
+57:        private const val PAGE_HOSPITAL_DETAIL = "hospital_detail"
+58:        private const val GROUP_BUY_DATA_TYPE = "group_buys"
+59:        private const val MIN_CARD_WIDTH = 900
+60:        private const val MIN_CARD_HEIGHT = 120
+61:        private const val MIN_CARD_TOP = 0
+62:        private val GROUPBUY_TAIL_SIGNALS = listOf(
+63:            "展开更多",
+64:            "收起",
+65:            "预约到店送好礼",
+66:            "预约到店专属礼",
+67:            "用户评价"
+68:        )
+69:
+70:        private val TITLE_REGEX = Regex(
+71:            """^(.*?)(?=,(?:周|至少提前|随时退|原价|现价|已售|[0-9A-Za-z+\-千wW万]+\s*人逛过|次卡|放心付|券后|周末节假日通用|预约|可用)|$)"""
+72:        )
+73:        private val ORIGINAL_PRICE_REGEX = Regex("""原价\s*([0-9]+(?:\.[0-9]+)?)元""")
+74:        private val CURRENT_PRICE_REGEX = Regex("""现价\s*([0-9]+(?:\.[0-9]+)?)元""")
+75:        private val SALES_REGEX = Regex("""(已售[0-9A-Za-z+\-千wW万]+)""")
+76:        private val BROWSE_REGEX = Regex("""([0-9A-Za-z+\-千wW万]+\s*人逛过)""")
+77:        private val DISPLAY_PRICE_REGEX = Regex("""¥\s*([0-9]+(?:\.[0-9]+)?)""")
+78:        private val TITLE_TEXT_REGEX = Regex("""[\p{IsHan}A-Za-z]{2,}""")
+79:
+80:        internal data class ParsedCard(
+81:            val title: String,
+82:            val price: String,
+83:            val originalPrice: String,
+84:            val sales: String,
+85:            val rawText: String
+86:        )
+87:
+88:        internal fun normalizeCardText(text: String): String {
+89:            return text
+90:                .replace("[\\u200B-\\u200D\\uFEFF]".toRegex(), "")
+91:                .replace("\\s+".toRegex(), " ")
+92:                .replace(" ,", ",")
+93:                .replace(", ", ",")
+94:                .trim()
+95:        }
+96:
+97:        internal fun parseGroupBuyCardText(cardText: String): ParsedCard? {
+98:            val normalized = normalizeCardText(cardText)
+99:            if (normalized.isBlank()) return null
+100:
+101:            val title = TITLE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+102:                ?.let(::normalizeCardText)
+103:                ?.trim(',', '，')
+104:                .orEmpty()
+105:            if (title.isBlank()) return null
+106:
+107:            val displayPrices = DISPLAY_PRICE_REGEX.findAll(normalized)
+108:                .map { it.groupValues.getOrNull(1).orEmpty() }
+109:                .filter { it.isNotBlank() }
+110:                .toList()
+111:
+112:            val price = CURRENT_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+113:                ?: displayPrices.getOrNull(0)
+114:                ?: ""
+115:            val originalPrice = ORIGINAL_PRICE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+116:                ?: displayPrices.getOrNull(1)
+117:                ?: ""
+118:            val sales = SALES_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+119:                ?: BROWSE_REGEX.find(normalized)?.groupValues?.getOrNull(1)
+120:                ?: ""
+121:
+122:            val hasCommerceHint = CARD_HINT_KEYWORDS.any { normalized.contains(it) }
+123:            if (price.isBlank() || (!hasCommerceHint && sales.isBlank())) {
+124:                return null
+125:            }
+126:
+127:            return ParsedCard(
+128:                title = title,
+129:                price = price,
+130:                originalPrice = originalPrice,
+131:                sales = sales,
+132:                rawText = normalized
+133:            )
+134:        }
+135:    }
+136:
+137:    private data class HospitalInfo(
+138:        val hospitalName: String = "",
+139:        val honors: String = ""
+140:    )
+141:
+142:    private data class GroupBuyInfo(
+143:        val title: String = "",
+144:        val price: String = "",
+145:        val originalPrice: String = "",
+146:        val sales: String = "",
+147:        val rawText: String = ""
+148:    )
+149:
+150:    private var service: AccessibilityService? = null
+151:    private var currentMode: String = "feed"
+152:    private var keywords: List<String> = emptyList()
+153:    private var lastMerchantName: String = ""
+154:
+155:    override val pluginId: String = "douyin"
+156:    override val pluginName: String = "功能 A"
+157:    override val targetPackages: List<String> = DOUYIN_PACKAGES
+158:
+159:    override fun initialize(service: AccessibilityService) {
+160:        this.service = service
+161:        Log.i(TAG, "Plugin initialized")
+162:
+163:        val frameworkService = service as? FrameworkAccessibilityService
+164:        val configManager: ConfigManager? = frameworkService?.configManager
+165:
+166:        val loadedKeywords = configManager?.getPluginConfigList(pluginId, "keywords")
+167:        keywords = loadedKeywords
+168:            ?.filter { it.isNotEmpty() }
+169:            ?.takeIf { it.isNotEmpty() }
+170:            ?: listOf("郑州美莱")
+171:        currentMode = configManager?.getPluginConfigString(pluginId, "scrapeMode", "feed") ?: "feed"
+172:        lastMerchantName = ""
+173:
+174:        Log.d(TAG, "Config loaded: mode=$currentMode, keywords=$keywords")
+175:    }
+176:
+177:    override fun cleanup() {
+178:        lastMerchantName = ""
+179:        service = null
+180:        Log.i(TAG, "Plugin cleaned up")
+181:    }
+182:
+183:    override fun onActivate() {
+184:        lastMerchantName = ""
+185:        Log.i(TAG, "Plugin activated")
+186:    }
+187:
+188:    override fun onDeactivate() {
+189:        lastMerchantName = ""
+190:        Log.i(TAG, "Plugin deactivated")
+191:    }
+192:
+193:    override fun isTargetPage(nodeInfo: AccessibilityNodeInfo?): Boolean {
+194:        if (nodeInfo == null) return false
+195:
+196:        val pageText = NodeUtils.getAllNodeText(
+197:            nodeInfo,
+198:            maxDepth = 24,
+199:            maxNodes = 520,
+200:            maxTextLength = 10000
+201:        )
+202:        val visibleCards = findVisibleGroupBuyCards(nodeInfo)
+203:        if (containsHardNonGroupBuyModule(pageText) && visibleCards.isEmpty()) {
+204:            Log.d(TAG, "Detected hard non-groupbuy module, skip target page")
+205:            return false
+206:        }
+207:
+208:        val signalCount = SHOP_PAGE_SIGNALS.count { signal ->
+209:            pageText.contains(signal, ignoreCase = true)
+210:        }
+211:        val hasTailSignals = GROUPBUY_TAIL_SIGNALS.any { signal ->
+212:            pageText.contains(signal, ignoreCase = true)
+213:        }
+214:        val merchantName = extractMerchantName(nodeInfo)
+215:        val hasConfiguredKeyword = keywords.any { keyword ->
+216:            pageText.contains(keyword, ignoreCase = true)
+217:        }
+218:
+219:        val hasMerchantContext =
+220:            merchantName.isNotBlank() ||
+221:                signalCount >= 2 ||
+222:                (signalCount >= 1 && visibleCards.isNotEmpty()) ||
+223:                (hasTailSignals && visibleCards.isNotEmpty()) ||
+224:                (lastMerchantName.isNotBlank() && !containsHardNonGroupBuyModule(pageText))
+225:        val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
+226:        if (isTarget) {
+227:            Log.i(
+228:                TAG,
+229:                "Target merchant page detected: merchant=${merchantName.ifBlank { lastMerchantName }}, signals=$signalCount, cards=${visibleCards.size}"
+230:            )
+231:        }
+232:        return isTarget
+233:    }
+234:
+235:    override fun scrapeData(nodeInfo: AccessibilityNodeInfo?): List<ScrapedData> {
+236:        if (nodeInfo == null) return emptyList()
+237:
+238:        try {
+239:            val hospitalInfo = extractHospitalInfo(nodeInfo)
+240:            if (hospitalInfo.hospitalName.isBlank()) {
+241:                Log.d(TAG, "Merchant name missing, skip capture")
+242:                return emptyList()
+243:            }
+244:
+245:            val groupBuyList = extractGroupBuyList(nodeInfo)
+246:            if (groupBuyList.isEmpty()) {
+247:                Log.d(TAG, "No visible group-buy cards on current page")
+248:                return emptyList()
+249:            }
+250:
+251:            val results = groupBuyList.map { groupBuy ->
+252:                val merchantName = hospitalInfo.hospitalName
+253:                ScrapedData(
+254:                    pluginId = pluginId,
+255:                    pageType = PAGE_HOSPITAL_DETAIL,
+256:                    dataType = GROUP_BUY_DATA_TYPE,
+257:                    content = mapOf(
+258:                        "merchant_name" to merchantName,
+259:                        "hospital_name" to merchantName,
+260:                        "merchantName" to merchantName,
+261:                        "hospitalName" to merchantName,
+262:                        "honors" to hospitalInfo.honors,
+263:                        "title" to groupBuy.title,
+264:                        "groupBuyTitle" to groupBuy.title,
+265:                        "price" to groupBuy.price,
+266:                        "original_price" to groupBuy.originalPrice,
+267:                        "originalPrice" to groupBuy.originalPrice,
+268:                        "sales" to groupBuy.sales,
+269:                        "card_text" to groupBuy.rawText,
+270:                        "cardText" to groupBuy.rawText,
+271:                        "raw_text" to groupBuy.rawText,
+272:                        "rawText" to groupBuy.rawText
+273:                    ),
+274:                    rawText = groupBuy.rawText,
+275:                    metadata = mapOf(
+276:                        "pageName" to "商家详情页",
+277:                        "pageSignals" to hospitalInfo.honors
+278:                    )
+279:                )
+280:            }
+281:
+282:            Log.i(TAG, "Scraped ${results.size} visible cards from ${hospitalInfo.hospitalName}")
+283:            return results
+284:        } catch (e: Exception) {
+285:            Log.e(TAG, "Error scraping data", e)
+286:            return emptyList()
+287:        }
+288:    }
+289:
+290:    override fun processData(data: List<ScrapedData>): List<ScrapedData> {
+291:        return data
+292:            .filter { it.content["groupBuyTitle"].isNullOrBlank().not() }
+293:            .map { item ->
+294:                item.copy(
+295:                    content = item.content.mapValues { (_, value) ->
+296:                        value
+297:                            .trim()
+298:                            .replace("[\\u200B-\\u200D\\uFEFF]".toRegex(), "")
+299:                            .replace("\\s+".toRegex(), " ")
+300:                    },
+301:                    rawText = normalizeCardText(item.rawText)
+302:                )
+303:            }
+304:    }
+305:
+306:    private fun extractHospitalInfo(rootNode: AccessibilityNodeInfo): HospitalInfo {
+307:        val merchantName = extractMerchantName(rootNode).ifBlank { lastMerchantName }
+308:        if (merchantName.isNotBlank()) {
+309:            lastMerchantName = merchantName
+310:        }
+311:        val honors = extractShopSignals(rootNode)
+312:        Log.d(TAG, "Hospital info: name=$merchantName, honors=$honors")
+313:        return HospitalInfo(merchantName, honors)
+314:    }
+315:
+316:    private fun extractMerchantName(rootNode: AccessibilityNodeInfo): String {
+317:        val firstCardTop = findVisibleGroupBuyCards(rootNode)
+318:            .map { nodeTop(it) }
+319:            .minOrNull()
+320:            ?: Int.MAX_VALUE
+321:
+322:        val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
+323:            val label = NodeUtils.getNodeText(node)
+324:            if (label.isBlank()) return@findNodesByCondition false
+325:            if (label.contains("现价") || label.contains("已售")) return@findNodesByCondition false
+326:            if (containsNonMerchantTextMarker(label)) return@findNodesByCondition false
+327:
+328:            val rect = Rect()
+329:            node.getBoundsInScreen(rect)
+330:
+331:            rect.top in 300..1400 &&
+332:                rect.width() >= 400 &&
+333:                rect.height() <= 220 &&
+334:                rect.bottom <= firstCardTop - 40 &&
+335:                HOSPITAL_KEYWORDS.any { keyword -> label.contains(keyword, ignoreCase = true) }
+336:        }, maxDepth = 24)
+337:
+338:        return candidates
+339:            .map { node ->
+340:                val rect = Rect().also { node.getBoundsInScreen(it) }
+341:                rect.top to normalizeCardText(NodeUtils.getNodeText(node))
+342:            }
+343:            .sortedWith(compareBy<Pair<Int, String>> { it.first }.thenByDescending { it.second.length })
+344:            .map { it.second }
+345:            .firstOrNull()
+346:            .orEmpty()
+347:    }
+348:
+349:    private fun containsHardNonGroupBuyModule(text: String): Boolean {
+350:        return HARD_NON_GROUPBUY_MODULE_MARKERS.any { marker ->
+351:            text.contains(marker, ignoreCase = true)
+352:        }
+353:    }
+354:
+355:    private fun containsNonMerchantTextMarker(text: String): Boolean {
+356:        return NON_MERCHANT_TEXT_MARKERS.any { marker ->
+357:            text.contains(marker, ignoreCase = true)
+358:        }
+359:    }
+360:
+361:    private fun extractShopSignals(rootNode: AccessibilityNodeInfo): String {
+362:        val signalNodes = NodeUtils.findNodesByCondition(rootNode, { node ->
+363:            val label = normalizeCardText(NodeUtils.getNodeText(node))
+364:            if (label.isBlank()) return@findNodesByCondition false
+365:            if (label.length > 32) return@findNodesByCondition false
+366:            if (label.contains("原价") || label.contains("现价")) return@findNodesByCondition false
+367:
+368:            val rect = Rect()
+369:            node.getBoundsInScreen(rect)
+370:
+371:            rect.top in 300..1400 &&
+372:                rect.bottom <= 1500 &&
+373:                SHOP_PAGE_SIGNALS.any { signal -> label.contains(signal) }
+374:        }, maxDepth = 24)
+375:
+376:        return signalNodes
+377:            .map { normalizeCardText(NodeUtils.getNodeText(it)) }
+378:            .filter { it.isNotBlank() }
+379:            .distinct()
+380:            .joinToString(" | ")
+381:    }
+382:
+383:    private fun extractGroupBuyList(rootNode: AccessibilityNodeInfo): List<GroupBuyInfo> {
+384:        val cards = findVisibleGroupBuyCards(rootNode)
+385:        if (cards.isEmpty()) return emptyList()
+386:
+387:        val skippedSamples = mutableListOf<String>()
+388:        val items = cards.mapNotNull { cardNode ->
+389:            extractGroupBuyItem(cardNode, skippedSamples)
+390:        }.distinctBy { item ->
+391:            listOf(item.title, item.price, item.originalPrice).joinToString("|")
+392:        }
+393:
+394:        Log.d(TAG, "Visible group-buy cards: ${items.size}")
+395:        if (items.isEmpty() && skippedSamples.isNotEmpty()) {
+396:            Log.d(TAG, "Skipped group-buy samples: ${skippedSamples.joinToString(" || ")}")
+397:        }
+398:        return items
+399:    }
+400:
+401:    private fun findVisibleGroupBuyCards(rootNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
+402:        val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
+403:            val label = getNodeText(node)
+404:            if (label.isBlank()) return@findNodesByCondition false
+405:            if (!isLikelyGroupBuyCardLabel(label)) return@findNodesByCondition false
+406:
+407:            val rect = Rect()
+408:            node.getBoundsInScreen(rect)
+409:
+410:            rect.top >= MIN_CARD_TOP &&
+411:                rect.width() >= MIN_CARD_WIDTH &&
+412:                rect.height() >= MIN_CARD_HEIGHT &&
+413:                rect.left <= 120 &&
+414:                rect.right >= 1180
+415:        }, maxDepth = 32)
+416:
+417:        return candidates
+418:            .distinctBy { nodeBoundsKey(it) }
+419:            .sortedBy { nodeTop(it) }
+420:    }
+421:
+422:    private fun extractGroupBuyItem(
+423:        cardNode: AccessibilityNodeInfo,
+424:        skippedSamples: MutableList<String>
+425:    ): GroupBuyInfo? {
+426:        val ownLabel = normalizeCardText(NodeUtils.getNodeText(cardNode))
+427:        val rawCardText = if (ownLabel.isNotBlank()) ownLabel else normalizeCardText(getNodeText(cardNode))
+428:        val parsed = parseGroupBuyCardText(rawCardText)
+429:        if (parsed == null) {
+430:            if (skippedSamples.size < 3 && rawCardText.isNotBlank()) {
+431:                skippedSamples.add(rawCardText.take(140))
+432:            }
+433:            return null
+434:        }
+435:
+436:        return GroupBuyInfo(
+437:            title = parsed.title,
+438:            price = parsed.price,
+439:            originalPrice = parsed.originalPrice,
+440:            sales = parsed.sales,
+441:            rawText = parsed.rawText
+442:        )
+443:    }
+444:
+445:    private fun isLikelyGroupBuyCardLabel(label: String): Boolean {
+446:        val normalized = normalizeCardText(label)
+447:        if (normalized.isBlank()) return false
+448:
+449:        val hasPrice = normalized.contains("现价") ||
+450:            normalized.contains("原价") ||
+451:            DISPLAY_PRICE_REGEX.containsMatchIn(normalized)
+452:        val hasHint = CARD_HINT_KEYWORDS.any { normalized.contains(it) }
+453:        val hasTitleText = TITLE_TEXT_REGEX.containsMatchIn(normalized)
+454:
+455:        return hasPrice && hasHint && hasTitleText
+456:    }
+457:
+458:    private fun nodeBoundsKey(node: AccessibilityNodeInfo): String {
+459:        val rect = Rect()
+460:        node.getBoundsInScreen(rect)
+461:        return "${rect.left},${rect.top},${rect.right},${rect.bottom}"
+462:    }
+463:
+464:    private fun nodeTop(node: AccessibilityNodeInfo): Int {
+465:        val rect = Rect()
+466:        node.getBoundsInScreen(rect)
+467:        return rect.top
+468:    }
+469:
+470:    private fun getNodeText(node: AccessibilityNodeInfo): String {
+471:        val sb = StringBuilder()
+472:        collectNodeText(node, sb, 0)
+473:        return normalizeCardText(sb.toString())
+474:    }
+475:
+476:    private fun collectNodeText(node: AccessibilityNodeInfo, sb: StringBuilder, depth: Int) {
+477:        if (depth > 12) return
+478:
+479:        node.text?.let { sb.append(it.toString()).append(" ") }
+480:        node.contentDescription?.let { sb.append(it.toString()).append(" ") }
+481:
+482:        for (i in 0 until node.childCount) {
+483:            val child = node.getChild(i)
+484:            if (child != null) {
+485:                collectNodeText(child, sb, depth + 1)
+486:                child.recycle()
+487:            }
+488:        }
+489:    }
+490:}

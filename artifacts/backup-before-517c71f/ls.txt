@@ -1,0 +1,16 @@
+databases:
+a11y_scraped_data.db
+a11y_scraped_data.db-journal
+
+files/app_plugins/douyin:
+plugin.json
+rules
+
+files/rules:
+douyin_hospital_v1.json
+meituan_hospital_v1.json
+rule_index.json
+
+shared_prefs:
+a11y_framework_config.xml
+local_capture_state.xml

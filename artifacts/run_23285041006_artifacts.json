@@ -1,0 +1,25 @@
+{
+  "total_count": 1,
+  "artifacts": [
+    {
+      "id": 6001541089,
+      "node_id": "MDg6QXJ0aWZhY3Q2MDAxNTQxMDg5",
+      "name": "app-debug",
+      "size_in_bytes": 5728155,
+      "url": "https://api.github.com/repos/DBkevin/test/actions/artifacts/6001541089",
+      "archive_download_url": "https://api.github.com/repos/DBkevin/test/actions/artifacts/6001541089/zip",
+      "expired": false,
+      "digest": "sha256:adc64db9cc6559f507aeb0e13884782c56c3ba62a157c9ea9d664cca4ada6864",
+      "created_at": "2026-03-19T07:53:04Z",
+      "updated_at": "2026-03-19T07:53:04Z",
+      "expires_at": "2026-04-02T07:53:03Z",
+      "workflow_run": {
+        "id": 23285041006,
+        "repository_id": 1177413903,
+        "head_repository_id": 1177413903,
+        "head_branch": "codex/douyin-design-target",
+        "head_sha": "1d3d95cd35c42ef633dc41645244350601f8ed12"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+
+=== douyin_search:郑州美莱 @1773891518343 ===
+1773891518877 label=douyin_groupbuy_top_search_node bounds=1258 138 1440 292 clicked=true text=搜索
+1773891520215 label=search_submit_keyword bounds=1222 138 1440 292 clicked=pending text=搜索
+1773891520216 label=search_submit_keyword bounds=1222 138 1440 292 clicked=false text=搜索
+1773891520216 label=search_submit_keyword_bounds x=1331 y=215 dispatched=pending
+1773891520218 label=search_submit_keyword_bounds x=1331 y=215 dispatched=true
+=== open_merchant_result:郑州美莱 @1773891531328 ===
+1773891538581 label=merchant_result_entry_band_r0 x=586 y=716 dispatched=pending
+1773891538582 label=merchant_result_entry_band_r0 x=586 y=716 dispatched=true

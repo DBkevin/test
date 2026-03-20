@@ -1,0 +1,59 @@
+{
+  "device_profile": {
+    "resolution": "1440x3200",
+    "updated_at": "2026-03-13T16:30:00+08:00",
+    "notes": "These presets are verified on the current Xiaomi device and are intended for repeatable adb-assisted navigation."
+  },
+  "presets": [
+    {
+      "id": "douyin.feed_home.tuangou_tab",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 1016,
+      "y": 213,
+      "notes": "Confirmed from XML node bounds [936,136][1096,290]. Opens the top '团购' tab from the Douyin feed home page."
+    },
+    {
+      "id": "douyin.groupbuy.search_entry_hint",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 383,
+      "y": 373,
+      "notes": "Confirmed from XML node com.ss.android.ugc.aweme:id/et_search_kw bounds [278,347][488,399]. Tapping here enters the group-buy search page."
+    },
+    {
+      "id": "douyin.groupbuy.search_submit_button",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 1034,
+      "y": 373,
+      "notes": "Confirmed from XML node com.ss.android.ugc.aweme:id/bo7 bounds [929,310][1139,436]. Disabled for now because it directly searches using the current keyword in the box and may produce unstable default results."
+    },
+    {
+      "id": "douyin.search.input_box",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 695,
+      "y": 215,
+      "notes": "Confirmed from XML node com.ss.android.ugc.aweme:id/et_search_kw bounds [168,152][1222,278]. Focused EditText on the dedicated search input page."
+    },
+    {
+      "id": "douyin.search.submit_button",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 1331,
+      "y": 215,
+      "notes": "Confirmed from XML node com.ss.android.ugc.aweme:id/4_s bounds [1222,138][1440,292]. Use this only after explicitly setting the target keyword in the search input box."
+    },
+    {
+      "id": "douyin.groupbuy_home.left_merchant_card",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 245,
+      "y": 2640,
+      "notes": "Verified on the group-buy home page when the target merchant card is visible in the lower-left recommendation slot."
+    },
+    {
+      "id": "douyin.search_result.shop_entry_band",
+      "package": "com.ss.android.ugc.aweme",
+      "x": 508,
+      "y": 516,
+      "bounds": "[263,485][1384,548]",
+      "notes": "Confirmed with the user from the merchant search result XML. This is the safe title band for entering the merchant home page. Do not tap the stats row below or the group-buy cards."
+    }
+  ]
+}

@@ -78,7 +78,7 @@ class SearchController(
         
         try {
             // 方法 1: 通过关键词查找
-            val byKeyword = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byKeyword = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 val text = NodeUtils.getNodeText(node).lowercase()
                 SEARCH_KEYWORDS.any { keyword -> text.contains(keyword.lowercase()) }
             }
@@ -89,7 +89,7 @@ class SearchController(
             }
             
             // 方法 2: 通过 className 查找（EditText）
-            val byClass = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byClass = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 node.className?.toString()?.contains("EditText") == true ||
                 node.className?.toString()?.contains("edittext") == true
             }
@@ -100,7 +100,7 @@ class SearchController(
             }
             
             // 方法 3: 通过 viewId 查找
-            val byId = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val byId = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false
                 viewId.contains("search") || viewId.contains("Search")
             }
@@ -194,7 +194,7 @@ class SearchController(
         
         try {
             // 方法 1: 通过关键词查找搜索按钮
-            val button = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val button = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val text = NodeUtils.getNodeText(node).lowercase()
@@ -208,7 +208,7 @@ class SearchController(
             }
             
             // 方法 2: 通过 viewId 查找
-            val buttonById = NodeUtils.findNodeByCondition(rootNode) { node ->
+            val buttonById = NodeUtils.findNodeByCondition(rootNode) { node: AccessibilityNodeInfo ->
                 if (!node.isClickable) return@findNodeByCondition false
                 
                 val viewId = node.viewIdResourceName ?: return@findNodeByCondition false

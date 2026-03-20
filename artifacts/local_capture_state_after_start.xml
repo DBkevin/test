@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <long name="pending_updated_at" value="1773799948539" />
+    <string name="pending_target_package">com.ss.android.ugc.aweme</string>
+    <boolean name="pending_launch_target_app" value="false" />
+    <string name="pending_hospital_name">郑州美莱</string>
+</map>

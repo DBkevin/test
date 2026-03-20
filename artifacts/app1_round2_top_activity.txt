@@ -1,0 +1,1 @@
+    topResumedActivity=ActivityRecord{189853706 u0 com.ss.android.ugc.aweme/.splash.SplashActivity t2291}

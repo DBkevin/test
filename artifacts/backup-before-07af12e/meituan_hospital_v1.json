@@ -1,0 +1,65 @@
+{
+  "rule_id": "meituan_hospital_v1",
+  "rule_name": "美团医院团购详情页",
+  "app_id": "meituan",
+  "app_package": "com.sankuai.meituan",
+  "priority": 200,
+  "enabled": true,
+  "version": 1,
+  "pages": [
+    {
+      "page_id": "hospital_detail",
+      "page_name": "医院详情页",
+      "match_logic": "AND",
+      "match_rules": [
+        {
+          "type": "text_contains",
+          "field": "page_text",
+          "values": ["医院", "门诊", "整形", "美容", "医美"],
+          "logic": "OR"
+        },
+        {
+          "type": "text_contains",
+          "field": "page_text",
+          "values": ["团购", "套餐", "体验", "次卡", "疗程"],
+          "logic": "OR"
+        }
+      ],
+      "extract_rules": {
+        "hospital_name": {
+          "type": "find_by_keywords",
+          "keywords": ["医院", "门诊", "整形", "美容", "医美"],
+          "location": "top",
+          "max_depth": 3
+        },
+        "honors": {
+          "type": "find_by_keywords",
+          "keywords": ["认证", "奖", "基地", "定点", "授权", "合作"],
+          "location": "middle",
+          "max_depth": 5
+        },
+        "group_buys": {
+          "type": "find_list",
+          "container": {
+            "class": "androidx.recyclerview.widget.RecyclerView"
+          },
+          "item_rules": {
+            "title": {
+              "type": "find_by_keywords",
+              "keywords": ["团购", "套餐", "体验", "次卡", "疗程"]
+            },
+            "price": {
+              "type": "regex",
+              "pattern": "(¥\\d+(?:\\.\\d+)?)",
+              "group": 1
+            },
+            "sales": {
+              "type": "find_by_keywords",
+              "keywords": ["已售", "销量", "购买"]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

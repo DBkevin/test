@@ -1,0 +1,886 @@
+--------- beginning of main
+03-19 12:04:38.125  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.125  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49541.910156,R:30048.732422,G:17492.455078,B:9498.474609, lux: 698.113037,cct:4346.999023, irPara: 0
+03-19 12:04:38.127  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.127  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49600.265625,R:30098.251953,G:17515.097656,B:9509.660156, lux: 698.853699,cct:4342.504883, irPara: 0
+03-19 12:04:38.128  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.128  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49558.582031,R:30068.333984,G:17496.984375,B:9514.134766, lux: 697.727051,cct:4352.191895, irPara: 0
+03-19 12:04:38.129  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.130  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49574.214844,R:30076.587891,G:17506.605469,B:9489.805664, lux: 699.081909,cct:4335.053223, irPara: 0
+03-19 12:04:38.131  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.131  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49708.632812,R:30172.529297,G:17546.794922,B:9520.845703, lux: 700.612427,cct:4336.091797, irPara: 0
+03-19 12:04:38.132  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.132  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49565.878906,R:30048.732422,G:17488.492188,B:9494.280273, lux: 698.740906,cct:4349.038086, irPara: 0
+03-19 12:04:38.149  2792  2855 D GnssSsruImpl: onLocationPermissionsChanged provider:passive packageName:com.tencent.mm
+03-19 12:04:38.149  2792  2855 D GnssSsruImpl: onLocationPermissionsChanged provider:network packageName:com.tencent.mm
+03-19 12:04:38.194  3727  3727 I adbd    : in ShellService: input tap 280692 13461430
+03-19 12:04:38.194  3727  3727 I adbd    : set_carlife_cmd = 0
+--------- beginning of system
+03-19 12:04:38.262  2792  4569 W MIUIInput: Input event injection from package: null action ACTION_DOWN
+03-19 12:04:38.264  2792  4569 W InputManager: Input event injection from pid 3164 failed.
+03-19 12:04:38.264  2792  4569 W MIUIInput: Input event injection from package: null action ACTION_UP
+03-19 12:04:38.265  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:38.265  2414  2414 D MI-SF   : isTpIdleScene ,mAverageFrameRate is 4, 0 
+03-19 12:04:38.265  2792  4569 W InputManager: Input event injection from pid 3164 failed.
+03-19 12:04:38.265  2414  2414 D MI-SF   : modeGroup0 mIsSupportAutomodeForMaxFpsSetting is 0(0), getCurrentBrightness() = 2207(880), mIsKeepAutoMode 0 isAutoModeAllowed() 1
+03-19 12:04:38.265  2414  2414 D RefreshRateSelector: fixedMode_group: 0, isFindModeGroup 0
+03-19 12:04:38.265  2414  2414 D RefreshRateSelector: find max refresh rate:120, mode Group:0
+03-19 12:04:38.265  2414  2414 D DisplayModeController: setDesiredMode 4630946738963277955 {mode={fps=120.00 Hz, modePtr={id=1, vsyncRate=120.00 Hz, peakRefreshRate=120.00 Hz}}, emitEvent=true, force=false}
+03-19 12:04:38.266  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:38.266  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:38.266  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:38.266  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893078 -paraList {"detail":"input event inject fail"}
+03-19 12:04:38.267  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:38.267  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893078 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:38.267  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:38.268  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:38.268  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:38.268  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:38.268  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:38.268  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:38.268  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893078 -paraList {"detail":"input event inject fail"}
+03-19 12:04:38.268  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893078 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:38.268  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:38.270  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:38.270  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:38.275  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:38.275  2027  2656 I SDM     : HWCFunctionTimer::noticeTimerFps: displayid:65, fps: 120
+03-19 12:04:38.275  2027  2656 I SDM     : HWCDisplay::SetActiveConfigWithConstraints: display:65-0, config: 1, WxH 1440x3200, fps 120
+03-19 12:04:38.276  2027  2656 W SDM     : HWDeviceDRM::GetSupportedBitClkRate: Requested rate not supported: 1200000000
+03-19 12:04:38.277  2027  2656 I SDM     : HWDeviceDRM::UpdateMixerAttributes: Mixer WxH 1440x3200-1 for Peripheral
+03-19 12:04:38.277  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active configuration changed from config 0 to 1
+03-19 12:04:38.277  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active WxH 1440x3200 ,ddic_mode:normal, timing_fps: 120, sf_fps: 120
+03-19 12:04:38.278  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:38.278  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:38.279  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:38.279  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:38.280  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:38.280  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:38.280  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:38.280  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:38.283  2077  2400 D FPSMonitor: threadFuncFpsMonitor display 0, fps 120
+03-19 12:04:38.295  2792  2868 I DisplayDeviceRepository: Display device changed render timings: "内置屏幕", renderFrameRate=120.00001, presentationDeadlineNanos=11333333, appVsyncOffsetNanos=1000000, frameRateOverrides=[]
+03-19 12:04:38.296  2792  2866 D WindowManager: DeferredDisplayUpdater: partially applying DisplayInfo(1440 x 3200) immediately
+03-19 12:04:38.296  2792  2866 W DisplayContentStubImpl:  displayMetricsChanged=false physicalDisplayChanged=false displayId=0 newUniqueId=local:4630946738963277955 currentUnique=local:4630946738963277955
+03-19 12:04:38.296  2792  2866 D DisplayContentStubImpl: Display{#0 state=ON size=1440x3200 ROTATION_0} isActivityEmbeddingSplitEnable false
+03-19 12:04:38.297  2263 25770 D AudioFlingerImpl: setGameParameters keyvalue: screen_state=on
+03-19 12:04:38.297  2792  2866 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{323cc1e u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+03-19 12:04:38.297  2792  2866 D BarFollowAnimation: isAppTaskBarOnTop win:Window{323cc1e u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{a5fff97 #2292 type=standard A=10390:com.example.a11yframework} : true); (mAssociatedTask:Task{a5fff97 #2292 type=standard A=10390:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+03-19 12:04:38.297  2792  2792 D NetworkMetricsTracker: onDisplayChanged mIsScreenOn=true
+03-19 12:04:38.298  1923 20087 D AHAL: AudioDeviceCustom: SetParameters: 96: Enter: kvpairs is screen_state=on
+03-19 12:04:38.298  1923 20087 D AHAL: AudioDevice: SetParameters: 1616: Enter: kvpairs is screen_state=on
+03-19 12:04:38.298  1923 20087 D AHAL: AudioVoice: VoiceSetParameters: 122: Enter params: screen_state=on
+03-19 12:04:38.298  1923 20087 D AHAL: AudioVoice: VoiceSetParameters: 379: Exit ret: 0
+03-19 12:04:38.298  1923 20087 D AHAL: hfp: hfp_set_parameters: 444: enter
+03-19 12:04:38.298  1923 20087 D AHAL: FM: fm_set_parameters: 261: Enter
+03-19 12:04:38.298  1923 20087 D AHAL: FM: fm_set_parameters: 319: Exit
+03-19 12:04:38.298  1923 20087 D AHAL: Loopback_karaoke: karaoke_set_parameters: 394: Enter
+03-19 12:04:38.298  2792  2866 D MiuiRefreshRatePolicy: reset
+03-19 12:04:38.298  1923 20087 D AHAL: Loopback_karaoke: karaoke_set_parameters: 501: Exit
+03-19 12:04:38.298  1923 20087 D AHAL: AudioDevice: SetParameters: 1721: enter fcsam_setParameters_v2
+03-19 12:04:38.298  1923 20087 D AHAL: AudioDevice: SetParameters: 1751:  - screen = on
+03-19 12:04:38.298  1923 20087 D PAL: API: pal_set_param: 1133: Enter: param id 8 (PAL_PARAM_ID_SCREEN_STATE)
+03-19 12:04:38.298  1923 20087 D PAL: ResourceManager: setParameter: 9202: Enter param id: 0x8 (PAL_PARAM_ID_SCREEN_STATE)
+03-19 12:04:38.298  1923 20087 I PAL: ResourceManager: setParameter: 9225: Screen State:1
+03-19 12:04:38.298  1923 20087 D PAL: ResourceManager: setParameter: 10305: Exit status: 0
+03-19 12:04:38.298  1923 20087 D PAL: API: pal_set_param: 1148: Exit, status 0
+03-19 12:04:38.298  1923 20087 D AHAL: AudioDevice: SetParameters: 2386: Exit: -2
+03-19 12:04:38.298  2792  4735 D NetworkMetricsTracker: onUpdateDeviceState mIsScreenOn=true,mIsMobileDataOn=true,mIsCallStateIdle=true,mIsFeatureEnable=true,mIsStaticStatus=true,mIsCallStateLingering=false,mIsSelfStudyEnabled=false
+03-19 12:04:38.298  2792  4735 D NetworkMetricsTracker: startLinkMetricsPoll or message contains update,then ignore!
+03-19 12:04:38.299  1923 20087 D r_submix: adev_set_parameters() kvpairs='screen_state=on'
+03-19 12:04:38.300  6048  6048 V AutoDensityController: on display changed 0 context dpi:586 origin dpi:560 target dpi:586
+03-19 12:04:38.300  6048  6048 D ControlCenterWindowViewController: on display changed 0
+03-19 12:04:38.300  6048  6048 V AODAutoDensityController: on display changed 0 context dpi:586 origin dpi:560 target dpi:586
+03-19 12:04:38.300  6048  7330 D MiuiGxzwAnimView: onDisplayChanged: oldState = 2, newState = 2
+03-19 12:04:38.301  5303  6161 W GestureStubView_Left: onDisplayChanged
+03-19 12:04:38.301  5303  6161 W GestureStubView_Left: adaptRotation   currentRotation=0   mRotation=0
+03-19 12:04:38.301  5303  6161 W GestureStubView_Right: onDisplayChanged
+03-19 12:04:38.301  5303  6161 W GestureStubView_Right: adaptRotation   currentRotation=0   mRotation=0
+03-19 12:04:38.302  5303  5303 W Launcher: onDisplayChanged: newRotation=0, mCurrentRotation=0
+03-19 12:04:38.304  6001  6971 D NetworkSpeedTracker: onDisplayChanged mIsScreenOn=true
+03-19 12:04:38.304  6001  6971 D NetworkSpeedTracker: onUpdateDeviceState eventType=4,mIsScreenOn=true,mIsMobileDataOn=true
+03-19 12:04:38.304  6001  6971 D NetworkSpeedTracker: startDataPoll mPollActive=true
+03-19 12:04:38.304  6001  6971 D NetworkSpeedTracker: pollActive or message contains update,then ignore!
+03-19 12:04:38.304  6001  6992 D HighSpeedTrainModeController: msg.what = 6
+03-19 12:04:38.304  6001  7114 D MiuiDualMobileTrafficStats[1] : onDisplayChanged: displayId = 0
+03-19 12:04:38.304  6001  7112 D MiuiDualMobileTrafficStats[0] : onDisplayChanged: displayId = 0
+03-19 12:04:38.304  6001  7019 D TelephonySensorManager: msg.what = 5
+03-19 12:04:38.305  6001  7115 D ServiceStateMonitor: handleMessage=2
+03-19 12:04:38.306  6001  6964 D FiveGPowerController: onDisplayChanged to STATE ON
+03-19 12:04:38.306  6001  6964 D FiveGPowerController: onDisplayChanged isLastScreenOn is still on,ignore current displayChanged!!!
+03-19 12:04:38.307  6001  7019 D TelephonySensorManager: already registered:33171034
+03-19 12:04:38.307  6001  7019 D TelephonySensorManager: insterenSim: true, airplaneMode: false, screenOn: true, enabled: true, cloudDisabled: false
+03-19 12:04:38.307  6001  7019 D TelephonySensorManager: already registered:33171094
+03-19 12:04:38.308  6001  7303 D DataLowLatencyServiceEnhanced: handleMessage msg.what:4
+03-19 12:04:38.311  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 1
+03-19 12:04:38.311  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 1
+03-19 12:04:38.311  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:38.311  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:38.319  2792 11312 D PerfShielderService: com.android.systemui|StatusBar|68|416952055551984|51|0|2
+03-19 12:04:38.317  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577616): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.320  9830  9880 W MiuiPerfServiceClient: interceptAndQueuing:6048|com.android.systemui|68|51|416952055551984|Slow main thread|2
+03-19 12:04:38.320  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.320  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49465.843750,R:30016.751953,G:17465.285156,B:9483.094727, lux: 696.614624,cct:4342.623047, irPara: 0
+03-19 12:04:38.321  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.321  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49557.539062,R:30081.746094,G:17501.511719,B:9491.763672, lux: 698.356506,cct:4333.660156, irPara: 0
+03-19 12:04:38.321  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.321  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49607.558594,R:30095.156250,G:17519.625000,B:9514.134766, lux: 699.065491,cct:4345.951172, irPara: 0
+03-19 12:04:38.321  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.321  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49502.312500,R:30036.353516,G:17469.812500,B:9485.051758, lux: 697.199524,cct:4342.481445, irPara: 0
+03-19 12:04:38.321  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.321  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49508.566406,R:30026.037109,G:17479.435547,B:9500.711914, lux: 697.276855,cct:4353.225586, irPara: 0
+03-19 12:04:38.322  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.322  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49497.105469,R:30016.751953,G:17465.285156,B:9482.815430, lux: 697.398254,cct:4347.060059, irPara: 0
+03-19 12:04:38.322  2792 11312 D PerfShielderService: com.android.systemui|com.android.systemui-Sta-2054038096|73|416952060097557|54|3|2
+03-19 12:04:38.317  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577617): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.322  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.322  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49574.214844,R:30065.238281,G:17489.058594,B:9498.754883, lux: 698.488342,cct:4348.171875, irPara: 0
+03-19 12:04:38.322  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:38.322  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.322  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49532.531250,R:30053.890625,G:17493.021484,B:9503.228516, lux: 697.630798,cct:4346.882324, irPara: 0
+03-19 12:04:38.322  9830  9880 W MiuiPerfServiceClient: interceptAndQueuing:6048|com.android.systemui|73|54|416952060097557|Slow handle traversal|2
+03-19 12:04:38.322  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.322  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49374.144531,R:29949.695312,G:17433.585938,B:9478.340820, lux: 694.903625,cct:4353.418945, irPara: 0
+03-19 12:04:38.323  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:38.324  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:38.324  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:38.321  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577618): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.326  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:38.325  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577619): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.329  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:38.329  3653  4770 D libsensor-parseRGB: the value of RGB [227.490911 227.035948 194.645251]
+03-19 12:04:38.334  2414  2670 W EventThreadInspector: slow VSync-app on display(4630946738963277955) count=1, avg=32 ms, max=32 ms.
+03-19 12:04:38.347 31282 32478 D JavaheapMonitor: Java heap used=3M max=256M, proc: com.miui.audiomonitor
+03-19 12:04:38.347 31282 32478 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:38.412 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:38.412 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:38.412 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:38.412 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:38.481  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:38.512 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:38.513 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:38.513 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:38.513 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:38.523  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.339615,R:3792.041594,G:2391.832859,B:1219.349315,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.524  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153221.924106,G:152548.583610,B:108726.745613,EVENT C:49350.179688,R:29926.998047,G:17434.152344,B:9456.249023, lux: 695.539062,cct:4342.779785, irPara: 0
+03-19 12:04:38.646  6001  6392 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+03-19 12:04:38.650  2792  4729 D AmlWifiScoreReportInjector: isSwitchBackToWifi mRecentScore[0] = 60 mRecentScore[1] = 60 mRecentScore[2] = 60
+03-19 12:04:38.650  2792  4711 W WifiScoreReport: Ignoring stale/invalid external score sessionId=1881 currentSessionId=-1 score=60
+03-19 12:04:38.655  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 2
+03-19 12:04:38.655  6001  6001 D QtiLinkBandwidthEstimator-0: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:38.658  6001  6001 D QtiLinkBandwidthEstimator-0: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:38.660  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 2
+03-19 12:04:38.660  6001  6001 D QtiLinkBandwidthEstimator-1: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:38.663  6001  6001 D QtiLinkBandwidthEstimator-1: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:38.673  5914  6117 D HyperComm_TelephonyMonitor: onDataActivity[1], direction = 3
+03-19 12:04:38.675  6001  6001 D DynamicService_WifiBt: PhoneStateListener.onDataActivity: direction=3
+03-19 12:04:38.675  6001  6001 D DynamicService_WifiBt: modem or radio power state change,messageType: 128 state: 3
+03-19 12:04:38.674  5914  6117 I SceneObserver: notify event: EVENT_DATA_ACTIVITY_CHANGED
+03-19 12:04:38.676  6001  6001 D TelephonyManager: requestModemActivityInfo: Sending result to app: ModemActivityInfo{ mTimestamp=515186151 mSleepTimeMs=250697974 mIdleTimeMs=17847668 mActivityStatsTechSpecificInfo=[{mRat=UNKNOWN,mFrequencyRange=UNKNOWN,mTxTimeMs[]=[154471, 334189, 204253, 120413, 788185],mRxTimeMs=277483056}]}
+03-19 12:04:38.676  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 3
+03-19 12:04:38.677  6001  6001 E PhoneInterfaceManager: queryModemActivityInfo: invalid response
+03-19 12:04:38.678  6001  6001 D TelephonyManager: requestModemActivityInfo: Sending result to app: ModemActivityInfo{ mTimestamp=515186151 mSleepTimeMs=250697974 mIdleTimeMs=17847668 mActivityStatsTechSpecificInfo=[{mRat=UNKNOWN,mFrequencyRange=UNKNOWN,mTxTimeMs[]=[154471, 334189, 204253, 120413, 788185],mRxTimeMs=277483056}]}
+03-19 12:04:38.678  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 3
+03-19 12:04:38.709  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577620): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.721  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:38.723  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:38.723  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:38.724  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:38.721  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577621): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:38.725  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:38.725  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:38.725  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:38.749  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:38.750  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:38.757  3653  4770 D libsensor-parseRGB: the value of RGB [227.491977 227.036570 194.645471]
+03-19 12:04:38.878  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f21 went down
+03-19 12:04:38.878  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f21 went down
+03-19 12:04:38.880  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f22 went down
+03-19 12:04:38.880  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f22 went down
+03-19 12:04:38.881  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f23 went down
+03-19 12:04:38.881  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f23 went down
+03-19 12:04:38.883  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f24 went down
+03-19 12:04:38.883  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f24 went down
+03-19 12:04:38.923  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:38.925  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.358777,R:3792.053152,G:2391.839891,B:1219.352725,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:38.926  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153223.503303,G:152549.502550,B:108727.015998,EVENT C:49565.878906,R:30073.492188,G:17510.568359,B:9514.134766, lux: 698.193726,cct:4348.264160, irPara: 0
+03-19 12:04:39.196  9903 18904 D JavaheapMonitor: Java heap used=3M max=256M, proc: system
+03-19 12:04:39.196  9903 18904 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:39.307 31023 31104 D JavaheapMonitor: Java heap used=4M max=256M, proc: com.google.android.gms.unstable
+03-19 12:04:39.307 31023 31104 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:39.346  3727  3727 I adbd    : in ShellService: input tap 280692 13461430
+03-19 12:04:39.347  3727  3727 I adbd    : set_carlife_cmd = 0
+03-19 12:04:39.380  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f1c went down
+03-19 12:04:39.380  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f1c went down
+03-19 12:04:39.380  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f20 went down
+03-19 12:04:39.381  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f20 went down
+03-19 12:04:39.381  2792  9773 W MIUIInput: Input event injection from package: null action ACTION_DOWN
+03-19 12:04:39.383  2792  9773 W InputManager: Input event injection from pid 3187 failed.
+03-19 12:04:39.384  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:39.384  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:39.384  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:39.384  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893079 -paraList {"detail":"input event inject fail"}
+03-19 12:04:39.384  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893079 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:39.384  2792  9773 W MIUIInput: Input event injection from package: null action ACTION_UP
+03-19 12:04:39.384  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:39.384  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:39.384  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:39.384  2792  9773 W InputManager: Input event injection from pid 3187 failed.
+03-19 12:04:39.385  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:39.385  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:39.385  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:39.385  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893079 -paraList {"detail":"input event inject fail"}
+03-19 12:04:39.385  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893079 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:39.385  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:39.385  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:39.385  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:39.422  2792  4735 D NetworkMetricsTracker: calcNWCause:0
+03-19 12:04:39.662  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 2
+03-19 12:04:39.662  6001  6001 D QtiLinkBandwidthEstimator-0: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:39.667  6001  6001 D QtiLinkBandwidthEstimator-0: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:39.667  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 2
+03-19 12:04:39.668  6001  6001 D QtiLinkBandwidthEstimator-1: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:39.671  6001  6001 D QtiLinkBandwidthEstimator-1: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:39.673  5914  6117 D HyperComm_TelephonyMonitor: onDataActivity[1], direction = 0
+03-19 12:04:39.673  5914  6117 I SceneObserver: notify event: EVENT_DATA_ACTIVITY_CHANGED
+03-19 12:04:39.673  6001  6001 D DynamicService_WifiBt: PhoneStateListener.onDataActivity: direction=0
+03-19 12:04:39.673  6001  6001 D DynamicService_WifiBt: modem or radio power state change,messageType: 128 state: 0
+03-19 12:04:39.673  6001  6001 D DynamicService_WifiBt: listeners is null or md controller is disable!!!
+03-19 12:04:39.676 20080 26088 E RemoteCommand: Network error
+03-19 12:04:39.676 20080 26088 E RemoteCommand: java.net.UnknownServiceException: CLEARTEXT communication to 192.168.1.100 not permitted by network security policy
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.RealConnection.connect(RealConnection.kt:188)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.ExchangeFinder.findConnection(ExchangeFinder.kt:226)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.ExchangeFinder.findHealthyConnection(ExchangeFinder.kt:106)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.ExchangeFinder.find(ExchangeFinder.kt:74)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.RealCall.initExchange$okhttp(RealCall.kt:255)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.ConnectInterceptor.intercept(ConnectInterceptor.kt:32)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.cache.CacheInterceptor.intercept(CacheInterceptor.kt:95)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.BridgeInterceptor.intercept(BridgeInterceptor.kt:83)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.RetryAndFollowUpInterceptor.intercept(RetryAndFollowUpInterceptor.kt:76)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:109)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:201)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at okhttp3.internal.connection.RealCall.execute(RealCall.kt:154)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:115)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:103)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:697)
+03-19 12:04:39.676 20080 26088 E RemoteCommand: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)
+03-19 12:04:39.678  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:39.705  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577622): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:39.713  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577623): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:39.717  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:39.717  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:39.717  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:39.718  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:39.718  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:39.718  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:39.719  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:39.724  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:39.747  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:39.747  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:39.756  3653  4770 D libsensor-parseRGB: the value of RGB [227.491977 227.036570 194.645471]
+03-19 12:04:39.925  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.358777,R:3792.053152,G:2391.839891,B:1219.352725,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:39.925  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153223.503303,G:152549.502550,B:108727.015998,EVENT C:49508.566406,R:30029.130859,G:17483.398438,B:9494.000977, lux: 697.564880,cct:4347.270996, irPara: 0
+03-19 12:04:39.926  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:39.979  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f25 went down
+03-19 12:04:39.980  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f25 went down
+03-19 12:04:39.982  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f26 went down
+03-19 12:04:39.983  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f26 went down
+03-19 12:04:39.987  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f27 went down
+03-19 12:04:39.987  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f27 went down
+03-19 12:04:39.989  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f28 went down
+03-19 12:04:39.989  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f28 went down
+03-19 12:04:40.024 31147 31208 D JavaheapMonitor: Java heap used=4M max=256M, proc: com.google.android.gms.unstable
+03-19 12:04:40.024 31147 31208 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:40.368  2792  2880 I ThermalObserver: Temperature control has been released.
+03-19 12:04:40.457  3727  3727 I adbd    : in ShellService: input tap 280692 13461430
+03-19 12:04:40.457  3727  3727 I adbd    : set_carlife_cmd = 0
+03-19 12:04:40.483  2414  2414 D MI-SF   : setIdleFps choose FPS:60, mode:0
+03-19 12:04:40.484  2414  2414 D DisplayModeController: setDesiredMode 4630946738963277955 {mode={fps=60.00 Hz, modePtr={id=0, vsyncRate=60.00 Hz, peakRefreshRate=60.00 Hz}}, emitEvent=false, force=false}
+03-19 12:04:40.485  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:40.487  2027  2656 I SDM     : HWCFunctionTimer::noticeTimerFps: displayid:65, fps: 60
+03-19 12:04:40.487  2027  2656 I SDM     : HWCDisplay::SetActiveConfigWithConstraints: display:65-0, config: 0, WxH 1440x3200, fps 60
+03-19 12:04:40.488  2027  2656 W SDM     : HWDeviceDRM::GetSupportedBitClkRate: Requested rate not supported: 1200000000
+03-19 12:04:40.488  2027  2656 I SDM     : HWDeviceDRM::UpdateMixerAttributes: Mixer WxH 1440x3200-1 for Peripheral
+03-19 12:04:40.488  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active configuration changed from config 1 to 0
+03-19 12:04:40.488  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active WxH 1440x3200 ,ddic_mode:normal, timing_fps: 60, sf_fps: 60
+03-19 12:04:40.489  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:40.489  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:40.489  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:40.489  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:40.490  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:40.490  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:40.490  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:40.492  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:40.494  2792  4569 W MIUIInput: Input event injection from package: null action ACTION_DOWN
+03-19 12:04:40.494  2077  2400 D FPSMonitor: threadFuncFpsMonitor display 0, fps 60
+03-19 12:04:40.494  2792  4569 W InputManager: Input event injection from pid 3197 failed.
+03-19 12:04:40.495  2792  4569 W MIUIInput: Input event injection from package: null action ACTION_UP
+03-19 12:04:40.495  2792  4569 W InputManager: Input event injection from pid 3197 failed.
+03-19 12:04:40.495  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:40.495  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:40.495  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:40.495  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893080 -paraList {"detail":"input event inject fail"}
+03-19 12:04:40.495  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893080 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:40.495  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:40.495  2792  4575 D MiSight::  sendEvent id=907002071
+03-19 12:04:40.495  2792  4575 D MiSightJni: MiSight: Java_com_miui_misight_MiSight_nativeSendEvent enter called. '{"detail":"input event inject fail"}'
+03-19 12:04:40.495  2792  4575 D MiEvent : MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:40.495  2792  4575 D MiEvent : flatten EventId 907002071 -t 1773893080 -paraList {"detail":"input event inject fail"}
+03-19 12:04:40.496  2792  4575 D MiEvent : report:EventId 907002071 -t 1773893080 -paraList {"detail":"input event inject fail"} success
+03-19 12:04:40.496  2792  4575 D MiEvent : ~MiEvent: this 0x7a1f8c1ed0, paylod=0xb400007c0001ab50
+03-19 12:04:40.496  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:40.496  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:40.496  3171  3992 I misight : OnEvent EventPrivacyCompliance event=907002071
+03-19 12:04:40.496  3171  3992 I misight : OnEvent event 907002071 param is null after compliance, null
+03-19 12:04:40.498  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:40.498  2414  2414 D DisplayModeController: setDesiredMode 4630946738963277955 {mode={fps=120.00 Hz, modePtr={id=1, vsyncRate=120.00 Hz, peakRefreshRate=120.00 Hz}}, emitEvent=true, force=false}
+03-19 12:04:40.513 10583 16989 D JavaheapMonitor: Java heap used=17M max=256M, proc: com.xiaomi.metoknlp
+03-19 12:04:40.514 10583 16989 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:40.522  2027  2656 I SDM     : HWCFunctionTimer::noticeTimerFps: displayid:65, fps: 120
+03-19 12:04:40.522  2027  2656 I SDM     : HWCDisplay::SetActiveConfigWithConstraints: display:65-0, config: 1, WxH 1440x3200, fps 120
+03-19 12:04:40.524  2027  2656 W SDM     : HWDeviceDRM::GetSupportedBitClkRate: Requested rate not supported: 1200000000
+03-19 12:04:40.524  2027  2656 I SDM     : HWDeviceDRM::UpdateMixerAttributes: Mixer WxH 1440x3200-1 for Peripheral
+03-19 12:04:40.525  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active configuration changed from config 0 to 1
+03-19 12:04:40.525  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active WxH 1440x3200 ,ddic_mode:normal, timing_fps: 120, sf_fps: 120
+03-19 12:04:40.533  2077  2400 D FPSMonitor: threadFuncFpsMonitor display 0, fps 120
+03-19 12:04:40.536  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:40.538  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:40.555  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:40.555  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:40.566  3653  4770 D libsensor-parseRGB: the value of RGB [227.491977 227.036570 194.645471]
+03-19 12:04:40.615  5914 17625 D JavaheapMonitor: Java heap used=7M max=256M, proc: com.xiaomi.hypercomm
+03-19 12:04:40.616  5914 17625 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:40.668  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 2
+03-19 12:04:40.668  6001  6001 D QtiLinkBandwidthEstimator-0: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:40.673  6001  6001 D QtiLinkBandwidthEstimator-0: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:40.673  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 2
+03-19 12:04:40.674  6001  6001 D QtiLinkBandwidthEstimator-1: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:40.677  6001  6001 D QtiLinkBandwidthEstimator-1: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:40.680  5914  6117 D HyperComm_TelephonyMonitor: onDataActivity[1], direction = 3
+03-19 12:04:40.680  6001  6001 D DynamicService_WifiBt: PhoneStateListener.onDataActivity: direction=3
+03-19 12:04:40.680  6001  6001 D DynamicService_WifiBt: modem or radio power state change,messageType: 128 state: 3
+03-19 12:04:40.680  6001  6001 D DynamicService_WifiBt: listeners is null or md controller is disable!!!
+03-19 12:04:40.680  5914  6117 I SceneObserver: notify event: EVENT_DATA_ACTIVITY_CHANGED
+03-19 12:04:40.683  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:40.692  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:40.693  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577624): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:40.701  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577625): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:40.706  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:40.708  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:40.708  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:40.709  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:40.709  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:40.709  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:40.712  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:40.723  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.358777,R:3792.053152,G:2391.839891,B:1219.352725,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:40.723  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153223.503303,G:152549.502550,B:108727.015998,EVENT C:49657.574219,R:30153.960938,G:17542.267578,B:9516.651367, lux: 699.724731,cct:4332.476562, irPara: 0
+03-19 12:04:40.738  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:40.739  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:40.749  3653  4770 D libsensor-parseRGB: the value of RGB [227.491977 227.036570 194.645471]
+03-19 12:04:40.894  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:40.924  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.358777,R:3792.053152,G:2391.839891,B:1219.352725,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:40.925  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153223.503303,G:152549.502550,B:108727.015998,EVENT C:49550.246094,R:30073.492188,G:17496.984375,B:9507.422852, lux: 697.656555,cct:4345.473145, irPara: 0
+03-19 12:04:41.028  9317 12521 D JavaheapMonitor: Java heap used=9M max=256M, proc: com.xiaomi.account
+03-19 12:04:41.028  9317 12521 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:41.092  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f29 went down
+03-19 12:04:41.092  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f29 went down
+03-19 12:04:41.094  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2a went down
+03-19 12:04:41.094  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2a went down
+03-19 12:04:41.098  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2b went down
+03-19 12:04:41.098  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2b went down
+03-19 12:04:41.101  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2c went down
+03-19 12:04:41.101  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2c went down
+03-19 12:04:41.156 26377 30300 D JavaheapMonitor: Java heap used=5M max=256M, proc: com.milink.crossdeviceservice
+03-19 12:04:41.157 26377 30300 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:41.425  2792  4735 D NetworkMetricsTracker: calcNWCause:0
+03-19 12:04:41.509  9779 10316 D JavaheapMonitor: Java heap used=10M max=512M, proc: com.android.providers.media.module
+03-19 12:04:41.511  9779 10316 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:41.599  2414  2414 D MI-SF   : setIdleFps choose FPS:60, mode:0
+03-19 12:04:41.599  2414  2414 D DisplayModeController: setDesiredMode 4630946738963277955 {mode={fps=60.00 Hz, modePtr={id=0, vsyncRate=60.00 Hz, peakRefreshRate=60.00 Hz}}, emitEvent=false, force=false}
+03-19 12:04:41.601  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:41.604  2027  2656 I SDM     : HWCFunctionTimer::noticeTimerFps: displayid:65, fps: 60
+03-19 12:04:41.605  2027  2656 I SDM     : HWCDisplay::SetActiveConfigWithConstraints: display:65-0, config: 0, WxH 1440x3200, fps 60
+03-19 12:04:41.606  2027  2656 W SDM     : HWDeviceDRM::GetSupportedBitClkRate: Requested rate not supported: 1200000000
+03-19 12:04:41.606  2027  2656 I SDM     : HWDeviceDRM::UpdateMixerAttributes: Mixer WxH 1440x3200-1 for Peripheral
+03-19 12:04:41.607  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active configuration changed from config 1 to 0
+03-19 12:04:41.607  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active WxH 1440x3200 ,ddic_mode:normal, timing_fps: 60, sf_fps: 60
+03-19 12:04:41.608  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:41.608  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:41.609  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:41.609  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:41.609  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:41.609  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:41.610  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:41.610  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:41.613  2077  2400 D FPSMonitor: threadFuncFpsMonitor display 0, fps 60
+03-19 12:04:41.655  6001  6392 E PhoneAdapter: get ntnphones failed, exception: java.lang.IllegalStateException: not support satellite!
+03-19 12:04:41.660  2792  4729 D AmlWifiScoreReportInjector: isSwitchBackToWifi mRecentScore[0] = 60 mRecentScore[1] = 60 mRecentScore[2] = 60
+03-19 12:04:41.661  2792  4711 W WifiScoreReport: Ignoring stale/invalid external score sessionId=1881 currentSessionId=-1 score=60
+03-19 12:04:41.669  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:41.670  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:41.675  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 2
+03-19 12:04:41.675  6001  6001 D QtiLinkBandwidthEstimator-0: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:41.680  6001  6001 D QtiLinkBandwidthEstimator-0: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:41.680  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 2
+03-19 12:04:41.680  6001  6001 D QtiLinkBandwidthEstimator-1: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:41.682  6001  6001 D QtiLinkBandwidthEstimator-1: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:41.682  3653  4770 D libsensor-parseRGB: the value of RGB [227.491977 227.036570 194.645471]
+03-19 12:04:41.724  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.358777,R:3792.053152,G:2391.839891,B:1219.352725,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:41.725  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153223.503303,G:152549.502550,B:108727.015998,EVENT C:49558.582031,R:30070.396484,G:17506.041016,B:9491.763672, lux: 698.729187,cct:4335.813477, irPara: 0
+03-19 12:04:41.812  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:41.906  5195  7869 D JavaheapMonitor: Java heap used=10M max=512M, proc: com.android.camera
+03-19 12:04:41.907  5195  7869 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:41.911  2792  4835 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+03-19 12:04:41.912  2792  4835 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+03-19 12:04:41.912  2792  4835 D InetDiagMessage: Destroyed live tcp sockets for uids={10314} in 2ms
+03-19 12:04:41.912  2792  4835 D ActionExecute: frozen uid = 10314 reason=check binder
+03-19 12:04:41.914  2792  4835 D ExternalInterface: setUidState, uid = 10314 allow = false
+03-19 12:04:41.914  2792  4835 D MiSensorServiceImpl: PowerKeeperSensor stop iUid:10314 but app has Controlled
+03-19 12:04:42.185  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2d went down
+03-19 12:04:42.186  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2d went down
+03-19 12:04:42.187  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2e went down
+03-19 12:04:42.187  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2e went down
+03-19 12:04:42.196  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2f went down
+03-19 12:04:42.196  1916  1979 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f30 went down
+03-19 12:04:42.196  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f2f went down
+03-19 12:04:42.196  1916  2011 E minksocket: MinkIPC_QRTR_Service: client with node 1 port 4f30 went down
+03-19 12:04:42.319  2055 31868 I QC2Comp : [hevcD_1810] Stats: Pending(4) i/p-done(4) Works: Q: 11/Done 8|Work-Rate: Q(0.0/s Avg=0.0/s) Done(0.000/s Avg=0.032/s)| Stream: 29.41fps 334.1Kbps
+03-19 12:04:42.319  2055 31868 I QC2Comp : [hevcD_1810] Mem-usage:  [In-1D: 5 bufs 21.973 MB] [1D-3451: 20 bufs 0.312 MB] [2D-3452: 23 bufs 73.312 MB] | Total: 95.598 MB
+03-19 12:04:42.319  2027  2656 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:42.331  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:42.332  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:42.349  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577626): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:42.353  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577627): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:42.361  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:42.368  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:42.368  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:42.368  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:42.368  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:42.369  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:42.369  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:42.369  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:42.370  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:42.379  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:42.402  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:42.403  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:42.414  3653  4770 D libsensor-parseRGB: the value of RGB [227.491277 227.036124 194.645317]
+03-19 12:04:42.428 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:42.429 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:42.430 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:42.430 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:42.524  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.366629,R:3792.055954,G:2391.844188,B:1219.354737,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:42.524  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153222.465181,G:152548.844081,B:108726.826190,EVENT C:49450.210938,R:29995.087891,G:17465.851562,B:9485.051758, lux: 696.591980,cct:4347.443848, irPara: 0
+03-19 12:04:42.527 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:42.527 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:42.528 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:42.529 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:42.572  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:42.681  6001  6001 D QtiLinkBandwidthEstimator-0: handleMessage: 2
+03-19 12:04:42.682  6001  6001 D QtiLinkBandwidthEstimator-0: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:42.685  6001  6001 D QtiLinkBandwidthEstimator-0: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:42.686  6001  6001 D QtiLinkBandwidthEstimator-1: handleMessage: 2
+03-19 12:04:42.686  6001  6001 D QtiLinkBandwidthEstimator-1: MSG_TRAFFIC_STATS_POLL
+03-19 12:04:42.689  6001  6001 D QtiLinkBandwidthEstimator-1: isDataPacketsCaluclationOnEachSimSeperately : true
+03-19 12:04:42.690  6001  6001 D DynamicService_WifiBt: PhoneStateListener.onDataActivity: direction=0
+03-19 12:04:42.690  6001  6001 D DynamicService_WifiBt: modem or radio power state change,messageType: 128 state: 0
+03-19 12:04:42.690  6001  6001 D DynamicService_WifiBt: listeners is null or md controller is disable!!!
+03-19 12:04:42.691  5914  6117 D HyperComm_TelephonyMonitor: onDataActivity[1], direction = 0
+03-19 12:04:42.691  5914  6117 I SceneObserver: notify event: EVENT_DATA_ACTIVITY_CHANGED
+03-19 12:04:42.717  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577628): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:42.729  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577629): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:42.733  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:42.733  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:42.734  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:42.734  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:42.734  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:42.735  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:42.735  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:42.769  2792  6669 D SLM-SRV-SLAService: checktemp temperature = 31676 temperature_average = 32122 isPerformanceMode = false thermal_enable_slm = true
+03-19 12:04:42.771  2792  4735 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+03-19 12:04:42.772  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:42.774  2792  4735 D InetDiagMessage: Destroyed 4 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+03-19 12:04:42.774  2792  4735 D InetDiagMessage: Destroyed live tcp sockets for uids={10206} in 7ms
+03-19 12:04:42.776  2792  4735 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+03-19 12:04:42.778  2792  4735 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+03-19 12:04:42.779  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:42.779  2792  4735 D InetDiagMessage: Destroyed live tcp sockets for uids={20206} in 4ms
+03-19 12:04:42.779  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:42.783  2792  4835 D GreezeManager: FZ uid = 10206 reason =from system success !
+03-19 12:04:42.783  3653  4770 D libsensor-parseRGB: the value of RGB [227.491277 227.036124 194.645317]
+03-19 12:04:42.785  2792  4835 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+03-19 12:04:42.785  2792  4835 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+03-19 12:04:42.785  2792  4835 D InetDiagMessage: Destroyed live tcp sockets for uids={10206} in 1ms
+03-19 12:04:42.785  2792  4835 D ActionExecute: frozen uid = 10206 reason=from system
+03-19 12:04:42.786  2792  4835 D ExternalInterface: setUidState, uid = 10206 allow = false
+03-19 12:04:42.924  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.366629,R:3792.055954,G:2391.844188,B:1219.354737,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:42.925  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153222.465181,G:152548.844081,B:108726.826190,EVENT C:49500.230469,R:30016.751953,G:17474.908203,B:9489.526367, lux: 697.512756,cct:4349.048340, irPara: 0
+03-19 12:04:43.005  1924  6955 D vendor.qti.bluetooth@1.1-wake_lock: Acquire wakelock is acquired 
+03-19 12:04:43.011  5760  6540 I bt_btm_pm: system/stack/acl/btm_pm.cc:701 btm_pm_proc_mode_change: Power mode switched from immediate:sniff[2] to immediate:active[0]
+03-19 12:04:43.014 11345  6726 I SppChannel: onDataReceive: A5A5033D3000C631
+03-19 12:04:43.015 11345 12751 I TaskQueueV2: onDataReceive: header: A5A5033D3000C631
+03-19 12:04:43.015 11345 12751 I TaskQueueV2: -------------> RECEIVE: DATA: seq-> 61, size:48, frx:0
+03-19 12:04:43.015 11345 12751 I TaskQueueV2: onDataReceive: ack immediately
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: sendAck() called with: seqNum = 61, ack = true
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: enqueue: type:1, seqNumber:61
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: runNext() called thread: Spp Dispatcher
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: change tx status to TX_STATE_BUSY
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: window [packet type: 1, seq: 61], window size: 0, retransmission: false
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: -------------> SEND: ACK base: 183, nextseq: 183, size: 0, seq: 61, frx: 0
+03-19 12:04:43.016 11345 12751 I TaskQueueV2: sendPacket() called with: packet = L1Packet (header: Header (type: ACK, seqNumber: 61, dataLength: 0, frx: 0, crc: 0))}, crc = 0, mtu = 16394
+03-19 12:04:43.017 11345 12751 I TaskQueueV2: onSendComplete() called with: packet: L1Packet (header: Header (type: ACK, seqNumber: 61, dataLength: 0, frx: 0, crc: 0)), thread: Spp Dispatcher
+03-19 12:04:43.018 11345 12751 I TaskQueueV2: onSendComplete() don't wait remove L1Packet (header: Header (type: ACK, seqNumber: 61, dataLength: 0, frx: 0, crc: 0))
+03-19 12:04:43.018 11345 12751 I TaskQueueV2: sendTimerStop() called with: sendItem = 61
+03-19 12:04:43.018 11345 12751 I TaskQueueV2: change tx status to TX_STATE_IDLE
+03-19 12:04:43.025 11345 12751 I WearApiCall: handleData  type=101
+03-19 12:04:43.025 11345 12751 I DataDispatcher: dispatchData() called with: subType = 101, dataHandlers 2, dataHandler android.os.RemoteCallbackList@2d626dc
+03-19 12:04:43.025 11345 12751 I DataDispatcher: dispatchData() called with: 0
+03-19 12:04:43.025 11345 12751 I TaskQueueV2: runNext() called thread: Spp Dispatcher
+03-19 12:04:43.025 11345 12751 I TaskQueueV2: sendNextPacket: queue is empty
+03-19 12:04:43.027 10623 22912 I DataHandlerAdapter_10623_22912: handleData() called with: did = 837384343, type = 101
+03-19 12:04:43.028 10623 10707 I Device-Sync_10623_10707: dispatchMessage() called with: did = 837384343, type = 101, data = 46
+03-19 12:04:43.029 10623 10707 I Device-Sync_10623_10707: DeviceDataHandler-handlePacket:type=101,  packet type=10,  packet id=3,  did=837384343
+03-19 12:04:43.029 10623 10707 I Device-Sync_10623_10707: handle packet, did=837384343, type=10
+03-19 12:04:43.030 10623 10707 I Wearable.weather_10623_10707: weather sync by device requestweathercn:101180111
+03-19 12:04:43.082 10623 10707 I Wearable.weather_10623_10707: readWeatherSetting BleDeviceModel locationKey:weathercn:101180111 locationName:管城回族区 latitude:34.746 longitude:113.695
+03-19 12:04:43.083 10623 10707 I Wearable.weather_10623_10707: weather sync weathercn:101180111 isLocation =  true
+03-19 12:04:43.083 10623 10707 I Wearable.weather_10623_10707: syncWeatherToDevices localLocationKey locationKey:weathercn:101180111 locationName:管城回族区 latitude:34.746 longitude:113.695,  isUserAutoLocation:true
+03-19 12:04:43.083 10623 10707 I Wearable.weather_10623_10707: syncWeatherToDevices weatherLastTime = 1773892183404  pressureLastTime-1  weatherLocationLastTime1773889483028
+03-19 12:04:43.084 10623 10707 I Wearable.weather_10623_10707: syncWeatherToDevices needUpdateLocation
+03-19 12:04:43.104 10623 10707 I Wearable.weather_10623_10707: WeatherLocationService.requestLocation  highAccuracy:false
+03-19 12:04:43.107 10623 10707 I Wearable.weather_10623_10707: LocationHelper.request  receiver:com.xiaomi.fitness.sync.WeatherLocationService$LocationHelper$1@89fdb21
+03-19 12:04:43.122 10623 10707 I Wearable.weather_10623_10707: request location, isForeground: false
+03-19 12:04:43.123 10623 10707 I Wearable.weather_10623_10707: check if has bg location permission: true
+03-19 12:04:43.123 10623 10707 I Wearable.weather_10623_10707: LocationHelper.request  startService  startForegroundService
+03-19 12:04:43.125  2792  9773 I ActivityManager: Background started FGS: Allowed [callingPackage: com.mi.health; callingUid: 10255; uidState: FGS ; uidBFSL: [BFSL]; intent: Intent { act=com.xiaomi.wearable.home.devices.ble.sync.WeatherLocationService.START xflg=0x4 cmp=com.mi.health/com.xiaomi.fitness.sync.WeatherLocationService (has extras) }; code:PROC_STATE_FGS; tempAllowListReason:<,reasonCode:SYSTEM_ALLOW_LISTED,duration:9223372036854775807,callingUid:-1>; allowWiu:-1; targetSdkVersion:35; callerTargetSdkVersion:35; startForegroundCount:13; bindFromPackage:null: isBindService:false]
+03-19 12:04:43.132  2792  9773 D ActivityManager: Logging startService for com.mi.health, stopped=false, firstLaunch=false, intent=Intent { act=com.xiaomi.wearable.home.devices.ble.sync.WeatherLocationService.START xflg=0x4 cmp=com.mi.health/com.xiaomi.fitness.sync.WeatherLocationService (has extras) }, r.app=ProcessRecord{d8b13c7 10623:com.mi.health:device/u0a255}
+03-19 12:04:43.133 10623 10707 I Device-Sync_10623_10707: com.xiaomi.fitness.sync.BleDataHandler@51fa326>>>handlePacket: true
+03-19 12:04:43.133 10623 10707 I Device-Sync_10623_10707: DeviceDataHandler-handlePacket: type=101, handler=com.xiaomi.fitness.device.contact.DeviceDataHandlerAdapter@4473969, handleData=true
+03-19 12:04:43.136 10623 10623 I Wearable.weather_10623_10623: WeatherLocationService.onStartCommand  isHighAccuracy:false  commandNum:1
+03-19 12:04:43.137 10623 10623 I Wearable.weather_10623_10623: WeatherLocationService.startForeground
+03-19 12:04:43.164 10623 10623 W HWUI    : Image decoding logging dropped!
+03-19 12:04:43.175  2792  9773 W ActivityManager: Foreground service started from background can not have location/camera/microphone access: service com.mi.health/com.xiaomi.fitness.sync.WeatherLocationService
+03-19 12:04:43.229  2792  2792 I system_server: AssetManager2(0xb400007cdfe66778) locale list changing from [] to [zh-CN]
+03-19 12:04:43.230  2792  2792 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+03-19 12:04:43.233  2792  9773 D ActivityManager: Logging bindService for com.mi.health, stopped=false, firstLaunch=false
+03-19 12:04:43.233 10623 10623 I WeatherLocationService_10623_10623: config : true
+03-19 12:04:43.234 10623 10623 I XiaomiFit_10623_10623: use china location , locationByAndroid:true
+03-19 12:04:43.234 10623 10623 I WeatherLocationManager_10623_10623: use android location
+03-19 12:04:43.234 10623 10623 I fitness_10623_10623: [ChinaAndroid] isPositioning:false
+03-19 12:04:43.234 10623 10623 I ChinaAndroid_10623_10623: use china location
+03-19 12:04:43.234 10623 10623 I ChinaAndroid_10623_10623: startLocation
+03-19 12:04:43.235 10623 10623 I ChinaAndroid_10623_10623: requestLocationUpdates
+03-19 12:04:43.239  2792  4569 D IMiLocation: com.mi.health is request, loc_info:1025510623fusedbps$a@112024992
+03-19 12:04:43.239  2792  4569 D GnssBackgroundUsageOpt: request: mRequestMap add: 1025510623fusedbps$a@112024992
+03-19 12:04:43.239  2792  4569 D GnssBackgroundUsageOpt: NowRequest[@+100ms BALANCED, minUpdateDistance=1.0, WorkSource{10255 com.mi.health}] callType:android.location.ILocationListener$Stub$Proxy@66b94a1 identity:10255/com.mi.health/DACE3094
+03-19 12:04:43.240  2792  4569 E GnssBackgroundUsageOpt: no gnss feature....
+03-19 12:04:43.240  2792  4569 D LocationManagerService: [0]fused provider added registration from 10255/com.mi.health/DACE3094 -> Request[@+100ms BALANCED, minUpdateDistance=1.0, WorkSource{10255 com.mi.health}] permissionLevel: 2 permitted: true
+03-19 12:04:43.240  2792  4569 D LocationManagerService: registration onActive from uid: 10255 package: com.mi.health
+03-19 12:04:43.241 10623 10623 I Wearable.weather_10623_10623: WeatherLocationService.onStartCommand  end
+03-19 12:04:43.243 10623 10799 I NotifySyncService_10623_10799: MSG_NOTIFY_POSTED 
+03-19 12:04:43.243 10623 10799 I NotifySyncService_10623_10799: onNotificationPosted Id:1002 key:0|com.mi.health|1002|null|10255 PackageName:com.mi.health IsOngoing:true PostTime:1773893083179 currentDeviceModel.connected: true
+03-19 12:04:43.242 10525 13305 W MIUISafety-Monitor: sync com.mi.health,userId:0,op:41,active:true,isNote:false,isTerminal:false,notify:true
+03-19 12:04:43.244 10623 32318 I NotifyLogUtils_10623_32318: isIgnoringBatteryOptimizations true
+03-19 12:04:43.245 10623 10799 I NotifySyncService_10623_10799: onNotificationPosted Id:1002 , appName : 小米运动健康
+03-19 12:04:43.245 10623 10799 I NotifySyncService_10623_10799:  isOngoing = true isIncomingCall = false
+03-19 12:04:43.248  6048  6048 D FocusPlugin: plugin onNotificationPosted: 0|com.mi.health|1002|null|10255 com.mi.health
+03-19 12:04:43.248  6048  6048 D FocusPlugin: 0|com.mi.health|1002|null|10255 is not focus notification, isMedia: false
+03-19 12:04:43.250  6048  6048 D FocusPlugin: NotifLifetime: onNotificationRemoved, key: 0|com.mi.health|1002|null|10255, needExtendLifetime: false, reason: 0
+03-19 12:04:43.250  6048  6048 I FocusPlugin: onNotificationRemoved 0|com.mi.health|1002|null|10255, content: null
+03-19 12:04:43.250  6048  6048 I FocusPlugin: removeByKey 0|com.mi.health|1002|null|10255
+03-19 12:04:43.250  6048  6048 D HideDeletedFocusController: onNotificationRemoved 0 0|com.mi.health|1002|null|10255
+03-19 12:04:43.251  6048  6048 D AlarmScheduler-FOCUS_NOTIFICATION_DELETE_TIMEOUT: cancelAlarm, key=0|com.mi.health|1002|null|10255, currentKey=0|com.sankuai.meituan.merchant|-553886661|null|10051
+03-19 12:04:43.251  6048  6048 E NotifCollection: No notification to remove with key 0|com.mi.health|1002|null|10255 reason=0:REASON_UNKNOWN
+03-19 12:04:43.258 10603 13922 I FusedLocationProvider: onSetRequest source:WorkSource{10255 com.mi.health}
+03-19 12:04:43.272 10603 10994 I AbsoluteLocationDispatcher: request type:2
+03-19 12:04:43.279  2792  4569 I WifiService: startScan uid=1000
+03-19 12:04:43.280  2792  4711 D MiuiScanRequestProxy: Allow this scan for Package com.xiaomi.location.fused
+03-19 12:04:43.281 10603 11003 I NetworkLocationManager: start get current Location info[c:2;w:14;b:0]
+03-19 12:04:43.289  2792  4731 E AlarmManager: not align this alarm: Alarm{da16423 type 2 origWhen 515205764 whenElapsed 515205764 android}, reason=0
+03-19 12:04:43.291  2792  2896 D BatteryStatsManagerStub: noteWifiScanStartedLocked 1000
+03-19 12:04:43.291  2792  2896 E PowerInsightPolicy: sPowerInsightService null!
+03-19 12:04:43.292  2792  4569 D IMiLocation: com.xiaomi.location.fused is request, loc_info:100010603networkcom.xiaomi.location.c.c.f$2@262621861
+03-19 12:04:43.293  2792  4569 D GnssBackgroundUsageOpt: request: mRequestMap add: 100010603networkcom.xiaomi.location.c.c.f$2@262621861
+03-19 12:04:43.293  2792  4569 D GnssBackgroundUsageOpt: NowRequest[@0 BALANCED, duration=+30s0ms, maxUpdates=1, WorkSource{1000 com.xiaomi.location.fused}] callType:android.location.ILocationListener$Stub$Proxy@4c7d20 identity:1000/com.xiaomi.location.fused/5134E217
+03-19 12:04:43.293  2792  4569 E GnssBackgroundUsageOpt: no gnss feature....
+03-19 12:04:43.293  2792  4569 D LocationManagerService: [0]network provider added registration from 1000/com.xiaomi.location.fused/5134E217 -> Request[@0 BALANCED, duration=+30s0ms, maxUpdates=1, WorkSource{1000 com.xiaomi.location.fused}] permissionLevel: 2 permitted: true
+03-19 12:04:43.294  2792  4569 E AlarmManager: not align this alarm: Alarm{19c1f7f type 2 origWhen 515220769 whenElapsed 515220769 android}, reason=0
+03-19 12:04:43.295  2792  4569 D LocationManagerService: registration onActive from uid: 1000 package: com.xiaomi.location.fused
+03-19 12:04:43.296 10525 13305 I ElectricCommonUtils: getIfProtectScreenIsEnable: status = true
+03-19 12:04:43.297 10525 13305 I ElectricCommonUtils: getIfProtectScreenIsEnable: status = true
+03-19 12:04:43.297 10525 13305 I ElectricCommonUtils: getIfProtectScreenIsEnable: status = true
+03-19 12:04:43.297 10525 13305 I ElectricCommonUtils: getIfProtectScreenIsEnable: status = true
+03-19 12:04:43.297 10525 13305 I ElectricCommonUtils: getIfProtectScreenIsEnable: status = true
+03-19 12:04:43.298 10583 10583 I MetokLocationProvider: setRequest: request =ProviderRequest[@0, WorkSource{1000 com.xiaomi.location.fused}] ; client =WorkSource{1000 com.xiaomi.location.fused}
+03-19 12:04:43.298 10583 10801 D MetokFileLogger: logInfo msg:03-19 12:04:43.297 - =MI NLP=onSetRequest: request =ProviderRequest[@0, WorkSource{1000 com.xiaomi.location.fused}] ; client =WorkSource{1000 com.xiaomi.location.fused}
+03-19 12:04:43.299 10583 10801 D MetokFileLogger: logInfo msg:03-19 12:04:43.299 - =MI NLP=NLPManagerrequestLocationUpdatescom.xiaomi.location.fused
+03-19 12:04:43.299 10583 10801 D MetokFileLogger: logInfo msg:03-19 12:04:43.299 - =MI NLP=NLPManagerpostRunnable lock
+03-19 12:04:43.299 10583 10801 D MetokFileLogger: logInfo msg:03-19 12:04:43.299 - =MI NLP=NLPManagerpostRunnable unlock
+03-19 12:04:43.300 10525 13305 W MIUISafety-Flares: setStatus hideLevel:0,showLevel:1
+03-19 12:04:43.301 10525 13305 W MIUISafety-Flares: setStatus event:1,content:小米运动健康,type:0-0-1-0
+03-19 12:04:43.302  6048  6425 D CommandQueueExt: setStatus: setStatus: what = 1, action = action_update_prompt, ext = Bundle[mParcelledData.dataSize=8324][key_status_bar_home_state = android.widget.RemoteViews@be0dac8[key_prompt_type = [I@164761[key_prompt_controlCenterDotColor = -13184665[key_first_use_location_prompt = false[key_prompt_contentDescription = 小米运动健康[key_status_bar_mini_state = android.widget.RemoteViews@9422286[key_prompt_pending = PendingIntent{151b747: android.os.BinderProxy@f2fe224}[key_status_bar_priority = 1[key_fullscreen_dot_visibility = 0[key_dot_color = -13184665
+03-19 12:04:43.302  6048  6048 W PrivacyNewController: MIUILOG onLocationActiveChanged active: true
+03-19 12:04:43.303  2792  4569 I WifiService: startScan uid=10164
+03-19 12:04:43.305  2792  4711 D MiuiScanRequestProxy: Package com.xiaomi.metoknlp is in white list
+03-19 12:04:43.305  2792  4711 D MiuiScanRequestProxy: Allow this scan for Package com.xiaomi.metoknlp
+03-19 12:04:43.305 10583 10988 I NetworkLocationManager: start get current Location info[c:2;w:14;b:0]
+03-19 12:04:43.305 10583 10988 I NetworkLocationManager: request location 5
+03-19 12:04:43.305 10583 10988 I LocationManagerProxy: acquire wifi lock
+03-19 12:04:43.307 10583 10801 D MetokFileLogger: logInfo msg:=MI NLP EN=SdobZr5m5SbIjrdS9oIH4wcRYdycvboEcbab7Oln5fjmKtB9wBuEJ3dnA2gCKYdYzC41G6Ilvqf36Ji82ZQMV/k+w4612/DUUuZldvq5WRFoMXt2idlDlgNUEJjRj5VkSvwyRH3WIQKiN9cc7e19pzNU4WpVuzR/YzfKvXjIdNI=
+03-19 12:04:43.312  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.312  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.312  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.312  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.312  6048  6048 D MiuiHomePrivacyController: updateStatusBarHomePrivacyVisibilities: showDot
+03-19 12:04:43.312  6048  6048 D MiuiHomePrivacyController: updateStatusBarDotViewVisibility: showDot
+03-19 12:04:43.312  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.313  6048  6048 I MiuiHomePrivacyController: onPromptInfoChanged: newMiuiPromptInfo=4, mLastMiuiPromptInfo=0, mShowPrivacy=true, mIsNewMiuiPromptInfo=true, mFirstUseLocationPrompt=false, mReducePromptInfo=false, mOnlyUpdateLocation=true, mLessLocationTip=1
+03-19 12:04:43.313  6048  6048 D MiuiHomePrivacyController: updateStatusBarHomePrivacyVisibilities: showDot
+03-19 12:04:43.313  6048  6048 D MiuiHomePrivacyController: updateStatusBarDotViewVisibility: showDot
+03-19 12:04:43.313  6048  6048 D PrivacyNewController: updateDotVisibility, mStatusBarVisible:true,mIsShadeState:truemPromptInfo.getFullscreenDotVisibility() == View.VISIBLE:true
+03-19 12:04:43.313  6048  6048 E DeviceNotificationListenerImpl: setStatus bundle is null or error:true,model is null or error:true
+03-19 12:04:43.313  2792  2884 I SmartPower: com.xiaomi.metoknlp/10164(10583): idle->background(85266ms) R(broadcast start Intent { act=android.net.wifi.WIFI_STATE_CHANGED flg=0x14000010 xflg=0x4 (has extras) }) adj=200.
+03-19 12:04:43.313  2792  2884 D BroadcastQueue: Logging broadcast for com.xiaomi.metoknlp, stopped=false, firstLaunch=false
+03-19 12:04:43.314  2792  2884 D BroadcastQueue: Logging broadcast for com.xiaomi.metoknlp, stopped=false, firstLaunch=false
+03-19 12:04:43.315  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:43.315  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:43.315  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:43.319  6048  6048 I FolmePropertyAnimator: slot = location ---> start anim success  cur =0.0 value = 1.0
+03-19 12:04:43.321  2792  4569 I WifiService: startScan uid=10164
+03-19 12:04:43.322  2792  4711 D MiuiScanRequestProxy: Package com.xiaomi.metoknlp is in white list
+03-19 12:04:43.322  2792  4711 D MiuiScanRequestProxy: Allow this scan for Package com.xiaomi.metoknlp
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessageLegacy(MessageQueue.java:1378)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:1519)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:799)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:748)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:718)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.post(Handler.java:443)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:43)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellLocationChanged$9(PhoneStateListener.java:1371)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$oSe_UsW_k8u6cR_SQ6f-c0ltVY0(Unknown Source:0)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda34.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellLocationChanged(PhoneStateListener.java:1370)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:444)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.323 10583 17887 W Binder  : Caught a RuntimeException from the binder stub implementation.
+03-19 12:04:43.323 10583 17887 W Binder  : java.util.concurrent.RejectedExecutionException: Handler (android.os.Handler) {bd4c910} is shutting down
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:44)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellLocationChanged$9(PhoneStateListener.java:1371)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$oSe_UsW_k8u6cR_SQ6f-c0ltVY0(Unknown Source:0)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda34.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellLocationChanged(PhoneStateListener.java:1370)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:444)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.323 10583 17887 W Binder  : 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessageLegacy(MessageQueue.java:1378)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:1519)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:799)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:748)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:718)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.post(Handler.java:443)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:43)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onDataConnectionStateChanged$15(PhoneStateListener.java:1399)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$79IzSETkopHT-hH__CLgaXzNbj8(Unknown Source:0)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda59.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onDataConnectionStateChanged(PhoneStateListener.java:1399)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:472)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.323 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.324 10583 17887 W Binder  : Caught a RuntimeException from the binder stub implementation.
+03-19 12:04:43.324 10583 17887 W Binder  : java.util.concurrent.RejectedExecutionException: Handler (android.os.Handler) {bd4c910} is shutting down
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:44)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onDataConnectionStateChanged$15(PhoneStateListener.java:1399)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$79IzSETkopHT-hH__CLgaXzNbj8(Unknown Source:0)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda59.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onDataConnectionStateChanged(PhoneStateListener.java:1399)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:472)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.324 10583 17887 W Binder  : 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessageLegacy(MessageQueue.java:1378)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:1519)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:799)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:748)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:718)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.post(Handler.java:443)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:43)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onSignalStrengthsChanged$19(PhoneStateListener.java:1420)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$evHVvwZSyLCS1bu59ts3E7EGkTw(Unknown Source:0)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda31.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onSignalStrengthsChanged(PhoneStateListener.java:1419)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:488)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.324 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.325 10583 17887 W Binder  : Caught a RuntimeException from the binder stub implementation.
+03-19 12:04:43.325 10583 17887 W Binder  : java.util.concurrent.RejectedExecutionException: Handler (android.os.Handler) {bd4c910} is shutting down
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:44)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onSignalStrengthsChanged$19(PhoneStateListener.java:1420)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$evHVvwZSyLCS1bu59ts3E7EGkTw(Unknown Source:0)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda31.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onSignalStrengthsChanged(PhoneStateListener.java:1419)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:488)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessageLegacy(MessageQueue.java:1378)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:1519)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:799)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:748)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:718)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Handler.post(Handler.java:443)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:43)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellInfoChanged$21(PhoneStateListener.java:1428)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$YbzwgrpOSUHSUfUxRlqpuH8VVk8(Unknown Source:0)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda46.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellInfoChanged(PhoneStateListener.java:1427)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:496)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.325 10583 17887 W LegacyMessageQueue: 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.325 10583 17887 W Binder  : Caught a RuntimeException from the binder stub implementation.
+03-19 12:04:43.325 10583 17887 W Binder  : java.util.concurrent.RejectedExecutionException: Handler (android.os.Handler) {bd4c910} is shutting down
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:44)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellInfoChanged$21(PhoneStateListener.java:1428)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$YbzwgrpOSUHSUfUxRlqpuH8VVk8(Unknown Source:0)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda46.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellInfoChanged(PhoneStateListener.java:1427)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:496)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.325 10583 17887 W Binder  : 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.325 11607 12218 D JavaheapMonitor: Java heap used=14M max=256M, proc: com.miui.powerkeeper
+03-19 12:04:43.325 11607 12218 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:43.328  2792 11312 I WifiService: startScan uid=10164
+03-19 12:04:43.329  2792  4711 D MiuiScanRequestProxy: Package com.xiaomi.metoknlp is in white list
+03-19 12:04:43.329  2792  4711 D MiuiScanRequestProxy: Allow this scan for Package com.xiaomi.metoknlp
+03-19 12:04:43.333  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577630): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:43.337  2414  2414 W binder:2414_2: type=1400 audit(0.0:3577631): avc:  denied  { search } for  name="mcd" dev="dm-57" ino=663 scontext=u:r:surfaceflinger:s0 tcontext=u:object_r:mcd_data_file:s0 tclass=dir permissive=0
+03-19 12:04:43.338  5914  6117 D HyperComm_TelephonyMonitor: onCellInfoChanged[1], cellInfo = [CellInfoNr:{ mRegistered=YES mTimeStamp=515190810534390ns mCellConnectionStatus=0 CellIdentityNr:{ mMcc = 460 mMnc = 01 mAlphaLong = CHN-UNICOM mAlphaShort = UNICOM mAdditionalPlmns = {} } CellSignalStrengthNr:{ csiRsrp = 2147483647 csiRsrq = 2147483647 csiCqiTableIndex = 2147483647 csiCqiReport = [] ssRsrp = -95 ssRsrq = -11 ssSinr = 11 miuiLevel = 0 mOptimizedLevel = 0 level = 1 parametersUseForLevel = 0 timingAdvance = 2147483647 } }]
+03-19 12:04:43.339  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:43.344  6048  6048 D ControlCenterHeaderExpandController: onExpansionChanged: progress =  0.0
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: java.lang.IllegalStateException: Handler (android.os.Handler) {bd4c910} sending message to a Handler on a dead thread
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessageLegacy(MessageQueue.java:1378)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.MessageQueue.enqueueMessage(MessageQueue.java:1519)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Handler.enqueueMessage(Handler.java:799)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Handler.sendMessageAtTime(Handler.java:748)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Handler.sendMessageDelayed(Handler.java:718)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Handler.post(Handler.java:443)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:43)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellInfoChanged$21(PhoneStateListener.java:1428)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$YbzwgrpOSUHSUfUxRlqpuH8VVk8(Unknown Source:0)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda46.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellInfoChanged(PhoneStateListener.java:1427)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:496)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.345 10583 25234 W LegacyMessageQueue: 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.345 10583 25234 W Binder  : Caught a RuntimeException from the binder stub implementation.
+03-19 12:04:43.345 10583 25234 W Binder  : java.util.concurrent.RejectedExecutionException: Handler (android.os.Handler) {bd4c910} is shutting down
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.os.HandlerExecutor.execute(HandlerExecutor.java:44)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.lambda$onCellInfoChanged$21(PhoneStateListener.java:1428)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.$r8$lambda$YbzwgrpOSUHSUfUxRlqpuH8VVk8(Unknown Source:0)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub$$ExternalSyntheticLambda46.runOrThrow(D8$$SyntheticClass:0)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.os.Binder.withCleanCallingIdentity(Binder.java:478)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.telephony.PhoneStateListener$IPhoneStateListenerStub.onCellInfoChanged(PhoneStateListener.java:1427)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at com.android.internal.telephony.IPhoneStateListener$Stub.onTransact(IPhoneStateListener.java:496)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.os.Binder.execTransactInternal(Binder.java:1433)
+03-19 12:04:43.345 10583 25234 W Binder  : 	at android.os.Binder.execTransact(Binder.java:1372)
+03-19 12:04:43.347  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:43.347  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:43.347  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:43.347  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:43.347  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:43.348  2414  2414 D DisplayModeController: setDesiredMode 4630946738963277955 {mode={fps=120.00 Hz, modePtr={id=1, vsyncRate=120.00 Hz, peakRefreshRate=120.00 Hz}}, emitEvent=true, force=false}
+03-19 12:04:43.348  2027  5129 I SDM     : HWEventsDRM::SetEventState: Setup vsync event for CRTC 167, Connector 65
+03-19 12:04:43.348  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:43.349  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:43.349  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:43.349  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:43.370  2027  2656 I SDM     : HWCFunctionTimer::noticeTimerFps: displayid:65, fps: 120
+03-19 12:04:43.370  2027  2656 I SDM     : HWCDisplay::SetActiveConfigWithConstraints: display:65-0, config: 1, WxH 1440x3200, fps 120
+03-19 12:04:43.371  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.372  2027  2656 W SDM     : HWDeviceDRM::GetSupportedBitClkRate: Requested rate not supported: 1200000000
+03-19 12:04:43.372  2027  2656 I SDM     : HWDeviceDRM::UpdateMixerAttributes: Mixer WxH 1440x3200-1 for Peripheral
+03-19 12:04:43.373  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active configuration changed from config 0 to 1
+03-19 12:04:43.373  2027  2656 I SDM     : HWCDisplay::SubmitDisplayConfig: Active WxH 1440x3200 ,ddic_mode:normal, timing_fps: 120, sf_fps: 120
+03-19 12:04:43.382  2077  2400 D FPSMonitor: threadFuncFpsMonitor display 0, fps 120
+03-19 12:04:43.383  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:43.385  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:43.387  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.393  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.400  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:43.400  2414  2414 D RefreshRateSelector: Touch Boost
+03-19 12:04:43.400  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:43.401  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.410  3653  4770 D libsensor-parseRGB: the value of RGB [227.495772 227.038939 194.646342]
+03-19 12:04:43.411  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.411 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:43.411 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:43.412 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:43.412 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:43.419  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.427  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.428  2792  4735 D NetworkMetricsTracker: calcNWCause:0
+03-19 12:04:43.435  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.444  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.452  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.460  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.469  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.476 21524 24985 D JavaheapMonitor: Java heap used=3M max=256M, proc: com.miui.tsmclient:daemon
+03-19 12:04:43.477  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.477 21524 24985 V JavaheapMonitor: Check java heap usage finished! Next check delay: 300000
+03-19 12:04:43.485  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.493  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.496  2414  2414 D MI-SF   : isTpIdleScene ,mAverageFrameRate is 40, 0 
+03-19 12:04:43.496  2414  2414 D MI-SF   : modeGroup0 mIsSupportAutomodeForMaxFpsSetting is 0(0), getCurrentBrightness() = 2207(880), mIsKeepAutoMode 0 isAutoModeAllowed() 1
+03-19 12:04:43.497  2414  2414 D RefreshRateSelector: fixedMode_group: 0, isFindModeGroup 0
+03-19 12:04:43.497  2414  2414 D RefreshRateSelector: find max refresh rate:120, mode Group:0
+03-19 12:04:43.503  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.510 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:43.510 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:43.511 20080 20080 D RuleManager: 从内存缓存获取规则：douyin_hospital_v1
+03-19 12:04:43.511 20080 20080 D RuleManager: 从内存缓存获取规则：meituan_hospital_v1
+03-19 12:04:43.512  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.522  3653  4775 I libsensor-displayalgo: the value of channelCali C:6484.268557,R:3792.015740,G:2391.794205,B:1219.331620,scales C:1.048292,R:1.024244,G:0.957962,B:0.951822
+03-19 12:04:43.522  3653  4775 D libsensor-displayalgo: brightness:731.000000,R:153229.125665,G:152553.004857,B:108728.086125,EVENT C:49463.757812,R:30007.466797,G:17451.699219,B:9469.392578, lux: 696.838745,cct:4340.224121, irPara: 0
+03-19 12:04:43.526  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.543  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.551  2027  2690 I vendor.qti.hardware.display.composer-service: FrameNotifyProcess Sensor: notify citsensorservice to trigger cwb
+03-19 12:04:43.552  3653  4769 I libsensor-parseRGB: request dump start for mRequestDisplayId 0
+03-19 12:04:43.553  3653  4769 D vendor.xiaomi.sensor.citsensorservice@2.0-service: handle id:21 wxh:1536x3200 uwxuh:1440x3200 size: 14745600 fd:19 fd_meta:20 flags:0x228 usage:0x33  format:0x3 layer_count: 1 reserved_size = 0
+03-19 12:04:43.553  2414  2672 E HWComposer: getLuts: getLuts failed for display 4630946738963277955: UNSUPPORTED (8)
+03-19 12:04:43.554  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 1.
+03-19 12:04:43.554  2027  2656 W SDM     : HWCSession::GetDisplayIndex: Display index not found for display 3.
+03-19 12:04:43.554  2027  2656 D SDM     : HWCSession::SetCWBOutputBuffer: CWB config passed by cwb_client : tappoint 1  CWB_ROI : (768.000000 40.000000 1009.000000 281.000000). Display 0
+03-19 12:04:43.562  2792  4702 I MiuiNetworkPolicy: updateUidState uid = 10155, uidState = 19
+03-19 12:04:43.564  2792  2884 D BroadcastQueue: Logging broadcast for android, stopped=false, firstLaunch=false
+03-19 12:04:43.568  2027  2141 D SDM     : HWDeviceDRM::SetupConcurrentWriteback: Tear down the Concurrent Writeback topology
+03-19 12:04:43.568  6048  6048 D backgroundBlur: setSelfColorModes has setted com.android.systemui.statusbar.StatusBarIconView hashcode 198447418
+03-19 12:04:43.578  3727  3727 I adbd    : in ShellService: export ANDROID_LOG_TAGS=''; exec logcat '-d'
+03-19 12:04:43.578  3727  3727 I adbd    : set_carlife_cmd = 0
+03-19 12:04:43.582  2027  4837 D SDM     : HWCSession::NotifyCWBStatus: Notify the client about buffer status 0. Display: 0
+03-19 12:04:43.583  2027  4837 I SDM     : HWCSession::ProcessCWBStatus: CWB queue is empty. display_index: 0
+03-19 12:04:43.592  3653  4770 D libsensor-parseRGB: the value of RGB [227.568099 227.085934 194.663536]

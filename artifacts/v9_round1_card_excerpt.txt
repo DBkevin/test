@@ -1,0 +1,21 @@
+=== header/top signals ===
+desc=郑州美莱医疗美容医院	bounds=[56,717][1103,839]	class=android.view.ViewGroup	rid=
+desc=关注	bounds=[1138,717][1384,840]	class=android.view.ViewGroup	rid=
+desc=收藏3千+	bounds=[56,947][266,1024]	class=android.view.ViewGroup	rid=
+desc=无隐形消费	bounds=[289,947][618,1024]	class=android.view.ViewGroup	rid=
+
+=== commerce/card signals ===
+desc=【面部提升】二代半岛黄金超声炮全模式(全面部+眼周+下颌缘),周一至周日可用,至少提前1天预约,随时退·过期退,原价3999.0元,现价3959.0元,已售50+领券抢购	bounds=[56,1756][1384,2117]	class=android.view.ViewGroup	rid=
+desc=已售50+	bounds=[1237,1916][1384,1967]	class=android.view.ViewGroup	rid=
+desc=【小V脸】钻石超塑(双下巴)-爆脂+紧致,周一至周日可用,至少提前1天预约,随时退·过期退,原价718.0元,现价674.9元,已售18领券抢购	bounds=[56,2173][1384,2533]	class=android.view.ViewGroup	rid=
+desc=已售18	bounds=[1269,2259][1384,2310]	class=android.view.ViewGroup	rid=
+desc=【营养水光】嗨体水光针2.5ml,周一至周日可用,至少提前1天预约,随时退·过期退,原价139.0元,现价132.0元,已售900+领券抢购	bounds=[56,2589][1384,2950]	class=android.view.ViewGroup	rid=
+desc=已售900+	bounds=[1215,2675][1384,2726]	class=android.view.ViewGroup	rid=
+desc=【长效水光】润致娃娃针2ml,周一至周日可用,至少提前1天预约,随时退·过期退,原价199.0元,现价189.0元,已售1000+领券抢购	bounds=[56,3006][1384,3144]	class=android.view.ViewGroup	rid=
+desc=已售1000+	bounds=[1200,3092][1384,3143]	class=android.view.ViewGroup	rid=
+
+=== tab-row structural candidates ===
+class=android.widget.ScrollView	bounds=[56,924][641,1024]	rid=
+class=android.widget.HorizontalScrollView	bounds=[56,924][641,1024]	rid=
+class=android.widget.ScrollView	bounds=[56,1429][980,1513]	rid=
+class=android.widget.HorizontalScrollView	bounds=[56,1429][980,1513]	rid=

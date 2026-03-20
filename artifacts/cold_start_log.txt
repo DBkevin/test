@@ -1,0 +1,28 @@
+03-17 19:28:43.943 I/CaptureCoordinator(16228): Waiting for user to open target app manually: com.ss.android.ugc.aweme
+03-17 19:28:46.612 I/DouyinPlugin(16228): Plugin activated
+03-17 19:28:46.647 I/DouyinPlugin(16228): Plugin deactivated
+03-17 19:28:47.636 I/DouyinPlugin(16228): Plugin activated
+03-17 19:28:48.011 I/CaptureCoordinator(16228): Target app opened manually, continue capture: com.ss.android.ugc.aweme
+03-17 19:28:52.063 D/SearchController(16228): Selected Douyin group buy tab with preset tap
+03-17 19:28:57.398 W/SearchController(16228): Douyin group buy page not confirmed after tab selection
+03-17 19:28:57.409 D/SearchController(16228): Opened Douyin group buy search entry with preset tap
+03-17 19:28:57.967 I/SearchController(16228): Searching for: 郑州美莱
+03-17 19:28:57.971 D/SearchController(16228): Found search box by id
+03-17 19:28:57.983 D/SearchController(16228): Cleared search box with direct setText
+03-17 19:28:58.006 D/SearchController(16228): Input text with direct setText: 郑州美莱
+03-17 19:28:58.031 D/SearchController(16228): Clicked search button by keyword: false
+03-17 19:28:58.031 D/SearchController(16228): Tapped search button by keyword bounds
+03-17 19:28:58.031 I/SearchController(16228): Search executed: 郑州美莱, submitted=true
+03-17 19:29:04.681 I/SearchController(16228): Merchant candidates: score=60, text=郑州美莱医疗美容医院, context=郑州美莱医疗美容医院
+03-17 19:29:05.451 I/SearchController(16228): Merchant result opened by entry band tap: name=郑州美莱, round=0
+03-17 19:29:12.217 D/SearchController(16228): Scrolled page with accessibility action
+03-17 19:29:16.040 I/SmartPower: com.example.a11yframework/10384(16228)( 2792): idle->background(25084ms) R(service unbind com.example.a11yframework/.core.FrameworkAccessibilityService) adj=200.
+03-17 19:29:18.055 I/CaptureCoordinator(16228): 取消当前抓取: service destroyed
+03-17 19:29:18.057 I/DouyinPlugin(16228): Plugin cleaned up
+03-17 19:29:18.058 I/CaptureCoordinator(16228): 任务被取消，等待外层决定是否恢复: 郑州美莱
+03-17 19:29:18.517 I/DouyinPlugin(16228): Plugin initialized
+03-17 19:29:18.517 D/DouyinPlugin(16228): Config loaded: mode=feed, keywords=[郑州美莱]
+03-17 19:29:18.520 I/CaptureCoordinator(16228): Waiting for user to open target app manually: com.ss.android.ugc.aweme
+03-17 19:29:18.526 I/CaptureCoordinator(16228): Target app opened manually, continue capture: com.ss.android.ugc.aweme
+03-17 19:29:19.043 I/SmartPower: com.example.a11yframework/10384(16228)( 2792): background->idle(3002ms) R(service unbind com.example.a11yframework/.core.FrameworkAccessibilityService) adj=200.
+03-17 19:29:19.204 I/DouyinPlugin(16228): Plugin activated

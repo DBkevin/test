@@ -1,0 +1,86 @@
+{
+  "rule_id": "douyin_hospital_v1",
+  "rule_name": "抖音医院团购详情页",
+  "app_id": "douyin",
+  "app_package": "com.ss.android.ugc.aweme",
+  "priority": 200,
+  "enabled": true,
+  "version": 4,
+  "pages": [
+    {
+      "page_id": "hospital_detail",
+      "page_name": "商家详情页",
+      "match_logic": "AND",
+      "match_rules": [
+        {
+          "type": "view_id",
+          "pattern": ".*id/gj7"
+        },
+        {
+          "type": "text_contains",
+          "field": "page_text",
+          "values": ["郑州美莱", "回头客"],
+          "logic": "AND"
+        },
+        {
+          "type": "text_contains",
+          "field": "page_text",
+          "values": ["原价", "现价", "已售", "领券抢购"],
+          "logic": "AND"
+        }
+      ],
+      "extract_rules": {
+        "merchant_name": {
+          "type": "regex",
+          "pattern": "(郑州美莱[^\\s,，]{0,20}(?:医疗美容医院|美容医院|医院|门诊部|门诊))",
+          "group": 1
+        },
+        "hospital_name": {
+          "type": "regex",
+          "pattern": "(郑州美莱[^\\s,，]{0,20}(?:医疗美容医院|美容医院|医院|门诊部|门诊))",
+          "group": 1
+        },
+        "honors": {
+          "type": "find_by_keywords",
+          "keywords": ["认证", "奖", "基地", "定点", "授权", "合作"],
+          "location": "middle",
+          "max_depth": 5
+        },
+        "group_buys": {
+          "type": "find_list",
+          "container": {
+            "class": "androidx.recyclerview.widget.RecyclerView",
+            "viewId": "com.ss.android.ugc.aweme:id/gj7"
+          },
+          "item_rules": {
+            "title": {
+              "type": "regex",
+              "pattern": "^(【[^】]+】[^,，]{1,80})",
+              "group": 1
+            },
+            "price": {
+              "type": "regex",
+              "pattern": "现价\\s*(\\d+(?:\\.\\d+)?)元",
+              "group": 1
+            },
+            "original_price": {
+              "type": "regex",
+              "pattern": "原价\\s*(\\d+(?:\\.\\d+)?)元",
+              "group": 1
+            },
+            "sales": {
+              "type": "regex",
+              "pattern": "((?:已售|销量|售出|购买)\\s*\\d+(?:\\.\\d+)?(?:万|w|\\+)?)",
+              "group": 1
+            },
+            "card_text": {
+              "type": "regex",
+              "pattern": "(.+)",
+              "group": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

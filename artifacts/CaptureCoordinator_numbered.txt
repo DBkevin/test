@@ -1,0 +1,917 @@
+1:package com.example.a11yframework.capture
+2:
+3:import android.util.Log
+4:import com.example.a11yframework.appplugin.AppPluginBundle
+5:import com.example.a11yframework.appplugin.CollectionConfig
+6:import com.example.a11yframework.core.FrameworkAccessibilityService
+7:import com.example.a11yframework.core.ScrapedData
+8:import com.example.a11yframework.core.ScrapedRecordIdentity
+9:import com.example.a11yframework.remote.HospitalTask
+10:import com.example.a11yframework.search.SearchController
+11:import kotlinx.coroutines.CancellationException
+12:import kotlinx.coroutines.delay
+13:import kotlinx.coroutines.sync.Mutex
+14:import kotlinx.coroutines.sync.withLock
+15:import kotlin.math.min
+16:
+17:/**
+18: * 手机端采集编排器。
+19: *
+20: * 框架职责只剩下：
+21: * 1. 启动目标 App
+22: * 2. 选择对应插件包
+23: * 3. 执行插件导航步骤
+24: * 4. 收敛采集窗口、滚动聚合结果、组装回传
+25: */
+26:class CaptureCoordinator(
+27:    private val service: FrameworkAccessibilityService
+28:) {
+29:
+30:    companion object {
+31:        private const val TAG = "CaptureCoordinator"
+32:        private const val DOUYIN_APP_PACKAGE = "com.ss.android.ugc.aweme"
+33:        private const val KEY_TARGET_APP_PACKAGE = "target_app_package"
+34:        private const val DEFAULT_TARGET_APP_PACKAGE = DOUYIN_APP_PACKAGE
+35:        private const val KEY_CAPTURE_TIMEOUT_MS = "capture_timeout_ms"
+36:        private const val DEFAULT_CAPTURE_TIMEOUT_MS = 60_000L
+37:        private const val KEY_APP_START_DELAY_MS = "app_start_delay_ms"
+38:        private const val DEFAULT_APP_START_DELAY_MS = 2_500L
+39:        private const val KEY_MANUAL_APP_WAIT_TIMEOUT_MS = "manual_app_wait_timeout_ms"
+40:        private const val DEFAULT_MANUAL_APP_WAIT_TIMEOUT_MS = 60_000L
+41:        private const val KEY_RESULT_LIST_WAIT_MS = "result_list_wait_ms"
+42:        private const val DEFAULT_RESULT_LIST_WAIT_MS = 2_500L
+43:        private const val KEY_DETAIL_OPEN_DELAY_MS = "detail_open_delay_ms"
+44:        private const val DEFAULT_DETAIL_OPEN_DELAY_MS = 2_200L
+45:        private const val KEY_SCROLL_SETTLE_MS = "scroll_settle_ms"
+46:        private const val DEFAULT_SCROLL_SETTLE_MS = 1_800L
+47:        private const val KEY_CAPTURE_ROUND_WAIT_MS = "capture_round_wait_ms"
+48:        private const val DEFAULT_CAPTURE_ROUND_WAIT_MS = 2_500L
+49:        private const val KEY_MAX_SCROLL_ROUNDS = "max_scroll_rounds"
+50:        private const val DEFAULT_MAX_SCROLL_ROUNDS = 6
+51:        private const val KEY_MAX_IDLE_SCROLL_ROUNDS = "max_idle_scroll_rounds"
+52:        private const val DEFAULT_MAX_IDLE_SCROLL_ROUNDS = 2
+53:        private const val KEY_EXPAND_SETTLE_MS = "expand_settle_ms"
+54:        private const val DEFAULT_EXPAND_SETTLE_MS = 1_000L
+55:        private const val KEY_MAX_EXPAND_CLICKS_PER_ROUND = "max_expand_clicks_per_round"
+56:        private const val DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND = 4
+57:        private const val INITIAL_VIEWPORT_MAX_ATTEMPTS = 3
+58:        private const val INITIAL_VIEWPORT_RETRY_DELAY_MS = 900L
+59:        private const val COLLECTING_SCRAPE_COOLDOWN_MS = 1_200L
+60:        private val DEFAULT_EXPAND_KEYWORDS = listOf(
+61:            "展开更多",
+62:            "查看全部",
+63:            "更多团购",
+64:            "更多套餐",
+65:            "全部团购",
+66:            "全部套餐"
+67:        )
+68:    }
+69:
+70:    private val executionMutex = Mutex()
+71:    private val searchController by lazy { SearchController(service) }
+72:    private val navigationExecutor by lazy { NavigationExecutor(searchController) }
+73:
+74:    @Volatile
+75:    private var activeCapture: ActiveCapture? = null
+76:
+77:    suspend fun executeTask(
+78:        task: HospitalTask,
+79:        launchTargetApp: Boolean = true
+80:    ): CaptureExecutionResult = executionMutex.withLock {
+81:        val targetPackage = resolveTargetPackage(task)
+82:        val appPlugin = service.appPluginManager.findPluginForPackage(targetPackage)
+83:
+84:        task.targetPackage = targetPackage
+85:
+86:        val activeExecution = ActiveCapture(
+87:            task = task,
+88:            targetPackage = targetPackage,
+89:            navigationPluginId = appPlugin?.pluginId,
+90:            stage = if (launchTargetApp) CaptureStage.OPENING_APP else CaptureStage.WAITING_TARGET_APP
+91:        )
+92:        activeCapture = activeExecution
+93:
+94:        return try {
+95:            if (!launchTargetApp) {
+96:                Log.i(TAG, "Waiting for user to open target app manually: $targetPackage")
+97:            }
+98:
+99:            if (launchTargetApp && !service.launchTargetApp(targetPackage)) {
+100:                failure(task, targetPackage, "无法打开目标 App: $targetPackage")
+101:            } else if (!waitForPackage(
+102:                    targetPackage,
+103:                    if (launchTargetApp) 15_000L else resolveManualAppWaitTimeoutMs()
+104:                )
+105:            ) {
+106:                failure(task, targetPackage, "等待目标 App 超时: $targetPackage")
+107:            } else {
+108:                if (!launchTargetApp) {
+109:                    Log.i(TAG, "Target app opened manually, continue capture: $targetPackage")
+110:                }
+111:                delay(resolveAppStartDelayMs(appPlugin))
+112:
+113:                val attemptResult = when {
+114:                    appPlugin?.captureFlow != null -> executePluginCapture(activeExecution, appPlugin)
+115:                    isDouyinPackage(targetPackage) -> executeDouyinCapture(activeExecution)
+116:                    else -> executeGenericCapture(activeExecution)
+117:                }
+118:
+119:                if (attemptResult.records.isEmpty()) {
+120:                    failure(
+121:                        task,
+122:                        targetPackage,
+123:                        attemptResult.errorMessage ?: "等待抓取结果超时或未产出数据"
+124:                    )
+125:                } else {
+126:                    service.dataStore.saveData(attemptResult.records)
+127:                    success(task, targetPackage, attemptResult.records)
+128:                }
+129:            }
+130:        } catch (e: CancellationException) {
+131:            Log.i(TAG, "任务被取消，等待外层决定是否恢复: ${task.hospitalName}")
+132:            throw e
+133:        } catch (e: Exception) {
+134:            Log.e(TAG, "任务执行异常: ${task.hospitalName}", e)
+135:            failure(task, targetPackage, e.message ?: "未知异常")
+136:        } finally {
+137:            activeCapture = null
+138:        }
+139:    }
+140:
+141:    fun hasActiveCapture(): Boolean = activeCapture != null
+142:
+143:    fun onWindowChanged(packageName: String) {
+144:        activeCapture?.lastSeenPackage = packageName
+145:    }
+146:
+147:    fun onRecordsCaptured(packageName: String, records: List<ScrapedData>): CaptureAppendResult {
+148:        val activeExecution = activeCapture ?: return CaptureAppendResult()
+149:        if (records.isEmpty()) return CaptureAppendResult()
+150:        if (packageName != activeExecution.targetPackage) return CaptureAppendResult()
+151:        if (activeExecution.stage != CaptureStage.COLLECTING) return CaptureAppendResult()
+152:
+153:        val appendResult = activeExecution.appendRecords(records)
+154:        if (appendResult.changed) {
+155:            Log.i(
+156:                TAG,
+157:                "已接收抓取结果: hospital=${activeExecution.task.hospitalName}, added=${appendResult.addedCount}, updated=${appendResult.updatedCount}, total=${activeExecution.recordCount()}"
+158:            )
+159:        }
+160:
+161:        return appendResult
+162:    }
+163:
+164:    fun cancelActiveCapture(reason: String) {
+165:        val activeExecution = activeCapture ?: return
+166:        activeExecution.stage = CaptureStage.CANCELLED
+167:        Log.i(TAG, "取消当前抓取: $reason")
+168:    }
+169:
+170:    fun shouldScrapePage(packageName: String): Boolean {
+171:        val activeExecution = activeCapture ?: return true
+172:        if (packageName != activeExecution.targetPackage) {
+173:            return true
+174:        }
+175:        return activeExecution.stage == CaptureStage.COLLECTING
+176:    }
+177:
+178:    fun isCollectingForPackage(packageName: String): Boolean {
+179:        val activeExecution = activeCapture ?: return false
+180:        return packageName == activeExecution.targetPackage &&
+181:            activeExecution.stage == CaptureStage.COLLECTING
+182:    }
+183:
+184:    fun getScrapeCooldownMs(packageName: String, defaultMs: Long): Long {
+185:        return if (isCollectingForPackage(packageName)) {
+186:            COLLECTING_SCRAPE_COOLDOWN_MS
+187:        } else {
+188:            defaultMs
+189:        }
+190:    }
+191:
+192:    fun prepareCapturedRecords(packageName: String, records: List<ScrapedData>): List<ScrapedData> {
+193:        if (records.isEmpty()) {
+194:            return emptyList()
+195:        }
+196:
+197:        val activeExecution = activeCapture
+198:        if (activeExecution == null || packageName != activeExecution.targetPackage) {
+199:            return records
+200:        }
+201:
+202:        val merchantName = activeExecution.task.hospitalName.trim()
+203:        if (merchantName.isBlank()) {
+204:            return records
+205:        }
+206:
+207:        return records.map { record ->
+208:            val content = record.content.toMutableMap()
+209:
+210:            if (content["merchant_name"].isNullOrBlank()) {
+211:                content["merchant_name"] = merchantName
+212:            }
+213:            if (content["hospital_name"].isNullOrBlank()) {
+214:                content["hospital_name"] = merchantName
+215:            }
+216:            if (content["hospitalName"].isNullOrBlank()) {
+217:                content["hospitalName"] = merchantName
+218:            }
+219:            if (content["search_keyword"].isNullOrBlank()) {
+220:                content["search_keyword"] = merchantName
+221:            }
+222:            if (content["searchKeyword"].isNullOrBlank()) {
+223:                content["searchKeyword"] = merchantName
+224:            }
+225:
+226:            val rawText = record.rawText.ifBlank {
+227:                content.values.filter { it.isNotBlank() }.joinToString(" ")
+228:            }
+229:
+230:            val metadata = record.metadata.toMutableMap()
+231:            metadata["captureStage"] = activeExecution.stage.name.lowercase()
+232:            activeExecution.navigationPluginId?.let { metadata["navigationPluginId"] = it }
+233:
+234:            record.copy(
+235:                content = content.toMap(),
+236:                rawText = rawText,
+237:                metadata = metadata.toMap()
+238:            )
+239:        }
+240:    }
+241:
+242:    private suspend fun waitForPackage(packageName: String, timeoutMs: Long): Boolean {
+243:        val startAt = System.currentTimeMillis()
+244:        while (System.currentTimeMillis() - startAt < timeoutMs) {
+245:            if (service.getCurrentActivePackage() == packageName) {
+246:                return true
+247:            }
+248:            delay(500)
+249:        }
+250:        return false
+251:    }
+252:
+253:    private fun resolveTargetPackage(task: HospitalTask): String {
+254:        return (task.targetPackage
+255:            ?: service.configManager.getPluginConfigString(
+256:                "system",
+257:                KEY_TARGET_APP_PACKAGE,
+258:                DEFAULT_TARGET_APP_PACKAGE
+259:            )).ifBlank { DEFAULT_TARGET_APP_PACKAGE }
+260:    }
+261:
+262:    private suspend fun executePluginCapture(
+263:        activeExecution: ActiveCapture,
+264:        plugin: AppPluginBundle
+265:    ): CaptureAttemptResult {
+266:        activeExecution.stage = CaptureStage.EXECUTING_PLUGIN_FLOW
+267:
+268:        val navigationResult = navigationExecutor.execute(plugin, activeExecution.task)
+269:        if (!navigationResult.success) {
+270:            return CaptureAttemptResult(
+271:                errorMessage = navigationResult.errorMessage ?: "插件导航流程执行失败"
+272:            )
+273:        }
+274:
+275:        activeExecution.stage = CaptureStage.COLLECTING
+276:        val records = collectDetailRecords(
+277:            activeExecution,
+278:            plugin.captureFlow?.collection
+279:        )
+280:
+281:        return if (records.isEmpty()) {
+282:            CaptureAttemptResult(errorMessage = "插件流程执行完成，但未采集到数据")
+283:        } else {
+284:            CaptureAttemptResult(records = records)
+285:        }
+286:    }
+287:
+288:    private suspend fun executeGenericCapture(activeExecution: ActiveCapture): CaptureAttemptResult {
+289:        activeExecution.stage = CaptureStage.SEARCHING
+290:
+291:        val searchSuccess = searchController.search(activeExecution.task.hospitalName)
+292:        if (!searchSuccess) {
+293:            return CaptureAttemptResult(
+294:                errorMessage = "搜索失败，未找到可操作的搜索框或搜索按钮"
+295:            )
+296:        }
+297:
+298:        activeExecution.stage = CaptureStage.COLLECTING
+299:        val records = waitForCollectedRecords(activeExecution, resolveCaptureTimeoutMs())
+300:        return if (records.isEmpty()) {
+301:            CaptureAttemptResult(errorMessage = "等待抓取结果超时或未产出数据")
+302:        } else {
+303:            CaptureAttemptResult(records = records)
+304:        }
+305:    }
+306:
+307:    private suspend fun executeDouyinCapture(activeExecution: ActiveCapture): CaptureAttemptResult {
+308:        activeExecution.stage = CaptureStage.NAVIGATING_GROUPBUY
+309:
+310:        if (
+311:            searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName) ||
+312:            service.isCurrentTargetPage(activeExecution.targetPackage)
+313:        ) {
+314:            Log.i(
+315:                TAG,
+316:                "Resume Douyin capture from current merchant detail page: ${activeExecution.task.hospitalName}"
+317:            )
+318:            activeExecution.stage = CaptureStage.COLLECTING
+319:            val resumedRecords = collectDetailRecords(activeExecution, null)
+320:            return if (resumedRecords.isEmpty()) {
+321:                CaptureAttemptResult(errorMessage = "恢复到商家详情页后未采集到团购数据")
+322:            } else {
+323:                CaptureAttemptResult(records = resumedRecords)
+324:            }
+325:        }
+326:
+327:        val alreadyOnResultPage =
+328:            searchController.isOnDouyinMerchantResultPage(activeExecution.task.hospitalName)
+329:        if (alreadyOnResultPage) {
+330:            Log.i(
+331:                TAG,
+332:                "Resume Douyin capture from merchant result page: ${activeExecution.task.hospitalName}"
+333:            )
+334:        } else {
+335:            val searchSuccess = searchController.searchDouyinGroupBuy(activeExecution.task.hospitalName)
+336:            if (!searchSuccess) {
+337:                return CaptureAttemptResult(
+338:                    errorMessage = "未能进入抖音团购搜索并提交关键词"
+339:                )
+340:            }
+341:        }
+342:
+343:        activeExecution.stage = CaptureStage.WAITING_RESULT_LIST
+344:        if (!alreadyOnResultPage) {
+345:            delay(resolveResultListWaitMs())
+346:        }
+347:
+348:        val merchantOpened = searchController.openMerchantResult(activeExecution.task.hospitalName)
+349:        if (!merchantOpened) {
+350:            return CaptureAttemptResult(
+351:                errorMessage = "未在搜索结果页定位到目标商家: ${activeExecution.task.hospitalName}"
+352:            )
+353:        }
+354:
+355:        activeExecution.stage = CaptureStage.OPENING_DETAIL
+356:        delay(resolveDetailOpenDelayMs())
+357:        val collectableViewportReady = prepareDouyinCollectableViewport(activeExecution)
+358:        if (!collectableViewportReady) {
+359:            return CaptureAttemptResult(errorMessage = "进入商家详情后未定位到可采集团购视口")
+360:        }
+361:
+362:        activeExecution.stage = CaptureStage.COLLECTING
+363:        val records = collectDetailRecords(activeExecution, null)
+364:        return if (records.isEmpty()) {
+365:            CaptureAttemptResult(errorMessage = "进入商家详情后未采集到团购数据")
+366:        } else {
+367:            CaptureAttemptResult(records = records)
+368:        }
+369:    }
+370:
+371:    private suspend fun prepareDouyinCollectableViewport(activeExecution: ActiveCapture): Boolean {
+372:        val merchantName = activeExecution.task.hospitalName
+373:        val detailWaitMs = resolveDetailOpenDelayMs() + 1_500L
+374:
+375:        if (searchController.waitForMerchantHomepageAnchors(merchantName, detailWaitMs)) {
+376:            return true
+377:        }
+378:
+379:        if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+380:            return true
+381:        }
+382:
+383:        repeat(3) { attempt ->
+384:            if (!searchController.isOnMerchantDetailPage(merchantName)) {
+385:                return false
+386:            }
+387:
+388:            val movedUp = searchController.scrollCurrentPage(forward = false)
+389:            if (!movedUp) {
+390:                return false
+391:            }
+392:
+393:            Log.i(
+394:                TAG,
+395:                "Adjust Douyin merchant viewport upward before collection: step=${attempt + 1}"
+396:            )
+397:            delay(resolveScrollSettleMs(null))
+398:
+399:            if (searchController.waitForMerchantHomepageAnchors(merchantName, 900L)) {
+400:                return true
+401:            }
+402:            if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+403:                return true
+404:            }
+405:        }
+406:
+407:        return false
+408:    }
+409:
+410:    private suspend fun waitForCollectedRecords(
+411:        activeExecution: ActiveCapture,
+412:        timeoutMs: Long
+413:    ): List<ScrapedData> {
+414:        val baselineRevision = activeExecution.revision()
+415:        waitForCaptureProgress(activeExecution, baselineRevision, timeoutMs)
+416:        return activeExecution.snapshotRecords()
+417:    }
+418:
+419:    private suspend fun collectDetailRecords(
+420:        activeExecution: ActiveCapture,
+421:        collectionConfig: CollectionConfig?
+422:    ): List<ScrapedData> {
+423:        val deadline = System.currentTimeMillis() + resolveCaptureTimeoutMs(collectionConfig)
+424:        val maxScrollRounds = resolveMaxScrollRounds(collectionConfig)
+425:        val maxIdleScrollRounds = resolveMaxIdleScrollRounds(collectionConfig)
+426:
+427:        var idleRounds = 0
+428:        var scrollRounds = 0
+429:
+430:        val initialViewportReady = stabilizeInitialViewport(
+431:            activeExecution = activeExecution,
+432:            collectionConfig = collectionConfig,
+433:            deadline = deadline
+434:        )
+435:        if (!initialViewportReady) {
+436:            Log.w(TAG, "Initial Douyin viewport not stable enough for scrolling, stop current capture")
+437:            return activeExecution.snapshotRecords()
+438:        }
+439:
+440:        if (shouldStopCollection(collectionConfig)) {
+441:            Log.i(TAG, "Stop collection after initial viewport capture")
+442:            return activeExecution.snapshotRecords()
+443:        }
+444:
+445:        while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
+446:            if (!ensureMerchantDetailContext(activeExecution, "before_scroll:$scrollRounds")) {
+447:                Log.i(TAG, "Stop collection after losing merchant detail context before scroll")
+448:                break
+449:            }
+450:
+451:            if (shouldStopCollection(collectionConfig)) {
+452:                Log.i(TAG, "Stop collection before next scroll: round=$scrollRounds")
+453:                break
+454:            }
+455:
+456:            val beforeCount = activeExecution.recordCount()
+457:            val beforeRevision = activeExecution.revision()
+458:            val scrolled = searchController.scrollCurrentPage()
+459:            if (!scrolled) {
+460:                break
+461:            }
+462:
+463:            scrollRounds++
+464:            delay(resolveScrollSettleMs(collectionConfig))
+465:            collectCurrentViewport(activeExecution, collectionConfig, deadline)
+466:
+467:            if (!ensureMerchantDetailContext(activeExecution, "after_scroll:$scrollRounds")) {
+468:                Log.i(TAG, "Stop collection after losing merchant detail context after scroll")
+469:                break
+470:            }
+471:
+472:            if (shouldStopCollection(collectionConfig)) {
+473:                Log.i(TAG, "Stop collection after scroll round=$scrollRounds")
+474:                break
+475:            }
+476:
+477:            val afterCount = activeExecution.recordCount()
+478:            val afterRevision = activeExecution.revision()
+479:            if (afterCount <= beforeCount && afterRevision <= beforeRevision) {
+480:                idleRounds++
+481:                if (idleRounds >= maxIdleScrollRounds) {
+482:                    break
+483:                }
+484:            } else {
+485:                idleRounds = 0
+486:            }
+487:        }
+488:
+489:        return activeExecution.snapshotRecords()
+490:    }
+491:
+492:    private suspend fun stabilizeInitialViewport(
+493:        activeExecution: ActiveCapture,
+494:        collectionConfig: CollectionConfig?,
+495:        deadline: Long
+496:    ): Boolean {
+497:        repeat(INITIAL_VIEWPORT_MAX_ATTEMPTS) { attempt ->
+498:            collectCurrentViewport(activeExecution, collectionConfig, deadline)
+499:
+500:            if (activeExecution.recordCount() > 0) {
+501:                Log.i(TAG, "Initial viewport captured records before first scroll: count=${activeExecution.recordCount()}")
+502:                return true
+503:            }
+504:
+505:            val stillOnTargetPage = service.isCurrentTargetPage(activeExecution.targetPackage)
+506:            if (stillOnTargetPage) {
+507:                Log.i(TAG, "Initial viewport confirmed as target page before first scroll: attempt=${attempt + 1}")
+508:                return true
+509:            }
+510:
+511:            val stillOnMerchantDetail = searchController.isOnMerchantDetailPage(
+512:                activeExecution.task.hospitalName
+513:            )
+514:            if (!stillOnMerchantDetail) {
+515:                val recovered = searchController.recoverMerchantDetailPage(
+516:                    merchantName = activeExecution.task.hospitalName,
+517:                    maxBackAttempts = 2
+518:                )
+519:                if (recovered) {
+520:                    Log.i(
+521:                        TAG,
+522:                        "Recovered merchant detail context during initial viewport stabilization: attempt=${attempt + 1}"
+523:                    )
+524:                    delay(min(INITIAL_VIEWPORT_RETRY_DELAY_MS, remainingTime(deadline)))
+525:                    return@repeat
+526:                }
+527:                Log.w(
+528:                    TAG,
+529:                    "Initial viewport lost merchant detail context before first scroll: attempt=${attempt + 1}"
+530:                )
+531:                return false
+532:            }
+533:
+534:            if (attempt < INITIAL_VIEWPORT_MAX_ATTEMPTS - 1 && remainingTime(deadline) > 0L) {
+535:                Log.i(
+536:                    TAG,
+537:                    "Retry initial viewport capture before first scroll: attempt=${attempt + 1}"
+538:                )
+539:                delay(min(INITIAL_VIEWPORT_RETRY_DELAY_MS, remainingTime(deadline)))
+540:            }
+541:        }
+542:
+543:        return activeExecution.recordCount() > 0 || service.isCurrentTargetPage(activeExecution.targetPackage)
+544:    }
+545:
+546:    private fun shouldStopCollection(collectionConfig: CollectionConfig?): Boolean {
+547:        val stopTextsAll = resolveStopTextsAll(collectionConfig)
+548:        val stopTextsAny = resolveStopTextsAny(collectionConfig)
+549:        val stopTextsNone = resolveStopTextsNone(collectionConfig)
+550:        if (stopTextsAll.isEmpty() && stopTextsAny.isEmpty() && stopTextsNone.isEmpty()) {
+551:            return false
+552:        }
+553:
+554:        val matchResult = searchController.matchCurrentPageTexts(
+555:            requiredAllTexts = stopTextsAll,
+556:            requiredAnyTexts = stopTextsAny,
+557:            absentTexts = stopTextsNone
+558:        )
+559:        if (!matchResult.matched) {
+560:            return false
+561:        }
+562:
+563:        Log.i(
+564:            TAG,
+565:            "Detected end-of-list markers: all=${matchResult.matchedAllTexts.joinToString(",")}, any=${matchResult.matchedAnyTexts.joinToString(",")}, none=${stopTextsNone.joinToString(",")}"
+566:        )
+567:        return true
+568:    }
+569:
+570:    private suspend fun collectCurrentViewport(
+571:        activeExecution: ActiveCapture,
+572:        collectionConfig: CollectionConfig?,
+573:        deadline: Long
+574:    ) {
+575:        val baselineRevision = activeExecution.revision()
+576:        val expandedCount = expandVisibleSections(collectionConfig)
+577:        if (expandedCount > 0) {
+578:            delay(resolveExpandSettleMs(collectionConfig))
+579:        }
+580:
+581:        service.scrapeCurrentPageNow(activeExecution.targetPackage)
+582:
+583:        val progressed = waitForCaptureProgress(
+584:            activeExecution,
+585:            baselineRevision = baselineRevision,
+586:            timeoutMs = min(resolveCaptureRoundWaitMs(collectionConfig), remainingTime(deadline))
+587:        )
+588:
+589:        if (!progressed && remainingTime(deadline) > 0L) {
+590:            delay(400)
+591:            service.scrapeCurrentPageNow(activeExecution.targetPackage)
+592:            waitForCaptureProgress(
+593:                activeExecution,
+594:                baselineRevision = baselineRevision,
+595:                timeoutMs = min(900L, remainingTime(deadline))
+596:            )
+597:        }
+598:    }
+599:
+600:    private suspend fun expandVisibleSections(collectionConfig: CollectionConfig?): Int {
+601:        val expandKeywords = resolveExpandKeywords(collectionConfig)
+602:        val maxClicks = resolveMaxExpandClicksPerRound(collectionConfig)
+603:        if (expandKeywords.isEmpty() || maxClicks <= 0) {
+604:            return 0
+605:        }
+606:
+607:        val expandedCount = searchController.clickMerchantExpandTexts(
+608:            targetTexts = expandKeywords,
+609:            maxClicks = maxClicks
+610:        )
+611:
+612:        if (expandedCount > 0) {
+613:            Log.i(
+614:                TAG,
+615:                "Expanded detail sections: clicks=$expandedCount, keywords=${expandKeywords.joinToString(",")}"
+616:            )
+617:        }
+618:
+619:        return expandedCount
+620:    }
+621:
+622:    private suspend fun ensureMerchantDetailContext(
+623:        activeExecution: ActiveCapture,
+624:        phase: String
+625:    ): Boolean {
+626:        if (searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName)) {
+627:            return true
+628:        }
+629:
+630:        if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
+631:            return true
+632:        }
+633:
+634:        val recovered = searchController.recoverMerchantDetailPage(
+635:            merchantName = activeExecution.task.hospitalName,
+636:            maxBackAttempts = 2
+637:        )
+638:        if (!recovered) {
+639:            Log.w(TAG, "Lost merchant detail context and failed to recover: phase=$phase")
+640:            return false
+641:        }
+642:
+643:        delay(700)
+644:        return searchController.isOnMerchantDetailPage(activeExecution.task.hospitalName) ||
+645:            service.isCurrentTargetPage(activeExecution.targetPackage)
+646:    }
+647:
+648:    private suspend fun waitForCaptureProgress(
+649:        activeExecution: ActiveCapture,
+650:        baselineRevision: Int,
+651:        timeoutMs: Long
+652:    ): Boolean {
+653:        if (timeoutMs <= 0L) {
+654:            return activeExecution.revision() > baselineRevision
+655:        }
+656:
+657:        val startAt = System.currentTimeMillis()
+658:        while (System.currentTimeMillis() - startAt < timeoutMs) {
+659:            if (activeExecution.revision() > baselineRevision) {
+660:                return true
+661:            }
+662:            delay(400)
+663:        }
+664:
+665:        return activeExecution.revision() > baselineRevision
+666:    }
+667:
+668:    private fun remainingTime(deadline: Long): Long {
+669:        return (deadline - System.currentTimeMillis()).coerceAtLeast(0L)
+670:    }
+671:
+672:    private fun isDouyinPackage(packageName: String): Boolean {
+673:        return packageName == DOUYIN_APP_PACKAGE
+674:    }
+675:
+676:    private fun success(
+677:        task: HospitalTask,
+678:        targetPackage: String,
+679:        records: List<ScrapedData>
+680:    ): CaptureExecutionResult {
+681:        val payload = CapturePayloadBuilder.build(task, records)
+682:        return CaptureExecutionResult(
+683:            success = true,
+684:            targetPackage = targetPackage,
+685:            recordCount = records.size,
+686:            data = payload
+687:        )
+688:    }
+689:
+690:    private fun failure(
+691:        task: HospitalTask,
+692:        targetPackage: String,
+693:        errorMessage: String
+694:    ): CaptureExecutionResult {
+695:        return CaptureExecutionResult(
+696:            success = false,
+697:            targetPackage = targetPackage,
+698:            errorMessage = errorMessage,
+699:            data = CapturePayloadBuilder.build(task, emptyList())
+700:        )
+701:    }
+702:
+703:    private fun resolveCaptureTimeoutMs(collectionConfig: CollectionConfig? = null): Long {
+704:        return collectionConfig?.captureTimeoutMs?.takeIf { it > 0L }
+705:            ?: service.configManager.getPluginConfigInt(
+706:                "system",
+707:                KEY_CAPTURE_TIMEOUT_MS,
+708:                DEFAULT_CAPTURE_TIMEOUT_MS.toInt()
+709:            ).toLong()
+710:    }
+711:
+712:    private fun resolveAppStartDelayMs(plugin: AppPluginBundle? = null): Long {
+713:        return plugin?.captureFlow?.appStartDelayMs?.takeIf { it > 0L }
+714:            ?: service.configManager.getPluginConfigInt(
+715:                "system",
+716:                KEY_APP_START_DELAY_MS,
+717:                DEFAULT_APP_START_DELAY_MS.toInt()
+718:            ).toLong()
+719:    }
+720:
+721:    private fun resolveManualAppWaitTimeoutMs(): Long {
+722:        return service.configManager.getPluginConfigInt(
+723:            "system",
+724:            KEY_MANUAL_APP_WAIT_TIMEOUT_MS,
+725:            DEFAULT_MANUAL_APP_WAIT_TIMEOUT_MS.toInt()
+726:        ).toLong()
+727:    }
+728:
+729:    private fun resolveResultListWaitMs(): Long {
+730:        return service.configManager.getPluginConfigInt(
+731:            "system",
+732:            KEY_RESULT_LIST_WAIT_MS,
+733:            DEFAULT_RESULT_LIST_WAIT_MS.toInt()
+734:        ).toLong()
+735:    }
+736:
+737:    private fun resolveDetailOpenDelayMs(): Long {
+738:        return service.configManager.getPluginConfigInt(
+739:            "system",
+740:            KEY_DETAIL_OPEN_DELAY_MS,
+741:            DEFAULT_DETAIL_OPEN_DELAY_MS.toInt()
+742:        ).toLong()
+743:    }
+744:
+745:    private fun resolveScrollSettleMs(collectionConfig: CollectionConfig? = null): Long {
+746:        return collectionConfig?.scrollSettleMs?.takeIf { it > 0L }
+747:            ?: service.configManager.getPluginConfigInt(
+748:                "system",
+749:                KEY_SCROLL_SETTLE_MS,
+750:                DEFAULT_SCROLL_SETTLE_MS.toInt()
+751:            ).toLong()
+752:    }
+753:
+754:    private fun resolveCaptureRoundWaitMs(collectionConfig: CollectionConfig? = null): Long {
+755:        return collectionConfig?.captureRoundWaitMs?.takeIf { it > 0L }
+756:            ?: service.configManager.getPluginConfigInt(
+757:                "system",
+758:                KEY_CAPTURE_ROUND_WAIT_MS,
+759:                DEFAULT_CAPTURE_ROUND_WAIT_MS.toInt()
+760:            ).toLong()
+761:    }
+762:
+763:    private fun resolveMaxScrollRounds(collectionConfig: CollectionConfig? = null): Int {
+764:        return collectionConfig?.maxScrollRounds?.takeIf { it > 0 }
+765:            ?: service.configManager.getPluginConfigInt(
+766:                "system",
+767:                KEY_MAX_SCROLL_ROUNDS,
+768:                DEFAULT_MAX_SCROLL_ROUNDS
+769:            )
+770:    }
+771:
+772:    private fun resolveMaxIdleScrollRounds(collectionConfig: CollectionConfig? = null): Int {
+773:        return collectionConfig?.maxIdleScrollRounds?.takeIf { it > 0 }
+774:            ?: service.configManager.getPluginConfigInt(
+775:                "system",
+776:                KEY_MAX_IDLE_SCROLL_ROUNDS,
+777:                DEFAULT_MAX_IDLE_SCROLL_ROUNDS
+778:            )
+779:    }
+780:
+781:    private fun resolveExpandKeywords(collectionConfig: CollectionConfig? = null): List<String> {
+782:        return collectionConfig?.expandKeywords
+783:            ?.map { it.trim() }
+784:            ?.filter { it.isNotEmpty() }
+785:            ?.distinct()
+786:            ?.takeIf { it.isNotEmpty() }
+787:            ?: DEFAULT_EXPAND_KEYWORDS
+788:    }
+789:
+790:    private fun resolveExpandSettleMs(collectionConfig: CollectionConfig? = null): Long {
+791:        return collectionConfig?.expandSettleMs?.takeIf { it > 0L }
+792:            ?: service.configManager.getPluginConfigInt(
+793:                "system",
+794:                KEY_EXPAND_SETTLE_MS,
+795:                DEFAULT_EXPAND_SETTLE_MS.toInt()
+796:            ).toLong()
+797:    }
+798:
+799:    private fun resolveMaxExpandClicksPerRound(collectionConfig: CollectionConfig? = null): Int {
+800:        return collectionConfig?.maxExpandClicksPerRound?.takeIf { it > 0 }
+801:            ?: service.configManager.getPluginConfigInt(
+802:                "system",
+803:                KEY_MAX_EXPAND_CLICKS_PER_ROUND,
+804:                DEFAULT_MAX_EXPAND_CLICKS_PER_ROUND
+805:            )
+806:    }
+807:
+808:    private fun resolveStopTextsAll(collectionConfig: CollectionConfig? = null): List<String> {
+809:        return collectionConfig?.stopTextsAll
+810:            ?.map { it.trim() }
+811:            ?.filter { it.isNotEmpty() }
+812:            ?.distinct()
+813:            .orEmpty()
+814:    }
+815:
+816:    private fun resolveStopTextsAny(collectionConfig: CollectionConfig? = null): List<String> {
+817:        return collectionConfig?.stopTextsAny
+818:            ?.map { it.trim() }
+819:            ?.filter { it.isNotEmpty() }
+820:            ?.distinct()
+821:            .orEmpty()
+822:    }
+823:
+824:    private fun resolveStopTextsNone(collectionConfig: CollectionConfig? = null): List<String> {
+825:        return collectionConfig?.stopTextsNone
+826:            ?.map { it.trim() }
+827:            ?.filter { it.isNotEmpty() }
+828:            ?.distinct()
+829:            .orEmpty()
+830:    }
+831:}
+832:
+833:data class CaptureExecutionResult(
+834:    val success: Boolean,
+835:    val targetPackage: String,
+836:    val recordCount: Int = 0,
+837:    val data: Map<String, Any> = emptyMap(),
+838:    val errorMessage: String? = null
+839:)
+840:
+841:private data class ActiveCapture(
+842:    val task: HospitalTask,
+843:    val targetPackage: String,
+844:    val navigationPluginId: String? = null,
+845:    var stage: CaptureStage = CaptureStage.OPENING_APP,
+846:    var lastSeenPackage: String = "",
+847:    val recordsByKey: LinkedHashMap<String, ScrapedData> = linkedMapOf(),
+848:    var progressRevision: Int = 0
+849:)
+850:
+851:private enum class CaptureStage {
+852:    OPENING_APP,
+853:    WAITING_TARGET_APP,
+854:    EXECUTING_PLUGIN_FLOW,
+855:    NAVIGATING_GROUPBUY,
+856:    SEARCHING,
+857:    WAITING_RESULT_LIST,
+858:    OPENING_DETAIL,
+859:    COLLECTING,
+860:    CANCELLED
+861:}
+862:
+863:private data class CaptureAttemptResult(
+864:    val records: List<ScrapedData> = emptyList(),
+865:    val errorMessage: String? = null
+866:)
+867:
+868:data class CaptureAppendResult(
+869:    val addedCount: Int = 0,
+870:    val updatedCount: Int = 0
+871:) {
+872:    val changed: Boolean
+873:        get() = addedCount > 0 || updatedCount > 0
+874:}
+875:
+876:private fun ActiveCapture.appendRecords(records: List<ScrapedData>): CaptureAppendResult {
+877:    synchronized(this) {
+878:        var addedCount = 0
+879:        var updatedCount = 0
+880:        records.forEach { record ->
+881:            val key = ScrapedRecordIdentity.buildBusinessKey(record)
+882:            val existing = recordsByKey[key]
+883:            if (existing == null) {
+884:                recordsByKey[key] = record
+885:                addedCount++
+886:            } else {
+887:                val merged = ScrapedRecordIdentity.merge(existing, record)
+888:                if (merged != existing) {
+889:                    recordsByKey[key] = merged
+890:                    updatedCount++
+891:                }
+892:            }
+893:        }
+894:        if (addedCount > 0 || updatedCount > 0) {
+895:            progressRevision++
+896:        }
+897:        return CaptureAppendResult(addedCount = addedCount, updatedCount = updatedCount)
+898:    }
+899:}
+900:
+901:private fun ActiveCapture.recordCount(): Int {
+902:    synchronized(this) {
+903:        return recordsByKey.size
+904:    }
+905:}
+906:
+907:private fun ActiveCapture.snapshotRecords(): List<ScrapedData> {
+908:    synchronized(this) {
+909:        return recordsByKey.values.toList()
+910:    }
+911:}
+912:
+913:private fun ActiveCapture.revision(): Int {
+914:    synchronized(this) {
+915:        return progressRevision
+916:    }
+917:}

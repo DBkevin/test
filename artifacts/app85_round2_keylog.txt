@@ -1,0 +1,875 @@
+234:03-18 12:05:18.893  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+235:03-18 12:05:18.893  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+236:03-18 12:05:18.893  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+1132:03-18 12:05:23.903  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+1133:03-18 12:05:23.903  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+1134:03-18 12:05:23.903  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+1892:03-18 12:05:27.047  2792  6863 I ActivityTaskManager: moveTaskToFront: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} caller trace:com.android.server.wm.TaskDisplayArea.onTaskMoved:461 com.android.server.wm.Task.updateTaskMovement:1756 com.android.server.wm.TaskDisplayArea.positionChildTaskAt:425 com.android.server.wm.TaskDisplayArea.positionChildAt:386 com.android.server.wm.Task.moveToFront:6245 com.android.server.wm.Task.moveToFront:6215 com.android.server.wm.Task.moveToFront:6205 com.android.server.wm.Task.adjustFocusToNextFocusableTask:3481 com.android.server.wm.Task.adjustFocusToNextFocusableTask:3378 com.android.server.wm.RootWindowContainer.ensureVisibilityOnVisibleActivityDiedOrCrashed:2763
+1895:03-18 12:05:27.048  2792  6863 D PerfStubImpl: perfWarmLaunchBoost: com.example.a11yframework, -1, 1
+1896:03-18 12:05:27.049  2792  6863 D WindowManager: Collecting in transition 6553: ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} init visibleRequested:false dc:Display{#0 state=ON size=1440x3200 ROTATION_0}
+1897:03-18 12:05:27.049  2792  6863 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+1898:03-18 12:05:27.050  2792  6863 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} shouldbeVisible:true isVisible:false isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+1899:03-18 12:05:27.051  2792  6863 I SmartPower: com.example.a11yframework/10389(8696): idle->invisible(126783ms) R(become foreground) adj=200.
+1900:03-18 12:05:27.053  2792  6863 D AurogonImmobulusMode: launch app processName = com.example.a11yframework uid = 10389
+1904:03-18 12:05:27.054  2792  6863 D BarFollowAnimation: isAppTaskBarOnTop win:Window{657a422 u0 com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} : false); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+1908:03-18 12:05:27.058  2792  7322 D WindowManager:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+1914:03-18 12:05:27.058  2792  7322 D WindowManager:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x0}
+1935:03-18 12:05:27.061  2792  2869 D BarFollowAnimation: isAppTaskBarOnTop win:Window{657a422 u0 com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} : false); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+1944:03-18 12:05:27.061  2792  2869 I BLASTSyncEngine: SyncGroup 6553:  Unfinished container:ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+1945:03-18 12:05:27.061  2792  2869 I BLASTSyncEngine: isActivitySyncFinished isSyncFinished false ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+1953:03-18 12:05:27.062  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=false, bounds=Rect(0, 0 - 1440, 3200), focused=true, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.decoration.MiuiDecorationController.relayout:4 com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskInfoChanged:18 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskListener.onTaskInfoChanged:47 com.android.wm.shell.ShellTaskOrganizer.onTaskInfoChanged:136 android.window.TaskOrganizer$1.lambda$onTaskInfoChanged$6:300
+1956:03-18 12:05:27.063  6048  6293 D MiuiFreeformModeController: onFocusTaskChanged taskInfo: TaskInfo{userId=0 taskId=2168 effectiveUid=10389 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity } baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} origActivity=null realActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} numActivities=1 lastActiveTime=428834525 supportsSplitScreenMultiWindow=true mSoScDisplayMode=-1 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@622ca78} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 0 - 0, 0) topActivityInfo=ActivityInfo{750f551 com.example.a11yframework.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=false isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(376, 921 - 1065, 2361) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false topActivityInMiuiSizeCompat=false isLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 138 - 1440, 3144) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} isImmersive=false mTopActivityRequestOrientation=-1 mStatusBarParent=null mNavBarParent=null mBehindAppLockPkg=null mOriginatingUid=0 isEmbedded=false shouldBeVisible=true isCreatedByOrganizer=false mIsCastMode=false mTopActivityMediaSize=null mTopActivityRecordName=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} mTopActivityOrientation=-1 topActivityMainWindowFrame=null}
+1968:03-18 12:05:27.064  2792  6863 D WindowManager:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+1974:03-18 12:05:27.064  2792  6863 D WindowManager:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x0}
+1978:03-18 12:05:27.064  5781  5931 I DynamicDDSService: handleMessage(ACTIVITY_INVOKE{appInfo=com.example.a11yframework isFullScreen=}true)
+1982:03-18 12:05:27.064  2792  6863 D WindowManager:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+1988:03-18 12:05:27.064  2792  6863 D WindowManager:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x0}
+2054:03-18 12:05:27.069  2792  4782 E TransitionChain:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+2060:03-18 12:05:27.069  2792  4782 E TransitionChain:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x0}
+2065:03-18 12:05:27.069  2792  4782 E TransitionChain:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+2071:03-18 12:05:27.069  2792  4782 E TransitionChain:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x0}
+2079:03-18 12:05:27.073 17790 17790 D AppLifecycleObserver: onReceive: com.example.a11yframework FOREGROUND
+2080:03-18 12:05:27.074  5303  6787 D RecentsImpl: onForegroundChanged, foregroundPackageName=com.example.a11yframework
+2081:03-18 12:05:27.075 17790 17790 D PkgUtils: getApplicationInfo packageName:com.example.a11yframework, flags:128 applicationInfo:ApplicationInfo{282127e com.example.a11yframework} needSecondSpace:false
+2099:03-18 12:05:27.080  5303  7468 W RecentsModel: getRunningTask   taskInfo=TaskInfo{userId=0 taskId=2168 effectiveUid=10389 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity } baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} origActivity=null realActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} numActivities=1 lastActiveTime=428834559 supportsSplitScreenMultiWindow=true mSoScDisplayMode=-1 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@a09ac87} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 0 - 0, 0) topActivityInfo=ActivityInfo{19c7b4 com.example.a11yframework.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=false isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(376, 921 - 1065, 2361) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false topActivityInMiuiSizeCompat=false isLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 138 - 1440, 3144) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} isImmersive=false mTopActivityRequestOrientation=-1 mStatusBarParent=null mNavBarParent=null mBehindAppLockPkg=null mOriginatingUid=0 isEmbedded=false shouldBeVisible=true isCreatedByOrganizer=false mIsCastMode=false mTopActivityMediaSize=null mTopActivityRecordName=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} mTopActivityOrientation=-1 topActivityMainWindowFrame=null}
+2108:03-18 12:05:27.088  6048  6048 D KeyguardEditorHelper: onTopActivityMayChanged, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}; mState=IDEL
+2124:03-18 12:05:27.096  8696  8696 D Activity: Activity = ActivityInfo{9565ed2 com.example.a11yframework.MainActivity}, Resume onConfigurationChanged = {1.0 460mcc11mnc [zh_CN] ldltr sw411dp w411dp h859dp 560dpi nrml long hdr widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1440, 3200) mAppBounds=Rect(0, 138 - 1440, 3144) mMaxBounds=Rect(0, 0 - 1440, 3200) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false embeddingScale=1.0} as.3 s.2 fontWeightAdjustment=0/d/0 themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+2201:03-18 12:05:27.102  5303  7468 E ActivityManagerWrapper:  mainTaskId=2168   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} }
+2214:03-18 12:05:27.105  5303  7468 D RecentsTaskLoader: reloadTasksData [TaskKey{id=2168, stackId=0, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity }, userId=0, lastActiveTime=428834525, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, mHashCode=65510440}, title=智能辅助, titleDescription=智能辅助, bounds=null, isLaunchTarget=true, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=, cti1Task=, cti2Task=]
+2235:03-18 12:05:27.115  8696  9206 I ContentCatcher: SettingTrigger : register screen QA status observer com.example.a11yframework.MainActivity
+2255:03-18 12:05:27.121  8696  9206 I ContentCatcher: SettingTrigger : register global collect status observer com.example.a11yframework.MainActivity
+2256:03-18 12:05:27.122  8696  9206 I ContentCatcher: SettingTrigger : registerUIAgentListener com.example.a11yframework.MainActivity, uid:10389
+2262:03-18 12:05:27.126 17790 30211 D services: [XMS][observer] ActivityObserver activityResumed packageName: com.example.a11yframework
+2264:03-18 12:05:27.127  2792  6860 I DataHub : registerUIAgentListener packageName: com.example.a11yframework~10389, client:miui.security.IUIAgentInteractionClient$Stub$Proxy@35890e9
+2265:03-18 12:05:27.127  2792  6860 I RemoteCallbackList: register success, put callback for com.example.a11yframework~10389
+2269:03-18 12:05:27.128 10033 10064 I travelService_ActivityObserverUtils: activityResumed ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+2276:03-18 12:05:27.129 17790 30211 D AppUpdateXmsfLauncher: activityResumed intent : Intent { cmp=com.example.a11yframework/.MainActivity (has extras) }
+2278:03-18 12:05:27.129 10033 10064 I ActivityObserverUtil: activityResumed ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+2280:03-18 12:05:27.130  5303  5303 D RecentsImpl: mActivityStateObserver com.example.a11yframework.MainActivity
+2282:03-18 12:05:27.130  5303  5303 W RecentsImpl: updateGestureWindowVisibleImpl, className=com.example.a11yframework.MainActivity
+2296:03-18 12:05:27.131 10033 10064 I TopActivityMonitor: send TopActivityChangeEvent=TopActivityChangeEvent(prev=ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity}, current=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity},appChanged=true)
+2297:03-18 12:05:27.131 26315 26557 D auth    : [XMS][Auth] ActivityObserver activityResumed packageName: com.example.a11yframework
+2299:03-18 12:05:27.131  2792  6863 D BarFollowAnimation: isAppTaskBarOnTop win:Window{657a422 u0 com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} : false); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+2302:03-18 12:05:27.132  2792  6863 I BLASTSyncEngine: SyncGroup 6553:  Unfinished container:ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+2303:03-18 12:05:27.132  2792  6863 I BLASTSyncEngine: isActivitySyncFinished isSyncFinished false ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+2334:03-18 12:05:27.135  2792  4844 I AudioGameEffect: foreground change to com.example.a11yframework, last foreground is com.ss.android.ugc.aweme
+2350:03-18 12:05:27.136  2792  4844 D EventReceiver: foregroundChange uid  uid=10389 pkg=com.example.a11yframework
+2357:03-18 12:05:27.136 10525 15377 I ProcessMonitor: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.example.a11yframework', mForegroundUid=10389, mForegroundPid=8696, mForegroundDisplayId=0, mLastForegroundPackageName='com.ss.android.ugc.aweme', mLastForegroundUid=10206, mLastForegroundPid=1576, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.example.a11yframework', mMultiWindowForegroundUid=10389, mFlags=0}
+2358:03-18 12:05:27.136  5914  7838 D HyperComm_AppMonitor: onForegroundInfoChanged: foregroundInfo = ForegroundInfo{mForegroundPackageName='com.example.a11yframework', mForegroundUid=10389, mForegroundPid=8696, mForegroundDisplayId=0, mLastForegroundPackageName='com.ss.android.ugc.aweme', mLastForegroundUid=10206, mLastForegroundPid=1576, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.example.a11yframework', mMultiWindowForegroundUid=10389, mFlags=0}
+2359:03-18 12:05:27.137  2792  4844 I MiuiNetworkPolicyQosUtils: onActivityChanged pre:ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity},cur:ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity},data=false
+2362:03-18 12:05:27.137 10525 16103 I BeautyService: notifyChange! preName = ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity}; curName = ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+2363:03-18 12:05:27.137 11607 19621 D PerfEngineController: ForegroundInfo{mForegroundPackageName='com.example.a11yframework', mForegroundUid=10389, mForegroundPid=8696, mForegroundDisplayId=0, mLastForegroundPackageName='com.ss.android.ugc.aweme', mLastForegroundUid=10206, mLastForegroundPid=1576, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.example.a11yframework', mMultiWindowForegroundUid=10389, mFlags=0}
+2367:03-18 12:05:27.140 10525 16103 I BeautyService: inSplitScreenMode = false, isFrontCameraOpen = false, mCurPkgName = com.example.a11yframework, mCurClsName = com.example.a11yframework.MainActivity
+2369:03-18 12:05:27.141  6048  6048 D DynamicIslandTopActivityController: fullscreen: com.example.a11yframework
+2370:03-18 12:05:27.141  5760 15662 D BluetoothLatencyMode: ForegroundInfo{mForegroundPackageName='com.example.a11yframework', mForegroundUid=10389, mForegroundPid=8696, mForegroundDisplayId=0, mLastForegroundPackageName='com.ss.android.ugc.aweme', mLastForegroundUid=10206, mLastForegroundPid=1576, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.example.a11yframework', mMultiWindowForegroundUid=10389, mFlags=0}
+2371:03-18 12:05:27.141  6048  6048 D DynamicIslandController: onTopActivityChanged: ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+2373:03-18 12:05:27.142 10525 15377 I GameBoosterService: onForegroundInfoChanged: Cur=com.example.a11yframework	 last=com.ss.android.ugc.aweme
+2381:03-18 12:05:27.143 14423 14530 I GST     : forePkg: com.example.a11yframework, preForePkg: com.ss.android.ugc.aweme
+2382:03-18 12:05:27.145 10525 15377 D GameBoosterService: onGameStatusChange foreground:ForegroundInfo{mForegroundPackageName='com.example.a11yframework', mForegroundUid=10389, mForegroundPid=8696, mForegroundDisplayId=0, mLastForegroundPackageName='com.ss.android.ugc.aweme', mLastForegroundUid=10206, mLastForegroundPid=1576, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.example.a11yframework', mMultiWindowForegroundUid=10389, mFlags=0}
+2385:03-18 12:05:27.146 10525 13531 E SuggestManager: openApp name = com.example.a11yframework
+2395:03-18 12:05:27.152  2792  6863 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} : false); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+2440:03-18 12:05:27.156  2792  6863 D WindowManager: updateSystemBarAttributes displayId: 0 Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} winAppearance=
+2441:03-18 12:05:27.156  2792  6863 D WindowManager: wms.Input focus has changed to Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} display=0 updateInputWindows = true
+2443:03-18 12:05:27.156  2792  2866 D WmSystemUiDebug: on system bar attributes changed displayId=0 appearance= appearanceRegions=[AppearanceRegion{LIGHT_STATUS_BARS bounds=[0,0][1440,3200]}] navbarColorManagedByIme=true behavior=1 requestedVisibleTypes=[statusBars navigationBars captionBar systemGestures mandatorySystemGestures tappableElement displayCutout windowDecor systemOverlays] packageName=com.example.a11yframework letterboxDetails=[]
+2444:03-18 12:05:27.157  2792  6863 I WindowManager: Allow fixed rotation for during interrupt anim activity r=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+2457:03-18 12:05:27.157  8696  8696 W e.a11yframework: type=1400 audit(0.0:2940008): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=506 scontext=u:r:untrusted_app:s0:c133,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.example.a11yframework
+2459:03-18 12:05:27.157  8696  8696 W e.a11yframework: type=1400 audit(0.0:2940010): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=506 scontext=u:r:untrusted_app:s0:c133,c257,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.example.a11yframework
+2465:03-18 12:05:27.164  6048  6048 D DynamicIslandWindowViewController: onTopActivityChange: topActivity ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, inSmallWindow false, isSupportPip false, isFocus true fullScreenPkg j1.J@cdcb8ef
+2467:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: cancelDelayEnterApp com.example.a11yframework com.android.deskclock
+2468:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: cancelDelayEnterMiniWindow com.example.a11yframework com.example.a11yframework null
+2469:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: cancelDelayExitApp com.example.a11yframework com.ss.android.ugc.aweme
+2470:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: cancelDelayExitMiniWindow com.example.a11yframework null
+2472:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: delayExitApp com.example.a11yframework
+2473:03-18 12:05:27.164  6048  6048 D DynamicIslandSafeguardsController: cancelDelayExitApp com.example.a11yframework com.example.a11yframework
+2477:03-18 12:05:27.165 10525 15377 I BeautyService: onForegroundInfoChanged: Cur=com.example.a11yframework	 last=com.ss.android.ugc.aweme
+2492:03-18 12:05:27.170  6001  6970 D NetworkMetricsController: processUidChangeEvent :activity is:ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+2498:03-18 12:05:27.178  2792 11051 D WindowManager: wms.finishDrawingLocked: mDrawState=COMMIT_DRAW_PENDING Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} in Surface(name=com.example.a11yframework/com.example.a11yframework.MainActivity#105859)/@0xfcdb00f
+2500:03-18 12:05:27.179  2792  2869 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} : false); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+2502:03-18 12:05:27.179  2792  2869 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} in Surface(name=com.example.a11yframework/com.example.a11yframework.MainActivity#105859)/@0xfcdb00f
+2504:03-18 12:05:27.180  2792  2869 I SmartPower: com.example.a11yframework/10389(8696): invisible->visible(129ms) R(become visible) adj=0.
+2505:03-18 12:05:27.180  2792  2869 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} shouldbeVisible:true isVisible:true isOnTop:true windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+2506:03-18 12:05:27.180  2792  2869 D WindowManager: wms.commitFinishDrawingLocked: mDrawState=READY_TO_SHOW Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} in Surface(name=com.example.a11yframework/com.example.a11yframework.MainActivity#105859)/@0xfcdb00f
+2507:03-18 12:05:27.180  2792  2869 I WindowManager: wms.showSurfaceRobustly mWin:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} in Surface(name=com.example.a11yframework/com.example.a11yframework.MainActivity#105859)/@0xfcdb00f
+2518:03-18 12:05:27.181  2792  2869 D WindowManager: Final targets: [ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x30}, ChangeInfo{16e1899 container=Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme} flags=0x10}]
+2520:03-18 12:05:27.183  2792  2869 I DynamicIslandService: elementSurfaceTransition is null for:com.example.a11yframework
+2523:03-18 12:05:27.184  2792  2869 D WindowManager: Calling onTransitionReady info={id=6553 t=CLOSE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_FRONT f=MOVE_TO_TOP leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=trueMiuiChangeImpl {miuiEmbedding:false, scale:1.0}},{WCT{RemoteToken{5bb761d Task{4945132 #2169 type=standard A=10206:com.ss.android.ugc.aweme}}} m=TO_BACK f=NONE leash=Surface(name=Task=2169#105772)/@0xaa6953d sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=falseMiuiChangeImpl {miuiEmbedding:false, scale:1.0}}] mk=[true] noAni=[false] df=[false] rsa=[false] oa=[false] nc=[0] ho=[false] hla=[false] iSync=[-1]}, mToken=Token{7842f15 TransitionRecord{20ccde0 id=6553 type=CLOSE flags=0x0 c=[
+2525:03-18 12:05:27.184  2792  2869 D WindowManager:    ChangeInfo{6b5475e container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+2531:03-18 12:05:27.184  2792  2869 D WindowManager:    ChangeInfo{27a78f8 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x30}
+2535:03-18 12:05:27.184  2792  5125 D BarFollowAnimation: disableBarAnimation change={WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_FRONT f=MOVE_TO_TOP leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=trueMiuiChangeImpl {miuiEmbedding:false, scale:1.0}} 1 1
+2540:03-18 12:05:27.185  2792  5125 D BarFollowAnimation: startStatusBarAnimation change= {WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_FRONT f=MOVE_TO_TOP leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=trueMiuiChangeImpl {miuiEmbedding:false, scale:1.0}} isRecent=false startWindowMode=1 endWindowMode=1 statusState=-1 isRotationAnimation=false
+2542:03-18 12:05:27.185  2792  5125 D BarFollowAnimation: startStatusBarAnimation task=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+2544:03-18 12:05:27.185  2792  5125 D BarFollowAnimation: bindAssociatedTask task=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+2545:03-18 12:05:27.185  2792  5125 D BarFollowAnimation: bindAssociatedTask task=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+2561:03-18 12:05:27.188  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=true, bounds=Rect(0, 0 - 1440, 3200), focused=true, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskChanging:110 com.android.wm.shell.freeform.FreeformTaskTransitionObserver.onTransitionReady:283 com.android.wm.shell.transition.Transitions.dispatchReady:241 com.android.wm.shell.transition.Transitions.onTransitionReady:269 com.android.wm.shell.transition.Transitions$TransitionPlayerImpl$$ExternalSyntheticLambda1.run:48
+2616:03-18 12:05:27.194  2792  2869 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+2617:03-18 12:05:27.195  2792  2869 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+2618:03-18 12:05:27.195  2792  2869 D WindowManager: updateSystemBarAttributes displayId: 16777216 Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} winAppearance=
+2620:03-18 12:05:27.195  2792  2866 D WmSystemUiDebug: on system bar attributes changed displayId=16777216 appearance= appearanceRegions=[AppearanceRegion{ bounds=[0,0][1440,3200]}] navbarColorManagedByIme=true behavior=1 requestedVisibleTypes=[statusBars navigationBars captionBar systemGestures mandatorySystemGestures tappableElement displayCutout windowDecor systemOverlays] packageName=com.example.a11yframework letterboxDetails=[]
+2628:03-18 12:05:27.197  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=true, bounds=Rect(0, 0 - 1440, 3200), focused=true, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.decoration.MiuiDecorationController.relayout:4 com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskInfoChanged:18 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskListener.onTaskInfoChanged:47 com.android.wm.shell.ShellTaskOrganizer.onTaskInfoChanged:136 android.window.TaskOrganizer$1.lambda$onTaskInfoChanged$6:300
+2658:03-18 12:05:27.204  2792  4782 D ActivityTaskManager:  setSkipCaptureLayers tr: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+2676:03-18 12:05:27.207  2792  6863 D ActivityTaskManager:  setSkipCaptureLayers tr: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+2712:03-18 12:05:27.217  2792  2869 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+2714:03-18 12:05:27.218  2792  2869 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+2718:03-18 12:05:27.219  2792  2869 D WindowManager: updateSystemBarAttributes displayId: 16777216 Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} winAppearance=
+2724:03-18 12:05:27.219  2792  2866 D WmSystemUiDebug: on system bar attributes changed displayId=16777216 appearance=LIGHT_NAVIGATION_BARS appearanceRegions=[AppearanceRegion{ bounds=[0,0][1440,3200]}] navbarColorManagedByIme=false behavior=1 requestedVisibleTypes=[statusBars navigationBars captionBar systemGestures mandatorySystemGestures tappableElement displayCutout windowDecor systemOverlays] packageName=com.example.a11yframework letterboxDetails=[]
+2791:03-18 12:05:27.238  4557  4557 D SogouIME: onStartInput: attribute:com.example.a11yframework 247030073 restarting:false
+2816:03-18 12:05:27.243  4557  4557 D SogouIME: onStartInputView: attribute:com.example.a11yframework 247030073 restarting:false
+2900:03-18 12:05:27.273  2792  6861 D CoreBackPreview: Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@c4e9701, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+2911:03-18 12:05:27.279  2792  6861 D CoreBackPreview: Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@b3ec9a6, mPriority=0, mIsAnimationCallback=false, mOverrideBehavior=0}
+2959:03-18 12:05:27.320  6048  6048 D DynamicIslandSafeguardsController: delayExitApp: com.example.a11yframework com.example.a11yframework count = 0
+2971:03-18 12:05:27.326  8696  8696 D A11yFramework: Window changed to: com.android.systemui
+2978:03-18 12:05:27.330  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+2984:03-18 12:05:27.331  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3002:03-18 12:05:27.332  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3003:03-18 12:05:27.333  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3025:03-18 12:05:27.334  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3026:03-18 12:05:27.334  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3031:03-18 12:05:27.335  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3032:03-18 12:05:27.335  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3035:03-18 12:05:27.336  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3036:03-18 12:05:27.336  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3040:03-18 12:05:27.337  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3041:03-18 12:05:27.338  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3096:03-18 12:05:27.345 14423 14954 I HeavyPackageIdentify: splitMode: false, splitPackages: null, foregroundPkg: com.example.a11yframework
+3483:03-18 12:05:27.784  2792  2853 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3484:03-18 12:05:27.785  2792  2853 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3491:03-18 12:05:27.791  2792  2853 I WindowManager: Allow fixed rotation for not collecting:ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168}
+3509:03-18 12:05:27.795  2792  2853 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3510:03-18 12:05:27.796  2792  2853 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3631:03-18 12:05:28.022  2792  2853 I TransitionImpl: finishTransition: updateLastSurfacePosition tf=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+3632:03-18 12:05:28.023  2792  2853 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3633:03-18 12:05:28.023  2792  2853 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3639:03-18 12:05:28.025  2792  2853 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3640:03-18 12:05:28.025  2792  2853 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3643:03-18 12:05:28.027  2792  2853 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+3644:03-18 12:05:28.027  2792  2853 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+3664:03-18 12:05:28.032  2792  5125 D BarFollowAnimation: checkBarStatus mReparentToOriginParent:false hasTopFullAppTask:true mHomeTask:Task{b24e070 #1 type=home} mCurrentTopTask: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} mAssociatedTask: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} homeTaskonTop:false mLastAppBarVisible:true mLastHomeBarVisible:false isInSplitScreen:false
+3666:03-18 12:05:28.033  2792  5125 D BarFollowAnimation:  showAppNavBar  packageName = com.example.a11yframework mHasHideAppSurface = false mIsKeyguardGoingAway = false mNavBarState = -1
+3674:03-18 12:05:28.033  2792  5125 D BarFollowAnimation: calculateAppSurface: task=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} appSurface=Surface(name=NavigationBar Container of Task = 2168#105731)/@0xd207541
+3692:03-18 12:05:28.041  5303  7468 W RecentsModel: getRunningTask   taskInfo=TaskInfo{userId=0 taskId=2168 effectiveUid=10389 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity } baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} origActivity=null realActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} numActivities=1 lastActiveTime=428835520 supportsSplitScreenMultiWindow=true mSoScDisplayMode=-1 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@9aa6eaa} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 0 - 0, 0) topActivityInfo=ActivityInfo{cc51a9b com.example.a11yframework.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(376, 921 - 1065, 2361) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false topActivityInMiuiSizeCompat=false isLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 138 - 1440, 3144) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} isImmersive=false mTopActivityRequestOrientation=-1 mStatusBarParent=null mNavBarParent=null mBehindAppLockPkg=null mOriginatingUid=0 isEmbedded=false shouldBeVisible=true isCreatedByOrganizer=false mIsCastMode=false mTopActivityMediaSize=null mTopActivityRecordName=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} mTopActivityOrientation=-1 topActivityMainWindowFrame=null}
+3695:03-18 12:05:28.047  5303  7468 E ActivityManagerWrapper:  mainTaskId=2168   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} }
+3703:03-18 12:05:28.047  5303  7468 D RecentsTaskLoader: reloadTasksData [TaskKey{id=2168, stackId=0, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity }, userId=0, lastActiveTime=428834525, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, mHashCode=65510440}, title=智能辅助, titleDescription=智能辅助, bounds=null, isLaunchTarget=true, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=, cti1Task=, cti2Task=]
+3845:03-18 12:05:28.139  6001  6966 D FiveGPowerController: PowerSaveOpt: processForegroundForPowerSave com.example.a11yframework, isWhiteApp=false
+3851:03-18 12:05:28.140  6001  6970 D NetworkMetricsController: processForegroundInfoEvent com.example.a11yframework,false,false
+4391:03-18 12:05:28.914  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+4392:03-18 12:05:28.914  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+4393:03-18 12:05:28.914  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+4463:03-18 12:05:29.158 10525 13483 I BeautyService: updateForegroundInfo new = ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, old Pkg = com.example.a11yframework, old ClsName = com.example.a11yframework.MainActivity
+4464:03-18 12:05:29.160 10525 13483 I BeautyService: inSplitScreenMode = false, isFrontCameraOpen = false, mCurPkgName = com.example.a11yframework, mCurClsName = com.example.a11yframework.MainActivity
+4826:03-18 12:05:29.500  2792  2853 D Transition: setReady 6554 wc=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} ready=false
+4834:03-18 12:05:29.501  5781 20645 W DynamicDDSService: appName is running in background.com.example.a11yframework
+4843:03-18 12:05:29.505  8696  9206 I ContentCatcher: SettingTrigger : unregister status observer com.example.a11yframework.MainActivity
+4860:03-18 12:05:29.509  2792  6858 D WindowManager: Collecting in transition 6554: ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} init visibleRequested:true dc:Display{#0 state=ON size=1440x3200 ROTATION_0}
+4867:03-18 12:05:29.511  2792  6858 D BarFollowAnimation: pairAppearanceRegionAndWin win=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} 0
+4870:03-18 12:05:29.511  2792  6858 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{2b4dcfe #2170 type=standard A=10206:com.ss.android.ugc.aweme} : true); (mAssociatedTask:Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+4871:03-18 12:05:29.511  2792  6858 D WindowManager: updateSystemBarAttributes displayId: 0 Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} winAppearance=
+4872:03-18 12:05:29.511  8696  9206 I ContentCatcher: SettingTrigger : unregisterUIAgentListener com.example.a11yframework.MainActivity, uid:10389
+4874:03-18 12:05:29.511  2792  2866 D WmSystemUiDebug: on system bar attributes changed displayId=0 appearance=LIGHT_NAVIGATION_BARS appearanceRegions=[AppearanceRegion{ bounds=[0,0][1440,3200]}] navbarColorManagedByIme=false behavior=1 requestedVisibleTypes=[statusBars navigationBars captionBar systemGestures mandatorySystemGestures tappableElement displayCutout windowDecor systemOverlays] packageName=com.example.a11yframework letterboxDetails=[]
+4875:03-18 12:05:29.511  2792  2853 I DataHub : unregisterUIAgentListener packageName: com.example.a11yframework~10389
+4876:03-18 12:05:29.511  2792  2853 I RemoteCallbackList: unregister success, remove callback for com.example.a11yframework~10389
+4892:03-18 12:05:29.512  2792  6858 D WindowManager: Final targets: [ChangeInfo{fff2dc container=Task{2b4dcfe #2170 type=standard A=10206:com.ss.android.ugc.aweme} flags=0x10}, ChangeInfo{fab1886 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x10}]
+4895:03-18 12:05:29.515  2792  6858 I DynamicIslandService: elementSurfaceTransition is null for:com.example.a11yframework
+4897:03-18 12:05:29.515  2792  6858 D WindowManager: Calling onTransitionReady info={id=6554 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{9103712 Task{2b4dcfe #2170 type=standard A=10206:com.ss.android.ugc.aweme}}} m=OPEN f=NONE leash=Surface(name=Task=2170#105875)/@0xc3e00b9 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=trueMiuiChangeImpl {miuiEmbedding:false, scale:1.0}},{WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_BACK f=NONE leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=falseMiuiChangeImpl {miuiEmbedding:false, scale:1.0}}] mk=[true] noAni=[false] df=[false] rsa=[false] oa=[false] nc=[0] ho=[false] hla=[true] iSync=[-1]}, mToken=Token{69b1ee3 TransitionRecord{d37e303 id=6554 type=OPEN flags=0x0 c=[
+4899:03-18 12:05:29.515  2792  6858 D WindowManager:    ChangeInfo{a0780e0 container=ActivityRecord{82554940 u0 com.example.a11yframework/.MainActivity t2168} flags=0x0}
+4902:03-18 12:05:29.515  2792  6858 D WindowManager:    ChangeInfo{fab1886 container=Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} flags=0x10}
+4907:03-18 12:05:29.515  2792  5125 D BarFollowAnimation: disableBarAnimation change={WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_BACK f=NONE leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=falseMiuiChangeImpl {miuiEmbedding:false, scale:1.0}} 1 1
+4909:03-18 12:05:29.515  2792  5125 D BarFollowAnimation: startStatusBarAnimation change= {WCT{RemoteToken{601840f Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}}} m=TO_BACK f=NONE leash=Surface(name=Task=2168#105730)/@0x27481c5 sb=Rect(0, 0 - 1440, 3200) eb=Rect(0, 0 - 1440, 3200) epz=Point(1440, 3200) d=0 taskParent=-1 v=falseMiuiChangeImpl {miuiEmbedding:false, scale:1.0}} isRecent=false startWindowMode=1 endWindowMode=1 statusState=-1 isRotationAnimation=false
+4914:03-18 12:05:29.516  2792  6858 E WindowManager:  source = Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} excludeMiuiNavBar = true excludeMiuiStatusBar = true excludeIme = false excludeNavBar = true miuiNavSurfaceControl = Surface(name=NavigationBar Container of Task = 2168#105731)/@0xd207541 miuiStatusSurfaceControl = Surface(name=StatusBar Container of Task = 2168#105733)/@0xbd1eae6
+4921:03-18 12:05:29.519  2414  2414 I SurfaceFlinger: SF-MICapture: mode:0, layerName:com.example.a11yframework/com.example.a11yframework.MainActivity#105859
+4926:03-18 12:05:29.524  2792  6858 D WindowManager: snapshot isNothing = false source = Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+4929:03-18 12:05:29.525  2792  2869 D WindowManager: wms.Focus not requested for window=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} because it has no surface or is not focusable.
+5009:03-18 12:05:29.532  2792  2869 D WindowManager: wms.Focus not requested for window=Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} because it has no surface or is not focusable.
+5020:03-18 12:05:29.533  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=true, bounds=Rect(0, 0 - 1440, 3200), focused=true, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskChanging:110 com.android.wm.shell.freeform.FreeformTaskTransitionObserver.onTransitionReady:187 com.android.wm.shell.transition.Transitions.dispatchReady:241 com.android.wm.shell.transition.Transitions.onTransitionReady:269 com.android.wm.shell.transition.Transitions$TransitionPlayerImpl$$ExternalSyntheticLambda1.run:48
+5092:03-18 12:05:29.544  2792  6318 D ActivityTaskManager:  setSkipCaptureLayers tr: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+5142:03-18 12:05:29.549  2792 11073 D BarFollowAnimation: isAppTaskBarOnTop win:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} (mCurrentTopTask:Task{2b4dcfe #2170 type=standard A=10206:com.ss.android.ugc.aweme} : true); (mAssociatedTask:Task{2b4dcfe #2170 type=standard A=10206:com.ss.android.ugc.aweme} : true); (mHomeTask:Task{b24e070 #1 type=home} : false); mReparentToOriginParent:false mLastAppBarVisible:true mLastHomeBarVisible:false
+5143:03-18 12:05:29.550  2792 11073 D WindowManager: updateSystemBarAttributes displayId: 16777216 Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} winAppearance=
+5145:03-18 12:05:29.550  2792  2866 D WmSystemUiDebug: on system bar attributes changed displayId=16777216 appearance= appearanceRegions=[AppearanceRegion{ bounds=[0,0][1440,3200]}] navbarColorManagedByIme=false behavior=1 requestedVisibleTypes=[statusBars navigationBars captionBar systemGestures mandatorySystemGestures tappableElement displayCutout windowDecor systemOverlays] packageName=com.example.a11yframework letterboxDetails=[]
+5244:03-18 12:05:29.570  5303  7468 E ActivityManagerWrapper:  mainTaskId=2168   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} }
+5315:03-18 12:05:29.584  5303  7468 E ActivityManagerWrapper:  mainTaskId=2168   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} }
+5355:03-18 12:05:29.595  5303  7468 D RecentsTaskLoader: reloadTasksData [TaskKey{id=2168, stackId=0, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity }, userId=0, lastActiveTime=428836974, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, mHashCode=65510440}, title=智能辅助, titleDescription=智能辅助, bounds=null, isLaunchTarget=true, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=, cti1Task=, cti2Task=]
+5392:03-18 12:05:29.603  5303  7468 D RecentsTaskLoader: reloadTasksData [TaskKey{id=2168, stackId=0, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity }, userId=0, lastActiveTime=428836974, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, mHashCode=65510440}, title=智能辅助, titleDescription=智能辅助, bounds=null, isLaunchTarget=true, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=, cti1Task=, cti2Task=]
+5421:03-18 12:05:29.611  6048  6048 D DynamicIslandSafeguardsController: cancelDelayExitApp com.ss.android.ugc.aweme com.example.a11yframework
+5446:03-18 12:05:29.617  5303  7468 E ActivityManagerWrapper:  mainTaskId=2168   userId=0   windowMode=1   isExcludedFromRecents=false   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity} }
+5455:03-18 12:05:29.620  5303  7468 D RecentsTaskLoader: reloadTasksData [TaskKey{id=2168, stackId=0, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.example.a11yframework/.MainActivity }, userId=0, lastActiveTime=428836974, windowingMode=1, isThumbnailBlur=false, isAccessLocked=false, isScreening=false, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, mHashCode=65510440}, title=智能辅助, titleDescription=智能辅助, bounds=null, isLaunchTarget=true, isStackTask=true, isSystemApp=false, isDockable=true, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, isLocked=false, mNeedHide=false, hasMultipleTasks=false, cti1Key=, cti2Key=, cti1Task=, cti2Task=]
+5540:03-18 12:05:29.670  8696  8696 I A11yFramework: Activating plugin from current package snapshot: 功能 A
+5546:03-18 12:05:29.675  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5557:03-18 12:05:29.688  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5567:03-18 12:05:29.692  2792  5814 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5579:03-18 12:05:29.695  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5587:03-18 12:05:29.699  2792  5814 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5598:03-18 12:05:29.702  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5603:03-18 12:05:29.704  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5617:03-18 12:05:29.714  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5632:03-18 12:05:29.737  8696  8696 D A11yFramework: Not a target page, skipping
+5652:03-18 12:05:29.741  2792  5679 E ClipboardService: Denying clipboard access to com.example.a11yframework, application is not in focus nor is it a system service for user 0
+5671:03-18 12:05:29.756  8696  8696 D A11yFramework: Not a target page, skipping
+6323:03-18 12:05:30.157 10525 13539 D AppPredictService: start doPredict com.example.a11yframework
+6340:03-18 12:05:30.163  2792  7329 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} shouldbeVisible:false isVisible:true isOnTop:false windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+6384:03-18 12:05:30.170  2792  4844 I AudioGameEffect: foreground change to com.ss.android.ugc.aweme, last foreground is com.example.a11yframework
+6391:03-18 12:05:30.171 11607 15200 D PerfEngineController: ForegroundInfo{mForegroundPackageName='com.ss.android.ugc.aweme', mForegroundUid=10206, mForegroundPid=7200, mForegroundDisplayId=0, mLastForegroundPackageName='com.example.a11yframework', mLastForegroundUid=10389, mLastForegroundPid=8696, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.ss.android.ugc.aweme', mMultiWindowForegroundUid=10206, mFlags=1}
+6392:03-18 12:05:30.171  5760  3136 D BluetoothLatencyMode: ForegroundInfo{mForegroundPackageName='com.ss.android.ugc.aweme', mForegroundUid=10206, mForegroundPid=7200, mForegroundDisplayId=0, mLastForegroundPackageName='com.example.a11yframework', mLastForegroundUid=10389, mLastForegroundPid=8696, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.ss.android.ugc.aweme', mMultiWindowForegroundUid=10206, mFlags=1}
+6393:03-18 12:05:30.171 10525 11360 I ProcessMonitor: onForegroundInfoChanged: ForegroundInfo{mForegroundPackageName='com.ss.android.ugc.aweme', mForegroundUid=10206, mForegroundPid=7200, mForegroundDisplayId=0, mLastForegroundPackageName='com.example.a11yframework', mLastForegroundUid=10389, mLastForegroundPid=8696, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.ss.android.ugc.aweme', mMultiWindowForegroundUid=10206, mFlags=1}
+6394:03-18 12:05:30.171  2792  4844 I MiuiNetworkPolicyQosUtils: onActivityChanged pre:ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity},cur:ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity},data=false
+6396:03-18 12:05:30.171 14423 14530 I GST     : forePkg: com.ss.android.ugc.aweme, preForePkg: com.example.a11yframework
+6400:03-18 12:05:30.172 10525 12393 I BeautyService: notifyChange! preName = ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}; curName = ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity}
+6401:03-18 12:05:30.172 10525 11360 I GameBoosterService: onForegroundInfoChanged: Cur=com.ss.android.ugc.aweme	 last=com.example.a11yframework
+6402:03-18 12:05:30.172  5914  7838 D HyperComm_AppMonitor: onForegroundInfoChanged: foregroundInfo = ForegroundInfo{mForegroundPackageName='com.ss.android.ugc.aweme', mForegroundUid=10206, mForegroundPid=7200, mForegroundDisplayId=0, mLastForegroundPackageName='com.example.a11yframework', mLastForegroundUid=10389, mLastForegroundPid=8696, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.ss.android.ugc.aweme', mMultiWindowForegroundUid=10206, mFlags=1}
+6404:03-18 12:05:30.172 10525 11360 D GameBoosterService: onGameStatusChange foreground:ForegroundInfo{mForegroundPackageName='com.ss.android.ugc.aweme', mForegroundUid=10206, mForegroundPid=7200, mForegroundDisplayId=0, mLastForegroundPackageName='com.example.a11yframework', mLastForegroundUid=10389, mLastForegroundPid=8696, mLastForegroundDisplayId=0, mMultiWindowForegroundPackageName='com.ss.android.ugc.aweme', mMultiWindowForegroundUid=10206, mFlags=1}
+6438:03-18 12:05:30.181 10525 11360 I BeautyService: onForegroundInfoChanged: Cur=com.ss.android.ugc.aweme	 last=com.example.a11yframework
+6444:03-18 12:05:30.182  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=true, bounds=Rect(0, 0 - 1440, 3200), focused=false, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.decoration.MiuiDecorationController.relayout:4 com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskInfoChanged:18 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskListener.onTaskInfoChanged:47 com.android.wm.shell.ShellTaskOrganizer.onTaskInfoChanged:136 android.window.TaskOrganizer$1.lambda$onTaskInfoChanged$6:300
+6478:03-18 12:05:30.185  2792  5814 D ActivityTaskManager:  setSkipCaptureLayers tr: Task{e83771a #2168 type=standard A=10389:com.example.a11yframework}
+7428:03-18 12:05:30.369  2792  6318 D BarFollowAnimation: onTaskInfoChanedForCaptionBar Task{e83771a #2168 type=standard A=10389:com.example.a11yframework} shouldbeVisible:false isVisible:false isOnTop:false windowMode:1 preDisplayId:-1 displayId:0 mCaptionAssociatedTask:null mIsTouchedInCaption:false
+7441:03-18 12:05:30.372  2792  2869 I WindowManager: wms.hideSurface mWin:Window{47cb773 u0 com.example.a11yframework/com.example.a11yframework.MainActivity} reason:(prepareSurfaceLocked) in Surface(name=com.example.a11yframework/com.example.a11yframework.MainActivity#105859)/@0xfcdb00f
+7519:03-18 12:05:30.378  6048  6293 D MiuiDecorationController: relayout::taskId=2168, visible=false, bounds=Rect(0, 0 - 1440, 3200), focused=false, oldImmersive=false, newImmersive=false, windowMode=1, activityType=1, displayId=0, baseActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, topActivity=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, callers=com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.decoration.MiuiDecorationController.relayout:4 com.android.wm.shell.multitasking.miuimultiwinswitch.miuiwindowdecor.MulWinSwitchDecorViewModel.onTaskInfoChanged:18 com.android.wm.shell.multitasking.common.taskmanager.MultiTaskingTaskListener.onTaskInfoChanged:47 com.android.wm.shell.ShellTaskOrganizer.onTaskInfoChanged:136 android.window.TaskOrganizer$1.lambda$onTaskInfoChanged$6:300
+7558:03-18 12:05:30.381  8696  8696 W e.a11yframework: Binder 0xb400007c5fda0f80 destroyed after setInheritRt before being parceled.
+8098:03-18 12:05:30.472 10033 10064 I TopActivityMonitor: send TopActivityChangeEvent=TopActivityChangeEvent(prev=ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}, current=ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.main.MainActivity},appChanged=true)
+8378:03-18 12:05:30.596  2792  2869 I SmartPower: Miui monitor launch : com.ss.android.ugc.aweme/.splash.SplashActivity  transitionTime:33  launchTime:1113  launchFrom:com.example.a11yframework  launchType:1
+8471:03-18 12:05:30.623  2792  2859 W SSRU-ResourceUsageProxy: Nonexistent ongoing transaction AW_TOP:73388619 for u:0 pkg:com.example.a11yframework ended
+8472:03-18 12:05:30.624 10033 10064 D travelService_ActivityObserverUtils: activityStopped ComponentInfo{com.example.a11yframework/com.example.a11yframework.MainActivity}
+8475:03-18 12:05:30.626 17790 17790 D AppLifecycleObserver: onReceive: com.example.a11yframework BACKGROUND
+8479:03-18 12:05:30.629 17790 17790 D PkgUtils: getApplicationInfo packageName:com.example.a11yframework, flags:128 applicationInfo:ApplicationInfo{54c9971 com.example.a11yframework} needSecondSpace:false
+8682:03-18 12:05:30.678  8696  8696 D A11yFramework: Window changed to: com.ss.android.ugc.aweme
+8685:03-18 12:05:30.680  8696  8696 I A11yFramework: Activating plugin: 功能 A
+8768:03-18 12:05:30.726  4557  4557 D SogouIME: onUnbindInput: editorInfo:com.example.a11yframework 247030073
+8789:03-18 12:05:30.728  4557  4557 D SogouIME: onBindInput: editorInfo:com.example.a11yframework 247030073
+8797:03-18 12:05:30.730  4557  4557 D SogouIME: onFinishInput: attribute:com.example.a11yframework 247030073
+9690:03-18 12:05:30.826  2792  4833 D Aurogon :  onForegroundActivitiesChanged packageName = com.example.a11yframework
+9944:03-18 12:05:30.871  8696  8696 D A11yFramework: Not a target page, skipping
+10273:03-18 12:05:30.947  8696  8696 D A11yFramework: Not a target page, skipping
+10370:03-18 12:05:31.123  8696  8696 D A11yFramework: Not a target page, skipping
+10838:03-18 12:05:31.270  8696  8696 D A11yFramework: Not a target page, skipping
+11047:03-18 12:05:31.675  8696  8696 D A11yFramework: Not a target page, skipping
+11407:03-18 12:05:32.270  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+11827:03-18 12:05:32.396  8696  8696 D A11yFramework: Not a target page, skipping
+12063:03-18 12:05:32.669  2792  6441 I SmartPower: com.example.a11yframework/10389(8696): visible->invisible(5490ms) R(become invisible) adj=200.
+12064:03-18 12:05:32.669  2792  6441 I SmartPower: com.example.a11yframework/10389(8696): invisible->background(0ms) R(become background) adj=200.
+12073:03-18 12:05:32.689  8696  8696 D A11yFramework: Not a target page, skipping
+12091:03-18 12:05:32.714  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12150:03-18 12:05:32.953  8696  8696 D A11yFramework: Not a target page, skipping
+12197:03-18 12:05:33.030  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12198:03-18 12:05:33.036  8696  8696 D A11yFramework: Not a target page, skipping
+12515:03-18 12:05:33.468  8696  8696 D A11yFramework: Not a target page, skipping
+12630:03-18 12:05:33.878  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12641:03-18 12:05:33.917  8696  8696 D A11yFramework: Not a target page, skipping
+12661:03-18 12:05:33.917  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+12662:03-18 12:05:33.917  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+12663:03-18 12:05:33.917  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+12762:03-18 12:05:34.385  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12763:03-18 12:05:34.388  8696  8696 D A11yFramework: Not a target page, skipping
+12803:03-18 12:05:34.608  8696  8696 D A11yFramework: Not a target page, skipping
+12871:03-18 12:05:34.971  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12889:03-18 12:05:35.021  8696  8696 D A11yFramework: Not a target page, skipping
+12896:03-18 12:05:35.094  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+12897:03-18 12:05:35.109  8696  8696 D A11yFramework: Not a target page, skipping
+13001:03-18 12:05:35.460  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+13002:03-18 12:05:35.463  8696  8696 D A11yFramework: Not a target page, skipping
+13050:03-18 12:05:35.672  2792  4876 I SmartPower: com.example.a11yframework/10389(8696): background->idle(3002ms) R(become background) adj=200.
+13088:03-18 12:05:35.829  2792  4835 D PolicyMaker: uid =10389 pkg=com.example.a11yframework reason=accessibility
+13095:03-18 12:05:35.890  8696  8696 D A11yFramework: Not a target page, skipping
+13101:03-18 12:05:35.903  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+13175:03-18 12:05:36.353  8696  8696 D A11yFramework: Not a target page, skipping
+14272:03-18 12:05:38.921  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+14273:03-18 12:05:38.921  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+14274:03-18 12:05:38.921  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+14283:03-18 12:05:38.941  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15030:03-18 12:05:41.703  8696  8696 D A11yFramework: Not a target page, skipping
+15089:03-18 12:05:41.929  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15134:03-18 12:05:42.132  8696  8696 D A11yFramework: Not a target page, skipping
+15140:03-18 12:05:42.145  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15167:03-18 12:05:42.218  8696  8696 D A11yFramework: Not a target page, skipping
+15174:03-18 12:05:42.218  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15181:03-18 12:05:42.281  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15182:03-18 12:05:42.298  8696  8696 D A11yFramework: Not a target page, skipping
+15190:03-18 12:05:42.364  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15192:03-18 12:05:42.380  8696  8696 D A11yFramework: Not a target page, skipping
+15220:03-18 12:05:42.436  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15222:03-18 12:05:42.460  8696  8696 D A11yFramework: Not a target page, skipping
+15391:03-18 12:05:42.836  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15395:03-18 12:05:42.902  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15396:03-18 12:05:42.906  8696  8696 D A11yFramework: Not a target page, skipping
+15410:03-18 12:05:42.976  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15413:03-18 12:05:42.996  8696  8696 D A11yFramework: Not a target page, skipping
+15491:03-18 12:05:43.253  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15509:03-18 12:05:43.307  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15512:03-18 12:05:43.321  8696  8696 D A11yFramework: Not a target page, skipping
+15522:03-18 12:05:43.354  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15607:03-18 12:05:43.393  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15608:03-18 12:05:43.398  8696  8696 D A11yFramework: Not a target page, skipping
+15627:03-18 12:05:43.437  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15637:03-18 12:05:43.476  8696  8696 D A11yFramework: Not a target page, skipping
+15640:03-18 12:05:43.476  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15651:03-18 12:05:43.533  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+15653:03-18 12:05:43.555  8696  8696 D A11yFramework: Not a target page, skipping
+15674:03-18 12:05:43.604  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15676:03-18 12:05:43.639  8696  8696 D A11yFramework: Not a target page, skipping
+15697:03-18 12:05:43.680  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15715:03-18 12:05:43.728  8696  8696 D A11yFramework: Not a target page, skipping
+15730:03-18 12:05:43.754  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15757:03-18 12:05:43.804  8696  8696 D A11yFramework: Not a target page, skipping
+15763:03-18 12:05:43.813  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15774:03-18 12:05:43.872  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15781:03-18 12:05:43.884  8696  8696 D A11yFramework: Not a target page, skipping
+15815:03-18 12:05:43.926  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+15816:03-18 12:05:43.926  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+15817:03-18 12:05:43.926  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+15826:03-18 12:05:43.938  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15829:03-18 12:05:43.966  8696  8696 D A11yFramework: Not a target page, skipping
+15839:03-18 12:05:43.992  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15854:03-18 12:05:44.041  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15855:03-18 12:05:44.047  8696  8696 D A11yFramework: Not a target page, skipping
+15872:03-18 12:05:44.112  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+15874:03-18 12:05:44.125  8696  8696 D A11yFramework: Not a target page, skipping
+15905:03-18 12:05:44.190  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15922:03-18 12:05:44.210  8696  8696 D A11yFramework: Not a target page, skipping
+15933:03-18 12:05:44.243  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15940:03-18 12:05:44.294  8696  8696 D A11yFramework: Not a target page, skipping
+15950:03-18 12:05:44.314  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15951:03-18 12:05:44.357  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15952:03-18 12:05:44.370  8696  8696 D A11yFramework: Not a target page, skipping
+15974:03-18 12:05:44.416  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+15977:03-18 12:05:44.447  8696  8696 D A11yFramework: Not a target page, skipping
+15988:03-18 12:05:44.481  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+16017:03-18 12:05:44.552  8696  8696 D A11yFramework: Not a target page, skipping
+16023:03-18 12:05:44.564  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16040:03-18 12:05:44.639  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16046:03-18 12:05:44.657  8696  8696 D A11yFramework: Not a target page, skipping
+16079:03-18 12:05:44.744  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+16230:03-18 12:05:44.771  8696  8696 D A11yFramework: Not a target page, skipping
+16507:03-18 12:05:44.822  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16762:03-18 12:05:44.850  8696  8696 D A11yFramework: Not a target page, skipping
+16800:03-18 12:05:44.884  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16847:03-18 12:05:44.930  8696  8696 D A11yFramework: Not a target page, skipping
+16859:03-18 12:05:44.952  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16891:03-18 12:05:45.015  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+16892:03-18 12:05:45.015  8696  8696 D A11yFramework: Not a target page, skipping
+16899:03-18 12:05:45.079  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16900:03-18 12:05:45.096  8696  8696 D A11yFramework: Not a target page, skipping
+16914:03-18 12:05:45.151  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+16926:03-18 12:05:45.174  8696  8696 D A11yFramework: Not a target page, skipping
+16952:03-18 12:05:45.222  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16953:03-18 12:05:45.254  8696  8696 D A11yFramework: Not a target page, skipping
+16959:03-18 12:05:45.290  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16965:03-18 12:05:45.335  8696  8696 D A11yFramework: Not a target page, skipping
+16971:03-18 12:05:45.370  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+16996:03-18 12:05:45.438  8696  8696 D A11yFramework: Not a target page, skipping
+17002:03-18 12:05:45.459  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17003:03-18 12:05:45.509  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17006:03-18 12:05:45.515  8696  8696 D A11yFramework: Not a target page, skipping
+17026:03-18 12:05:45.578  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17030:03-18 12:05:45.594  8696  8696 D A11yFramework: Not a target page, skipping
+17069:03-18 12:05:45.651  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17071:03-18 12:05:45.709  8696  8696 D A11yFramework: Not a target page, skipping
+17082:03-18 12:05:45.734  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17089:03-18 12:05:45.790  8696  8696 D A11yFramework: Not a target page, skipping
+17092:03-18 12:05:45.791  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17119:03-18 12:05:45.862  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17120:03-18 12:05:45.878  8696  8696 D A11yFramework: Not a target page, skipping
+17132:03-18 12:05:45.942  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17135:03-18 12:05:45.964  8696  8696 D A11yFramework: Not a target page, skipping
+17164:03-18 12:05:46.035  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17170:03-18 12:05:46.058  8696  8696 D A11yFramework: Not a target page, skipping
+17185:03-18 12:05:46.107  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17189:03-18 12:05:46.146  8696  8696 D A11yFramework: Not a target page, skipping
+17200:03-18 12:05:46.187  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17217:03-18 12:05:46.242  8696  8696 D A11yFramework: Not a target page, skipping
+17229:03-18 12:05:46.271  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17236:03-18 12:05:46.325  8696  8696 D A11yFramework: Not a target page, skipping
+17242:03-18 12:05:46.339  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17267:03-18 12:05:46.427  8696  8696 D A11yFramework: Not a target page, skipping
+17270:03-18 12:05:46.427  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17285:03-18 12:05:46.493  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17288:03-18 12:05:46.510  8696  8696 D A11yFramework: Not a target page, skipping
+17327:03-18 12:05:46.570  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17329:03-18 12:05:46.606  8696  8696 D A11yFramework: Not a target page, skipping
+17339:03-18 12:05:46.646  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17352:03-18 12:05:46.715  8696  8696 D A11yFramework: Not a target page, skipping
+17359:03-18 12:05:46.742  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17369:03-18 12:05:46.815  8696  8696 D A11yFramework: Not a target page, skipping
+17375:03-18 12:05:46.824  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17380:03-18 12:05:46.890  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17381:03-18 12:05:46.903  8696  8696 D A11yFramework: Not a target page, skipping
+17411:03-18 12:05:46.982  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17413:03-18 12:05:46.995  8696  8696 D A11yFramework: Not a target page, skipping
+17420:03-18 12:05:47.060  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17421:03-18 12:05:47.078  8696  8696 D A11yFramework: Not a target page, skipping
+17429:03-18 12:05:47.132  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17446:03-18 12:05:47.166  8696  8696 D A11yFramework: Not a target page, skipping
+17457:03-18 12:05:47.198  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17458:03-18 12:05:47.253  8696  8696 D A11yFramework: Not a target page, skipping
+17464:03-18 12:05:47.274  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17467:03-18 12:05:47.337  8696  8696 D A11yFramework: Not a target page, skipping
+17470:03-18 12:05:47.338  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17486:03-18 12:05:47.411  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17491:03-18 12:05:47.423  8696  8696 D A11yFramework: Not a target page, skipping
+17497:03-18 12:05:47.499  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17498:03-18 12:05:47.507  8696  8696 D A11yFramework: Not a target page, skipping
+17507:03-18 12:05:47.571  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17508:03-18 12:05:47.588  8696  8696 D A11yFramework: Not a target page, skipping
+17521:03-18 12:05:47.634  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17533:03-18 12:05:47.670  8696  8696 D A11yFramework: Not a target page, skipping
+17539:03-18 12:05:47.696  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17559:03-18 12:05:47.777  8696  8696 D A11yFramework: Not a target page, skipping
+17562:03-18 12:05:47.779  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17567:03-18 12:05:47.836  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17574:03-18 12:05:47.853  8696  8696 D A11yFramework: Not a target page, skipping
+17686:03-18 12:05:48.587  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17704:03-18 12:05:48.671  8696  8696 D A11yFramework: Not a target page, skipping
+17707:03-18 12:05:48.674  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17728:03-18 12:05:48.750  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17736:03-18 12:05:48.777  8696  8696 D A11yFramework: Not a target page, skipping
+17746:03-18 12:05:48.834  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17747:03-18 12:05:48.888  8696  8696 D A11yFramework: Not a target page, skipping
+17755:03-18 12:05:48.915  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17773:03-18 12:05:48.929  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+17774:03-18 12:05:48.929  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+17775:03-18 12:05:48.929  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+17797:03-18 12:05:48.990  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17799:03-18 12:05:48.992  8696  8696 D A11yFramework: Not a target page, skipping
+17894:03-18 12:05:49.774  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17896:03-18 12:05:49.795  8696  8696 D A11yFramework: Not a target page, skipping
+17919:03-18 12:05:49.841  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17921:03-18 12:05:49.880  8696  8696 D A11yFramework: Not a target page, skipping
+17972:03-18 12:05:50.022  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+17992:03-18 12:05:50.262  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+17993:03-18 12:05:50.263  8696  8696 D A11yFramework: Not a target page, skipping
+18001:03-18 12:05:50.340  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18002:03-18 12:05:50.355  8696  8696 D A11yFramework: Not a target page, skipping
+18008:03-18 12:05:50.407  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18016:03-18 12:05:50.434  8696  8696 D A11yFramework: Not a target page, skipping
+18026:03-18 12:05:50.474  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18029:03-18 12:05:50.519  8696  8696 D A11yFramework: Not a target page, skipping
+18038:03-18 12:05:50.555  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18039:03-18 12:05:50.602  8696  8696 D A11yFramework: Not a target page, skipping
+18046:03-18 12:05:50.624  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18064:03-18 12:05:50.702  8696  8696 D A11yFramework: Not a target page, skipping
+18067:03-18 12:05:50.703  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18075:03-18 12:05:50.770  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18079:03-18 12:05:50.785  8696  8696 D A11yFramework: Not a target page, skipping
+18095:03-18 12:05:50.840  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18107:03-18 12:05:50.869  8696  8696 D A11yFramework: Not a target page, skipping
+18123:03-18 12:05:50.903  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18161:03-18 12:05:50.948  8696  8696 D A11yFramework: Not a target page, skipping
+18186:03-18 12:05:50.983  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18212:03-18 12:05:51.056  8696  8696 D A11yFramework: Not a target page, skipping
+18218:03-18 12:05:51.070  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18258:03-18 12:05:51.146  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18265:03-18 12:05:51.150  8696  8696 D A11yFramework: Not a target page, skipping
+18277:03-18 12:05:51.216  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18285:03-18 12:05:51.235  8696  8696 D A11yFramework: Not a target page, skipping
+18297:03-18 12:05:51.288  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18304:03-18 12:05:51.324  8696  8696 D A11yFramework: Not a target page, skipping
+18310:03-18 12:05:51.360  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18312:03-18 12:05:51.434  8696  8696 D A11yFramework: Not a target page, skipping
+18318:03-18 12:05:51.450  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18330:03-18 12:05:51.517  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18333:03-18 12:05:51.527  8696  8696 D A11yFramework: Not a target page, skipping
+18343:03-18 12:05:51.602  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18344:03-18 12:05:51.608  8696  8696 D A11yFramework: Not a target page, skipping
+18351:03-18 12:05:51.674  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18359:03-18 12:05:51.692  8696  8696 D A11yFramework: Not a target page, skipping
+18376:03-18 12:05:51.744  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18393:03-18 12:05:51.778  8696  8696 D A11yFramework: Not a target page, skipping
+18428:03-18 12:05:51.810  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18476:03-18 12:05:51.876  8696  8696 D A11yFramework: Not a target page, skipping
+18488:03-18 12:05:51.895  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18520:03-18 12:05:51.958  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18522:03-18 12:05:51.968  8696  8696 D A11yFramework: Not a target page, skipping
+18553:03-18 12:05:52.054  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18555:03-18 12:05:52.058  8696  8696 D A11yFramework: Not a target page, skipping
+18583:03-18 12:05:52.130  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18585:03-18 12:05:52.146  8696  8696 D A11yFramework: Not a target page, skipping
+18598:03-18 12:05:52.201  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18600:03-18 12:05:52.231  8696  8696 D A11yFramework: Not a target page, skipping
+18606:03-18 12:05:52.264  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18615:03-18 12:05:52.307  8696  8696 D A11yFramework: Not a target page, skipping
+18627:03-18 12:05:52.347  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18633:03-18 12:05:52.383  8696  8696 D A11yFramework: Not a target page, skipping
+18639:03-18 12:05:52.408  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18641:03-18 12:05:52.464  8696  8696 D A11yFramework: Not a target page, skipping
+18647:03-18 12:05:52.476  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18665:03-18 12:05:52.533  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18668:03-18 12:05:52.545  8696  8696 D A11yFramework: Not a target page, skipping
+18677:03-18 12:05:52.632  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18678:03-18 12:05:52.634  8696  8696 D A11yFramework: Not a target page, skipping
+18687:03-18 12:05:52.703  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18691:03-18 12:05:52.720  8696  8696 D A11yFramework: Not a target page, skipping
+18716:03-18 12:05:52.770  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18732:03-18 12:05:52.794  8696  8696 D A11yFramework: Not a target page, skipping
+18747:03-18 12:05:52.844  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18748:03-18 12:05:52.882  8696  8696 D A11yFramework: Not a target page, skipping
+18757:03-18 12:05:52.930  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18764:03-18 12:05:52.959  8696  8696 D A11yFramework: Not a target page, skipping
+18783:03-18 12:05:52.989  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18797:03-18 12:05:53.038  8696  8696 D A11yFramework: Not a target page, skipping
+18803:03-18 12:05:53.050  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18823:03-18 12:05:53.113  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18824:03-18 12:05:53.116  8696  8696 D A11yFramework: Not a target page, skipping
+18836:03-18 12:05:53.173  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18840:03-18 12:05:53.189  8696  8696 D A11yFramework: Not a target page, skipping
+18850:03-18 12:05:53.245  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18851:03-18 12:05:53.271  8696  8696 D A11yFramework: Not a target page, skipping
+18861:03-18 12:05:53.317  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18869:03-18 12:05:53.362  8696  8696 D A11yFramework: Not a target page, skipping
+18890:03-18 12:05:53.408  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18892:03-18 12:05:53.439  8696  8696 D A11yFramework: Not a target page, skipping
+18902:03-18 12:05:53.472  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18907:03-18 12:05:53.525  8696  8696 D A11yFramework: Not a target page, skipping
+18919:03-18 12:05:53.548  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+18942:03-18 12:05:53.622  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+18950:03-18 12:05:53.642  8696  8696 D A11yFramework: Not a target page, skipping
+18991:03-18 12:05:53.737  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19004:03-18 12:05:53.743  8696  8696 D A11yFramework: Not a target page, skipping
+19084:03-18 12:05:53.803  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19093:03-18 12:05:53.819  8696  8696 D A11yFramework: Not a target page, skipping
+19108:03-18 12:05:53.863  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19109:03-18 12:05:53.892  8696  8696 D A11yFramework: Not a target page, skipping
+19118:03-18 12:05:53.919  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19136:03-18 12:05:53.934  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+19137:03-18 12:05:53.934  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+19138:03-18 12:05:53.934  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+19147:03-18 12:05:53.971  8696  8696 D A11yFramework: Not a target page, skipping
+19159:03-18 12:05:53.998  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19174:03-18 12:05:54.079  8696  8696 D A11yFramework: Not a target page, skipping
+19180:03-18 12:05:54.086  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19196:03-18 12:05:54.180  8696  8696 D A11yFramework: Not a target page, skipping
+19199:03-18 12:05:54.181  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19235:03-18 12:05:54.252  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19236:03-18 12:05:54.269  8696  8696 D A11yFramework: Not a target page, skipping
+19248:03-18 12:05:54.331  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19249:03-18 12:05:54.362  8696  8696 D A11yFramework: Not a target page, skipping
+19315:03-18 12:05:54.406  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19328:03-18 12:05:54.473  8696  8696 D A11yFramework: Not a target page, skipping
+19336:03-18 12:05:54.515  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19345:03-18 12:05:54.550  8696  8696 D A11yFramework: Not a target page, skipping
+19358:03-18 12:05:54.573  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19373:03-18 12:05:54.630  8696  8696 D A11yFramework: Not a target page, skipping
+19388:03-18 12:05:54.644  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19400:03-18 12:05:54.703  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19402:03-18 12:05:54.709  8696  8696 D A11yFramework: Not a target page, skipping
+19423:03-18 12:05:54.792  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19424:03-18 12:05:54.794  8696  8696 D A11yFramework: Not a target page, skipping
+19443:03-18 12:05:54.855  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19446:03-18 12:05:54.872  8696  8696 D A11yFramework: Not a target page, skipping
+19561:03-18 12:05:55.840  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19571:03-18 12:05:55.877  8696  8696 D A11yFramework: Not a target page, skipping
+19582:03-18 12:05:55.900  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19597:03-18 12:05:55.956  8696  8696 D A11yFramework: Not a target page, skipping
+19604:03-18 12:05:55.966  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19610:03-18 12:05:56.020  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19612:03-18 12:05:56.029  8696  8696 D A11yFramework: Not a target page, skipping
+19621:03-18 12:05:56.107  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19622:03-18 12:05:56.109  8696  8696 D A11yFramework: Not a target page, skipping
+19809:03-18 12:05:56.812  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19816:03-18 12:05:56.844  8696  8696 D A11yFramework: Not a target page, skipping
+19857:03-18 12:05:56.893  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19860:03-18 12:05:56.957  8696  8696 D A11yFramework: Not a target page, skipping
+19882:03-18 12:05:57.190  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19902:03-18 12:05:57.414  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19903:03-18 12:05:57.425  8696  8696 D A11yFramework: Not a target page, skipping
+19919:03-18 12:05:57.498  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19923:03-18 12:05:57.515  8696  8696 D A11yFramework: Not a target page, skipping
+19932:03-18 12:05:57.561  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19933:03-18 12:05:57.594  8696  8696 D A11yFramework: Not a target page, skipping
+19939:03-18 12:05:57.623  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19955:03-18 12:05:57.676  8696  8696 D A11yFramework: Not a target page, skipping
+19964:03-18 12:05:57.695  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19971:03-18 12:05:57.753  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+19972:03-18 12:05:57.763  8696  8696 D A11yFramework: Not a target page, skipping
+19986:03-18 12:05:57.857  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+19993:03-18 12:05:57.865  8696  8696 D A11yFramework: Not a target page, skipping
+20007:03-18 12:05:57.936  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20008:03-18 12:05:57.955  8696  8696 D A11yFramework: Not a target page, skipping
+20014:03-18 12:05:58.005  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20016:03-18 12:05:58.034  8696  8696 D A11yFramework: Not a target page, skipping
+20024:03-18 12:05:58.068  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20034:03-18 12:05:58.115  8696  8696 D A11yFramework: Not a target page, skipping
+20041:03-18 12:05:58.152  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20042:03-18 12:05:58.202  8696  8696 D A11yFramework: Not a target page, skipping
+20048:03-18 12:05:58.224  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20051:03-18 12:05:58.283  8696  8696 D A11yFramework: Not a target page, skipping
+20057:03-18 12:05:58.287  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20069:03-18 12:05:58.344  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20071:03-18 12:05:58.359  8696  8696 D A11yFramework: Not a target page, skipping
+20079:03-18 12:05:58.417  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20080:03-18 12:05:58.439  8696  8696 D A11yFramework: Not a target page, skipping
+20087:03-18 12:05:58.503  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20092:03-18 12:05:58.524  8696  8696 D A11yFramework: Not a target page, skipping
+20108:03-18 12:05:58.579  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20110:03-18 12:05:58.605  8696  8696 D A11yFramework: Not a target page, skipping
+20117:03-18 12:05:58.664  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20119:03-18 12:05:58.686  8696  8696 D A11yFramework: Not a target page, skipping
+20134:03-18 12:05:58.749  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20137:03-18 12:05:58.766  8696  8696 D A11yFramework: Not a target page, skipping
+20149:03-18 12:05:58.849  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20150:03-18 12:05:58.853  8696  8696 D A11yFramework: Not a target page, skipping
+20166:03-18 12:05:58.913  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20168:03-18 12:05:58.929  8696  8696 D A11yFramework: Not a target page, skipping
+20191:03-18 12:05:58.937  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+20192:03-18 12:05:58.937  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+20193:03-18 12:05:58.937  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+20214:03-18 12:05:58.984  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20219:03-18 12:05:59.013  8696  8696 D A11yFramework: Not a target page, skipping
+20228:03-18 12:05:59.046  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20231:03-18 12:05:59.094  8696  8696 D A11yFramework: Not a target page, skipping
+20239:03-18 12:05:59.130  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20246:03-18 12:05:59.166  8696  8696 D A11yFramework: Not a target page, skipping
+20256:03-18 12:05:59.190  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20259:03-18 12:05:59.251  8696  8696 D A11yFramework: Not a target page, skipping
+20265:03-18 12:05:59.263  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20269:03-18 12:05:59.321  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20270:03-18 12:05:59.335  8696  8696 D A11yFramework: Not a target page, skipping
+20286:03-18 12:05:59.409  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20287:03-18 12:05:59.414  8696  8696 D A11yFramework: Not a target page, skipping
+20293:03-18 12:05:59.480  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20295:03-18 12:05:59.496  8696  8696 D A11yFramework: Not a target page, skipping
+20308:03-18 12:05:59.543  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20310:03-18 12:05:59.571  8696  8696 D A11yFramework: Not a target page, skipping
+20326:03-18 12:05:59.612  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20329:03-18 12:05:59.667  8696  8696 D A11yFramework: Not a target page, skipping
+20343:03-18 12:05:59.716  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20344:03-18 12:05:59.766  8696  8696 D A11yFramework: Not a target page, skipping
+20353:03-18 12:05:59.797  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20369:03-18 12:05:59.867  8696  8696 D A11yFramework: Not a target page, skipping
+20382:03-18 12:05:59.886  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20388:03-18 12:05:59.958  8696  8696 D A11yFramework: Not a target page, skipping
+20394:03-18 12:05:59.974  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20436:03-18 12:06:00.046  8696  8696 D A11yFramework: Not a target page, skipping
+20574:03-18 12:06:00.091  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20642:03-18 12:06:00.152  8696  8696 D A11yFramework: Not a target page, skipping
+20658:03-18 12:06:00.173  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20769:03-18 12:06:00.252  8696  8696 D A11yFramework: Not a target page, skipping
+20817:03-18 12:06:00.272  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20877:03-18 12:06:00.340  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20878:03-18 12:06:00.354  8696  8696 D A11yFramework: Not a target page, skipping
+20902:03-18 12:06:00.465  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20903:03-18 12:06:00.487  8696  8696 D A11yFramework: Not a target page, skipping
+20925:03-18 12:06:00.564  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20928:03-18 12:06:00.588  8696  8696 D A11yFramework: Not a target page, skipping
+20940:03-18 12:06:00.649  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+20951:03-18 12:06:00.694  8696  8696 D A11yFramework: Not a target page, skipping
+20967:03-18 12:06:00.723  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+20980:03-18 12:06:00.789  8696  8696 D A11yFramework: Not a target page, skipping
+20985:03-18 12:06:00.817  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21121:03-18 12:06:01.002  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21123:03-18 12:06:01.021  8696  8696 D A11yFramework: Not a target page, skipping
+21140:03-18 12:06:01.091  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21148:03-18 12:06:01.138  8696  8696 D A11yFramework: Not a target page, skipping
+21154:03-18 12:06:01.167  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21156:03-18 12:06:01.233  8696  8696 D A11yFramework: Not a target page, skipping
+21162:03-18 12:06:01.245  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21171:03-18 12:06:01.313  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21178:03-18 12:06:01.330  8696  8696 D A11yFramework: Not a target page, skipping
+21201:03-18 12:06:01.418  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21209:03-18 12:06:01.433  8696  8696 D A11yFramework: Not a target page, skipping
+21218:03-18 12:06:01.513  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21227:03-18 12:06:01.531  8696  8696 D A11yFramework: Not a target page, skipping
+21237:03-18 12:06:01.627  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21238:03-18 12:06:01.629  8696  8696 D A11yFramework: Not a target page, skipping
+21254:03-18 12:06:01.706  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21257:03-18 12:06:01.726  8696  8696 D A11yFramework: Not a target page, skipping
+21286:03-18 12:06:01.806  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21289:03-18 12:06:01.828  8696  8696 D A11yFramework: Not a target page, skipping
+21299:03-18 12:06:01.911  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21301:03-18 12:06:01.932  8696  8696 D A11yFramework: Not a target page, skipping
+21330:03-18 12:06:02.029  8696  8696 D A11yFramework: Not a target page, skipping
+21337:03-18 12:06:02.034  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21344:03-18 12:06:02.104  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21353:03-18 12:06:02.120  8696  8696 D A11yFramework: Not a target page, skipping
+21376:03-18 12:06:02.214  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21378:03-18 12:06:02.222  8696  8696 D A11yFramework: Not a target page, skipping
+21416:03-18 12:06:02.318  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21417:03-18 12:06:02.332  8696  8696 D A11yFramework: Not a target page, skipping
+21568:03-18 12:06:03.062  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21576:03-18 12:06:03.096  8696  8696 D A11yFramework: Not a target page, skipping
+21584:03-18 12:06:03.146  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21585:03-18 12:06:03.202  8696  8696 D A11yFramework: Not a target page, skipping
+21600:03-18 12:06:03.257  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21606:03-18 12:06:03.307  8696  8696 D A11yFramework: Not a target page, skipping
+21616:03-18 12:06:03.336  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21617:03-18 12:06:03.403  8696  8696 D A11yFramework: Not a target page, skipping
+21623:03-18 12:06:03.419  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21647:03-18 12:06:03.488  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21648:03-18 12:06:03.494  8696  8696 D A11yFramework: Not a target page, skipping
+21736:03-18 12:06:03.944  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+21737:03-18 12:06:03.944  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+21738:03-18 12:06:03.944  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+21822:03-18 12:06:04.588  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21826:03-18 12:06:04.592  8696  8696 D A11yFramework: Not a target page, skipping
+21919:03-18 12:06:05.122  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21921:03-18 12:06:05.143  8696  8696 D A11yFramework: Not a target page, skipping
+21936:03-18 12:06:05.213  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21939:03-18 12:06:05.242  8696  8696 D A11yFramework: Not a target page, skipping
+21953:03-18 12:06:05.298  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21957:03-18 12:06:05.336  8696  8696 D A11yFramework: Not a target page, skipping
+21974:03-18 12:06:05.410  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+21983:03-18 12:06:05.436  8696  8696 D A11yFramework: Not a target page, skipping
+21994:03-18 12:06:05.504  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+21998:03-18 12:06:05.525  8696  8696 D A11yFramework: Not a target page, skipping
+22022:03-18 12:06:05.658  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22026:03-18 12:06:05.664  8696  8696 D A11yFramework: Not a target page, skipping
+22046:03-18 12:06:05.737  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22047:03-18 12:06:05.756  8696  8696 D A11yFramework: Not a target page, skipping
+22056:03-18 12:06:05.810  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22071:03-18 12:06:05.844  8696  8696 D A11yFramework: Not a target page, skipping
+22079:03-18 12:06:05.880  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22084:03-18 12:06:05.937  8696  8696 D A11yFramework: Not a target page, skipping
+22090:03-18 12:06:05.982  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22093:03-18 12:06:06.027  8696  8696 D A11yFramework: Not a target page, skipping
+22105:03-18 12:06:06.055  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22117:03-18 12:06:06.135  8696  8696 D A11yFramework: Not a target page, skipping
+22124:03-18 12:06:06.158  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22125:03-18 12:06:06.222  8696  8696 D A11yFramework: Not a target page, skipping
+22131:03-18 12:06:06.253  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22146:03-18 12:06:06.342  8696  8696 D A11yFramework: Not a target page, skipping
+22153:03-18 12:06:06.389  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22154:03-18 12:06:06.433  8696  8696 D A11yFramework: Not a target page, skipping
+22164:03-18 12:06:06.463  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22181:03-18 12:06:06.530  8696  8696 D A11yFramework: Not a target page, skipping
+22191:03-18 12:06:06.549  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22192:03-18 12:06:06.620  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22193:03-18 12:06:06.620  8696  8696 D A11yFramework: Not a target page, skipping
+22211:03-18 12:06:06.717  8696  8696 D A11yFramework: Not a target page, skipping
+22218:03-18 12:06:06.721  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22219:03-18 12:06:06.788  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22220:03-18 12:06:06.803  8696  8696 D A11yFramework: Not a target page, skipping
+22229:03-18 12:06:06.871  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22237:03-18 12:06:06.916  8696  8696 D A11yFramework: Not a target page, skipping
+22256:03-18 12:06:06.968  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22257:03-18 12:06:07.007  8696  8696 D A11yFramework: Not a target page, skipping
+22265:03-18 12:06:07.068  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22267:03-18 12:06:07.100  8696  8696 D A11yFramework: Not a target page, skipping
+22288:03-18 12:06:07.154  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22289:03-18 12:06:07.192  8696  8696 D A11yFramework: Not a target page, skipping
+22296:03-18 12:06:07.253  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22297:03-18 12:06:07.281  8696  8696 D A11yFramework: Not a target page, skipping
+22317:03-18 12:06:07.359  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22333:03-18 12:06:07.381  8696  8696 D A11yFramework: Not a target page, skipping
+22352:03-18 12:06:07.473  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22358:03-18 12:06:07.476  8696  8696 D A11yFramework: Not a target page, skipping
+22379:03-18 12:06:07.550  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22384:03-18 12:06:07.568  8696  8696 D A11yFramework: Not a target page, skipping
+22421:03-18 12:06:07.649  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22422:03-18 12:06:07.669  8696  8696 D A11yFramework: Not a target page, skipping
+22442:03-18 12:06:07.754  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22446:03-18 12:06:07.773  8696  8696 D A11yFramework: Not a target page, skipping
+22468:03-18 12:06:07.869  8696  8696 D A11yFramework: Not a target page, skipping
+22469:03-18 12:06:07.869  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22494:03-18 12:06:07.949  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22499:03-18 12:06:07.967  8696  8696 D A11yFramework: Not a target page, skipping
+22516:03-18 12:06:08.038  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22526:03-18 12:06:08.059  8696  8696 D A11yFramework: Not a target page, skipping
+22574:03-18 12:06:08.137  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22586:03-18 12:06:08.157  8696  8696 D A11yFramework: Not a target page, skipping
+22606:03-18 12:06:08.246  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22607:03-18 12:06:08.246  8696  8696 D A11yFramework: Not a target page, skipping
+22628:03-18 12:06:08.318  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22631:03-18 12:06:08.336  8696  8696 D A11yFramework: Not a target page, skipping
+22655:03-18 12:06:08.418  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22660:03-18 12:06:08.439  8696  8696 D A11yFramework: Not a target page, skipping
+22675:03-18 12:06:08.519  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22679:03-18 12:06:08.536  8696  8696 D A11yFramework: Not a target page, skipping
+22698:03-18 12:06:08.631  8696  8696 D A11yFramework: Not a target page, skipping
+22706:03-18 12:06:08.638  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22763:03-18 12:06:08.715  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22765:03-18 12:06:08.727  8696  8696 D A11yFramework: Not a target page, skipping
+22785:03-18 12:06:08.815  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22794:03-18 12:06:08.821  8696  8696 D A11yFramework: Not a target page, skipping
+22816:03-18 12:06:08.896  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22824:03-18 12:06:08.913  8696  8696 D A11yFramework: Not a target page, skipping
+22851:03-18 12:06:08.955  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+22852:03-18 12:06:08.955  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+22853:03-18 12:06:08.955  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+22866:03-18 12:06:08.976  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22873:03-18 12:06:09.008  8696  8696 D A11yFramework: Not a target page, skipping
+22892:03-18 12:06:09.056  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22901:03-18 12:06:09.105  8696  8696 D A11yFramework: Not a target page, skipping
+22918:03-18 12:06:09.168  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22925:03-18 12:06:09.202  8696  8696 D A11yFramework: Not a target page, skipping
+22936:03-18 12:06:09.239  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22954:03-18 12:06:09.292  8696  8696 D A11yFramework: Not a target page, skipping
+22973:03-18 12:06:09.344  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+22976:03-18 12:06:09.384  8696  8696 D A11yFramework: Not a target page, skipping
+22986:03-18 12:06:09.420  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+22999:03-18 12:06:09.476  8696  8696 D A11yFramework: Not a target page, skipping
+23009:03-18 12:06:09.503  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23035:03-18 12:06:09.575  8696  8696 D A11yFramework: Not a target page, skipping
+23041:03-18 12:06:09.580  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23054:03-18 12:06:09.670  8696  8696 D A11yFramework: Not a target page, skipping
+23066:03-18 12:06:09.682  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23086:03-18 12:06:09.761  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23090:03-18 12:06:09.773  8696  8696 D A11yFramework: Not a target page, skipping
+23114:03-18 12:06:09.863  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23115:03-18 12:06:09.865  8696  8696 D A11yFramework: Not a target page, skipping
+23140:03-18 12:06:09.946  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23143:03-18 12:06:09.966  8696  8696 D A11yFramework: Not a target page, skipping
+23156:03-18 12:06:10.037  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23159:03-18 12:06:10.062  8696  8696 D A11yFramework: Not a target page, skipping
+23331:03-18 12:06:11.055  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23341:03-18 12:06:11.088  8696  8696 D A11yFramework: Not a target page, skipping
+23360:03-18 12:06:11.164  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23363:03-18 12:06:11.184  8696  8696 D A11yFramework: Not a target page, skipping
+23397:03-18 12:06:11.255  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23401:03-18 12:06:11.274  8696  8696 D A11yFramework: Not a target page, skipping
+23424:03-18 12:06:11.375  8696  8696 D A11yFramework: Not a target page, skipping
+23427:03-18 12:06:11.377  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23452:03-18 12:06:11.453  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23455:03-18 12:06:11.470  8696  8696 D A11yFramework: Not a target page, skipping
+23850:03-18 12:06:12.569  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23853:03-18 12:06:12.604  8696  8696 D A11yFramework: Not a target page, skipping
+23867:03-18 12:06:12.655  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23880:03-18 12:06:12.708  8696  8696 D A11yFramework: Not a target page, skipping
+23926:03-18 12:06:12.916  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23949:03-18 12:06:13.102  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23952:03-18 12:06:13.117  8696  8696 D A11yFramework: Not a target page, skipping
+23972:03-18 12:06:13.184  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+23975:03-18 12:06:13.211  8696  8696 D A11yFramework: Not a target page, skipping
+23987:03-18 12:06:13.278  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+23993:03-18 12:06:13.301  8696  8696 D A11yFramework: Not a target page, skipping
+24013:03-18 12:06:13.384  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24014:03-18 12:06:13.390  8696  8696 D A11yFramework: Not a target page, skipping
+24026:03-18 12:06:13.466  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24031:03-18 12:06:13.482  8696  8696 D A11yFramework: Not a target page, skipping
+24049:03-18 12:06:13.552  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24062:03-18 12:06:13.577  8696  8696 D A11yFramework: Not a target page, skipping
+24088:03-18 12:06:13.658  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24089:03-18 12:06:13.678  8696  8696 D A11yFramework: Not a target page, skipping
+24119:03-18 12:06:13.772  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24122:03-18 12:06:13.776  8696  8696 D A11yFramework: Not a target page, skipping
+24152:03-18 12:06:13.853  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24157:03-18 12:06:13.870  8696  8696 D A11yFramework: Not a target page, skipping
+24176:03-18 12:06:13.943  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24196:03-18 12:06:13.967  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.pollCommands(RemoteCommandManager.kt:127)
+24197:03-18 12:06:13.967  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager.access$pollCommands(RemoteCommandManager.kt:25)
+24198:03-18 12:06:13.967  8696  8834 E RemoteCommand: 	at com.example.a11yframework.remote.RemoteCommandManager$startPolling$1.invokeSuspend(RemoteCommandManager.kt:89)
+24210:03-18 12:06:13.970  8696  8696 D A11yFramework: Not a target page, skipping
+24235:03-18 12:06:14.035  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24238:03-18 12:06:14.060  8696  8696 D A11yFramework: Not a target page, skipping
+24256:03-18 12:06:14.141  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24257:03-18 12:06:14.153  8696  8696 D A11yFramework: Not a target page, skipping
+24282:03-18 12:06:14.230  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24288:03-18 12:06:14.252  8696  8696 D A11yFramework: Not a target page, skipping
+24301:03-18 12:06:14.317  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24307:03-18 12:06:14.347  8696  8696 D A11yFramework: Not a target page, skipping
+24328:03-18 12:06:14.408  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24338:03-18 12:06:14.441  8696  8696 D A11yFramework: Not a target page, skipping
+24351:03-18 12:06:14.527  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24355:03-18 12:06:14.551  8696  8696 D A11yFramework: Not a target page, skipping
+24379:03-18 12:06:14.627  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24384:03-18 12:06:14.662  8696  8696 D A11yFramework: Not a target page, skipping
+24406:03-18 12:06:14.758  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24409:03-18 12:06:14.761  8696  8696 D A11yFramework: Not a target page, skipping
+24431:03-18 12:06:14.839  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24432:03-18 12:06:14.858  8696  8696 D A11yFramework: Not a target page, skipping
+24472:03-18 12:06:14.926  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24483:03-18 12:06:14.953  8696  8696 D A11yFramework: Not a target page, skipping
+24503:03-18 12:06:15.018  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24516:03-18 12:06:15.045  8696  8696 D A11yFramework: Not a target page, skipping
+24537:03-18 12:06:15.128  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24546:03-18 12:06:15.143  8696  8696 D A11yFramework: Not a target page, skipping
+24573:03-18 12:06:15.247  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24584:03-18 12:06:15.273  8696  8696 D A11yFramework: Not a target page, skipping
+24597:03-18 12:06:15.294  3727  3727 I adbd    : in ShellService: run-as com.example.a11yframework cat files/tap-trace-latest.txt
+24607:03-18 12:06:15.348  8696  8711 I e.a11yframework: This is non sticky GC, maxfree is 33554432 minfree is 8388608
+24618:03-18 12:06:15.387  8696  8696 D A11yFramework: Not a target page, skipping
+24848:03-18 12:06:15.437  8696  8711 I e.a11yframework: This is sticky GC, maxfree is 33554432 minfree is 8388608
+24865:03-18 12:06:15.444  2792  5972 I SmartPower: com.example.a11yframework/10389(8696): idle->background(39772ms) R(service unbind com.example.a11yframework/.core.FrameworkAccessibilityService) adj=200.

@@ -1,0 +1,42 @@
+{
+  "annotations": [
+    {
+      "order": 1,
+      "label": "1 首个商家块父级",
+      "bounds": "[0,450][1440,1221]",
+      "color": "#8e8e93",
+      "lineWidth": 4
+    },
+    {
+      "order": 2,
+      "label": "2 商家信息父级",
+      "bounds": "[0,485][1384,706]",
+      "color": "#ff9500",
+      "lineWidth": 4
+    },
+    {
+      "order": 3,
+      "label": "3 店铺首页入口带",
+      "bounds": "[263,485][1384,548]",
+      "color": "#ff3b30"
+    },
+    {
+      "order": 4,
+      "label": "4 商家名称节点",
+      "contentDesc": "郑州美莱医疗美容医院",
+      "color": "#34c759"
+    },
+    {
+      "order": 5,
+      "label": "5 不要点这里",
+      "bounds": "[263,566][1218,625]",
+      "color": "#0a84ff"
+    },
+    {
+      "order": 6,
+      "label": "6 回头客标签区",
+      "containsContentDesc": "回头客1千+",
+      "color": "#af52de"
+    }
+  ]
+}
