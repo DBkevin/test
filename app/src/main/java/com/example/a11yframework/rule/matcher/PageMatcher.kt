@@ -1,13 +1,15 @@
 package com.example.a11yframework.rule.matcher
 
 import android.accessibilityservice.AccessibilityService
-import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log
+import android.view.accessibility.AccessibilityNodeInfo
 import com.example.a11yframework.rule.MatchRule
 import com.example.a11yframework.rule.MatchLogic
 import com.example.a11yframework.rule.MatchType
 import com.example.a11yframework.rule.PageConfig
+import com.example.a11yframework.utils.NodeUtils
 import java.util.regex.Pattern
+import kotlin.LazyThreadSafetyMode
 
 /**
  * 页面匹配器
@@ -24,12 +26,12 @@ class PageMatcher(private val service: AccessibilityService) {
     
     companion object {
         private const val TAG = "PageMatcher"
+        private const val PAGE_TEXT_MAX_DEPTH = 12
+        private const val PAGE_TEXT_MAX_NODES = 220
+        private const val PAGE_TEXT_MAX_LENGTH = 4000
+        private const val NODE_SEARCH_MAX_DEPTH = 18
+        private const val NODE_SEARCH_MAX_NODES = 260
     }
-    
-    /**
-     * 文本匹配器（缓存）
-     */
-    private val textCache = mutableMapOf<String, String>()
     
     /**
      * 匹配页面
@@ -45,12 +47,13 @@ class PageMatcher(private val service: AccessibilityService) {
         }
         
         try {
-            // 获取页面文本（缓存）
-            val pageText = getPageText(rootNode)
+            val pageText by lazy(LazyThreadSafetyMode.NONE) {
+                getPageText(rootNode)
+            }
             
             // 遍历所有匹配规则
             val matchResults = pageConfig.matchRules.map { rule ->
-                matchRule(rule, pageText, rootNode)
+                matchRule(rule, rootNode) { pageText }
             }
             
             // 根据匹配逻辑组合结果
@@ -85,26 +88,34 @@ class PageMatcher(private val service: AccessibilityService) {
     /**
      * 匹配单个规则
      */
-    private fun matchRule(rule: MatchRule, pageText: String, rootNode: AccessibilityNodeInfo?): Boolean {
+    private fun matchRule(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        pageTextProvider: () -> String
+    ): Boolean {
         return when (rule.type) {
-            MatchType.TEXT_CONTAINS -> matchTextContains(rule, pageText)
-            MatchType.TEXT_EQUALS -> matchTextEquals(rule, pageText)
+            MatchType.TEXT_CONTAINS -> matchTextContains(rule, rootNode, pageTextProvider)
+            MatchType.TEXT_EQUALS -> matchTextEquals(rule, rootNode, pageTextProvider)
             MatchType.CLASS_NAME -> matchClassName(rule, rootNode)
             MatchType.VIEW_ID -> matchViewId(rule, rootNode)
-            MatchType.REGEX -> matchRegex(rule, pageText)
+            MatchType.REGEX -> matchRegex(rule, pageTextProvider())
         }
     }
     
     /**
      * 文本包含匹配
      */
-    private fun matchTextContains(rule: MatchRule, pageText: String): Boolean {
+    private fun matchTextContains(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        pageTextProvider: () -> String
+    ): Boolean {
         val values = rule.values ?: return false
-        
+
         val results = values.map { value ->
-            pageText.contains(value, ignoreCase = true)
+            hasTextMatch(rule, rootNode, value, exact = false, pageTextProvider)
         }
-        
+
         return when (rule.logic) {
             MatchLogic.AND -> results.all { it }
             MatchLogic.OR -> results.any { it }
@@ -114,13 +125,17 @@ class PageMatcher(private val service: AccessibilityService) {
     /**
      * 文本完全匹配
      */
-    private fun matchTextEquals(rule: MatchRule, pageText: String): Boolean {
+    private fun matchTextEquals(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        pageTextProvider: () -> String
+    ): Boolean {
         val values = rule.values ?: return false
-        
+
         val results = values.map { value ->
-            pageText.equals(value, ignoreCase = true)
+            hasTextMatch(rule, rootNode, value, exact = true, pageTextProvider)
         }
-        
+
         return when (rule.logic) {
             MatchLogic.AND -> results.all { it }
             MatchLogic.OR -> results.any { it }
@@ -133,8 +148,11 @@ class PageMatcher(private val service: AccessibilityService) {
     private fun matchClassName(rule: MatchRule, rootNode: AccessibilityNodeInfo?): Boolean {
         val pattern = rule.pattern ?: return false
         val regexPattern = pattern.replace("*", ".*")
-        
-        return findNodeByClassName(rootNode, regexPattern) != null
+
+        val node = findNodeByClassName(rootNode, regexPattern)
+        val matched = node != null
+        node?.recycle()
+        return matched
     }
     
     /**
@@ -143,8 +161,11 @@ class PageMatcher(private val service: AccessibilityService) {
     private fun matchViewId(rule: MatchRule, rootNode: AccessibilityNodeInfo?): Boolean {
         val pattern = rule.pattern ?: return false
         val regexPattern = pattern.replace("*", ".*")
-        
-        return findNodeByViewId(rootNode, regexPattern) != null
+
+        val node = findNodeByViewId(rootNode, regexPattern)
+        val matched = node != null
+        node?.recycle()
+        return matched
     }
     
     /**
@@ -163,48 +184,15 @@ class PageMatcher(private val service: AccessibilityService) {
     }
     
     /**
-     * 获取页面文本（带缓存）
+     * 获取页面文本
      */
     private fun getPageText(rootNode: AccessibilityNodeInfo?): String {
-        val cacheKey = "page_text_${System.currentTimeMillis() / 60000}" // 每分钟缓存
-        
-        return textCache.getOrPut(cacheKey) {
-            getAllNodeText(rootNode)
-        }
-    }
-    
-    /**
-     * 获取所有节点文本
-     */
-    private fun getAllNodeText(rootNode: AccessibilityNodeInfo?): String {
-        if (rootNode == null) return ""
-        
-        val text = StringBuilder()
-        
-        // 深度优先遍历
-        fun traverse(node: AccessibilityNodeInfo) {
-            // 添加节点文本
-            node.text?.let {
-                text.append(it.toString()).append(" ")
-            }
-            
-            // 添加 contentDescription
-            node.contentDescription?.let {
-                text.append(it.toString()).append(" ")
-            }
-            
-            // 遍历子节点
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    traverse(child)
-                    child.recycle()
-                }
-            }
-        }
-        
-        traverse(rootNode)
-        
-        return text.toString().trim()
+        return NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = PAGE_TEXT_MAX_DEPTH,
+            maxNodes = PAGE_TEXT_MAX_NODES,
+            maxTextLength = PAGE_TEXT_MAX_LENGTH
+        )
     }
     
     /**
@@ -214,27 +202,10 @@ class PageMatcher(private val service: AccessibilityService) {
         if (rootNode == null) return null
         
         val regex = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE)
-        
-        fun traverse(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-            // 检查当前节点
-            val className = node.className?.toString() ?: ""
-            if (regex.matcher(className).matches()) {
-                return node
-            }
-            
-            // 遍历子节点
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    val result = traverse(child)
-                    child.recycle()
-                    if (result != null) return result
-                }
-            }
-            
-            return null
+
+        return findFirstMatchingNode(rootNode) { node ->
+            regex.matcher(node.className?.toString().orEmpty()).matches()
         }
-        
-        return traverse(rootNode)
     }
     
     /**
@@ -244,35 +215,120 @@ class PageMatcher(private val service: AccessibilityService) {
         if (rootNode == null) return null
         
         val regex = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE)
-        
-        fun traverse(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-            // 检查当前节点
-            val viewId = node.viewIdResourceName ?: ""
-            if (regex.matcher(viewId).matches()) {
-                return node
+
+        return findFirstMatchingNode(rootNode) { node ->
+            regex.matcher(node.viewIdResourceName.orEmpty()).matches()
+        }
+    }
+
+    private fun hasTextMatch(
+        rule: MatchRule,
+        rootNode: AccessibilityNodeInfo?,
+        value: String,
+        exact: Boolean,
+        pageTextProvider: () -> String
+    ): Boolean {
+        if (value.isBlank()) {
+            return false
+        }
+
+        if (rule.field.equals("page_text", ignoreCase = true)) {
+            val pageText = normalizeText(pageTextProvider())
+            return if (exact) {
+                pageText.equals(value, ignoreCase = true)
+            } else {
+                pageText.contains(value, ignoreCase = true)
             }
-            
-            // 遍历子节点
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    val result = traverse(child)
-                    child.recycle()
-                    if (result != null) return result
+        }
+
+        if (rootNode == null) {
+            return false
+        }
+
+        val matchedNodes = try {
+            rootNode.findAccessibilityNodeInfosByText(value)
+        } catch (e: Exception) {
+            Log.w(TAG, "文本搜索失败：$value", e)
+            emptyList()
+        }
+
+        return try {
+            matchedNodes.any { node ->
+                val combinedText = normalizeText(
+                    "${node.text?.toString().orEmpty()} ${node.contentDescription?.toString().orEmpty()}"
+                )
+
+                if (exact) {
+                    combinedText.equals(value, ignoreCase = true)
+                } else {
+                    combinedText.contains(value, ignoreCase = true)
                 }
             }
-            
+        } finally {
+            matchedNodes.forEach { recycleSafely(it) }
+        }
+    }
+
+    private fun findFirstMatchingNode(
+        rootNode: AccessibilityNodeInfo,
+        predicate: (AccessibilityNodeInfo) -> Boolean
+    ): AccessibilityNodeInfo? {
+        var visitedNodes = 0
+
+        fun traverse(node: AccessibilityNodeInfo, depth: Int): AccessibilityNodeInfo? {
+            if (depth > NODE_SEARCH_MAX_DEPTH || visitedNodes >= NODE_SEARCH_MAX_NODES) {
+                return null
+            }
+
+            visitedNodes++
+            if (predicate(node)) {
+                return AccessibilityNodeInfo.obtain(node)
+            }
+
+            for (i in 0 until node.childCount) {
+                if (visitedNodes >= NODE_SEARCH_MAX_NODES) {
+                    break
+                }
+
+                val child = node.getChild(i)
+                if (child != null) {
+                    try {
+                        val result = traverse(child, depth + 1)
+                        if (result != null) {
+                            return result
+                        }
+                    } finally {
+                        child.recycle()
+                    }
+                }
+            }
+
             return null
         }
-        
-        return traverse(rootNode)
+
+        return traverse(rootNode, 0)
+    }
+
+    private fun normalizeText(rawText: String): String {
+        return rawText
+            .replace("\u00A0", " ")
+            .replace(Regex("[\\u200B-\\u200D\\uFEFF]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun recycleSafely(node: AccessibilityNodeInfo?) {
+        try {
+            node?.recycle()
+        } catch (_: Exception) {
+        }
     }
     
     /**
      * 清除缓存
      */
     fun clearCache() {
-        textCache.clear()
-        Log.d(TAG, "文本缓存已清除")
+        Log.d(TAG, "PageMatcher is stateless, no cache to clear")
     }
 }
 

@@ -101,24 +101,68 @@ object NodeUtils {
     /**
      * 获取节点及其所有子节点的文本
      */
-    fun getAllNodeText(node: AccessibilityNodeInfo?): String {
+    fun getAllNodeText(
+        node: AccessibilityNodeInfo?,
+        maxDepth: Int = 14,
+        maxNodes: Int = 320,
+        maxTextLength: Int = 6000
+    ): String {
         if (node == null) return ""
         
         val sb = StringBuilder()
-        collectTextRecursive(node, sb)
+        var visitedNodes = 0
+
+        fun collectTextRecursive(current: AccessibilityNodeInfo, depth: Int) {
+            if (depth > maxDepth || visitedNodes >= maxNodes || sb.length >= maxTextLength) {
+                return
+            }
+
+            visitedNodes++
+            appendNodeText(sb, current, maxTextLength)
+
+            if (sb.length >= maxTextLength) {
+                return
+            }
+
+            for (i in 0 until current.childCount) {
+                if (visitedNodes >= maxNodes || sb.length >= maxTextLength) {
+                    break
+                }
+
+                val child = current.getChild(i)
+                if (child != null) {
+                    try {
+                        collectTextRecursive(child, depth + 1)
+                    } finally {
+                        child.recycle()
+                    }
+                }
+            }
+        }
+
+        collectTextRecursive(node, 0)
         return sb.toString().trim()
     }
     
-    private fun collectTextRecursive(node: AccessibilityNodeInfo, sb: StringBuilder) {
-        node.text?.let { sb.append(it.toString()).append(" ") }
-        node.contentDescription?.let { sb.append(it.toString()).append(" ") }
-        
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            if (child != null) {
-                collectTextRecursive(child, sb)
-                child.recycle()
-            }
+    private fun appendNodeText(
+        sb: StringBuilder,
+        node: AccessibilityNodeInfo,
+        maxTextLength: Int
+    ) {
+        if (sb.length >= maxTextLength) {
+            return
+        }
+
+        node.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            sb.append(it).append(" ")
+        }
+
+        if (sb.length >= maxTextLength) {
+            return
+        }
+
+        node.contentDescription?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            sb.append(it).append(" ")
         }
     }
     
@@ -252,16 +296,16 @@ object NodeUtils {
      * 获取节点文本
      */
     fun getNodeText(node: AccessibilityNodeInfo?): String {
-        if (node == null) return ""
+        if (node == null) {
+            return ""
+        }
 
         val text = node.text?.toString()?.trim().orEmpty()
-        val contentDesc = node.contentDescription?.toString()?.trim().orEmpty()
+        if (text.isNotEmpty()) {
+            return text
+        }
 
-        return when {
-            text.isNotEmpty() && contentDesc.isNotEmpty() && text != contentDesc -> "$text $contentDesc"
-            text.isNotEmpty() -> text
-            else -> contentDesc
-        }.trim()
+        return node.contentDescription?.toString()?.trim().orEmpty()
     }
     
     /**

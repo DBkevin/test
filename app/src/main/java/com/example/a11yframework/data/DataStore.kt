@@ -6,8 +6,10 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.a11yframework.core.ScrapedData
+import com.example.a11yframework.core.ScrapedRecordIdentity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.util.LinkedHashMap
 
 /**
  * 数据存储
@@ -20,7 +22,9 @@ class DataStore(context: Context) {
     companion object {
         private const val TAG = "DataStore"
         private const val DB_NAME = "a11y_scraped_data.db"
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 1
+        private const val RECENT_RECORD_TTL_MS = 10 * 60 * 1000L
+        private const val RECENT_RECORD_CACHE_LIMIT = 4000
         
         private const val TABLE_NAME = "scraped_data"
         
@@ -33,45 +37,12 @@ class DataStore(context: Context) {
         private const val COL_CONTENT = "content"  // JSON 字符串
         private const val COL_RAW_TEXT = "raw_text"
         private const val COL_METADATA = "metadata"  // JSON 字符串
-        private const val COL_DEDUP_KEY = "dedup_key"
         private const val COL_CREATED_AT = "created_at"
-
-        internal fun buildDedupKey(data: ScrapedData): String {
-            val merchantName = normalizeKeyPart(
-                data.content["merchantName"]
-                    ?: data.content["hospitalName"]
-                    ?: data.content["shopName"]
-                    ?: ""
-            )
-            val title = normalizeKeyPart(
-                data.content["groupBuyTitle"]
-                    ?: data.content["title"]
-                    ?: ""
-            )
-            val price = normalizeKeyPart(data.content["price"] ?: "")
-            val originalPrice = normalizeKeyPart(data.content["originalPrice"] ?: "")
-
-            return listOf(
-                normalizeKeyPart(data.pluginId),
-                normalizeKeyPart(data.pageType),
-                normalizeKeyPart(data.dataType),
-                merchantName,
-                title,
-                price,
-                originalPrice
-            ).joinToString("|")
-        }
-
-        private fun normalizeKeyPart(value: String): String {
-            return value
-                .trim()
-                .lowercase()
-                .replace("\\s+".toRegex(), " ")
-        }
     }
     
     private val dbHelper: DbHelper
     private val gson = Gson()
+    private val recentRecordKeys = LinkedHashMap<String, Long>()
     
     init {
         dbHelper = DbHelper(context)
@@ -81,14 +52,26 @@ class DataStore(context: Context) {
      * 保存数据
      */
     fun saveData(dataList: List<ScrapedData>) {
+        if (dataList.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        val freshCandidates = synchronized(recentRecordKeys) {
+            selectFreshCandidates(dataList, now)
+        }
+
+        if (freshCandidates.isEmpty()) {
+            Log.d(TAG, "Skipped ${dataList.size} duplicate records")
+            return
+        }
+
         val db = dbHelper.writableDatabase
+        var committed = false
         
         try {
             db.beginTransaction()
-            var insertedCount = 0
-            var skippedCount = 0
             
-            dataList.forEach { data ->
+            freshCandidates.forEach { candidate ->
+                val data = candidate.data
                 val values = ContentValues().apply {
                     put(COL_TIMESTAMP, data.timestamp)
                     put(COL_PLUGIN_ID, data.pluginId)
@@ -97,30 +80,24 @@ class DataStore(context: Context) {
                     put(COL_CONTENT, gson.toJson(data.content))
                     put(COL_RAW_TEXT, data.rawText)
                     put(COL_METADATA, gson.toJson(data.metadata))
-                    put(COL_DEDUP_KEY, buildDedupKey(data))
                     put(COL_CREATED_AT, System.currentTimeMillis())
                 }
                 
-                val rowId = db.insertWithOnConflict(
-                    TABLE_NAME,
-                    null,
-                    values,
-                    SQLiteDatabase.CONFLICT_IGNORE
-                )
-
-                if (rowId == -1L) {
-                    skippedCount++
-                } else {
-                    insertedCount++
-                }
+                db.insert(TABLE_NAME, null, values)
             }
             
             db.setTransactionSuccessful()
-            Log.i(TAG, "Saved $insertedCount records, skipped $skippedCount duplicates")
+            committed = true
+            Log.i(TAG, "Saved ${freshCandidates.size} records")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving data", e)
         } finally {
             db.endTransaction()
+            if (committed) {
+                synchronized(recentRecordKeys) {
+                    rememberRecentKeys(freshCandidates, now)
+                }
+            }
         }
     }
     
@@ -290,6 +267,62 @@ class DataStore(context: Context) {
             metadata = metadata
         )
     }
+
+    private fun selectFreshCandidates(
+        dataList: List<ScrapedData>,
+        now: Long
+    ): List<RecordInsertCandidate> {
+        pruneRecentRecordKeys(now)
+
+        val freshCandidates = mutableListOf<RecordInsertCandidate>()
+        val seenInBatch = mutableSetOf<String>()
+
+        dataList.forEach { data ->
+            val key = buildRecordKey(data)
+            if (!seenInBatch.add(key)) {
+                return@forEach
+            }
+            if (recentRecordKeys.containsKey(key)) {
+                return@forEach
+            }
+
+            freshCandidates.add(RecordInsertCandidate(key, data))
+        }
+
+        return freshCandidates
+    }
+
+    private fun rememberRecentKeys(
+        candidates: List<RecordInsertCandidate>,
+        now: Long
+    ) {
+        candidates.forEach { candidate ->
+            recentRecordKeys[candidate.key] = now
+        }
+
+        trimRecentRecordKeys()
+    }
+
+    private fun pruneRecentRecordKeys(now: Long) {
+        val iterator = recentRecordKeys.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (now - entry.value > RECENT_RECORD_TTL_MS) {
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun trimRecentRecordKeys() {
+        while (recentRecordKeys.size > RECENT_RECORD_CACHE_LIMIT) {
+            val oldestKey = recentRecordKeys.entries.firstOrNull()?.key ?: break
+            recentRecordKeys.remove(oldestKey)
+        }
+    }
+
+    private fun buildRecordKey(data: ScrapedData): String {
+        return ScrapedRecordIdentity.buildBusinessKey(data)
+    }
     
     /**
      * 数据库帮助类
@@ -307,7 +340,6 @@ class DataStore(context: Context) {
                     $COL_CONTENT TEXT,
                     $COL_RAW_TEXT TEXT,
                     $COL_METADATA TEXT,
-                    $COL_DEDUP_KEY TEXT,
                     $COL_CREATED_AT INTEGER NOT NULL
                 )
             """.trimIndent()
@@ -317,17 +349,19 @@ class DataStore(context: Context) {
             // 创建索引
             db.execSQL("CREATE INDEX idx_plugin ON $TABLE_NAME($COL_PLUGIN_ID)")
             db.execSQL("CREATE INDEX idx_timestamp ON $TABLE_NAME($COL_TIMESTAMP)")
-            db.execSQL("CREATE UNIQUE INDEX idx_dedup_key ON $TABLE_NAME($COL_DEDUP_KEY)")
             
             Log.i(TAG, "Database created")
         }
         
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
             Log.w(TAG, "Upgrading database from $oldVersion to $newVersion")
-            if (oldVersion < 2) {
-                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COL_DEDUP_KEY TEXT")
-                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_dedup_key ON $TABLE_NAME($COL_DEDUP_KEY)")
-            }
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
+            onCreate(db)
         }
     }
 }
+
+private data class RecordInsertCandidate(
+    val key: String,
+    val data: ScrapedData
+)

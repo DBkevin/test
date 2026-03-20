@@ -1,1 +1,0 @@
-tap start button at 720,2776

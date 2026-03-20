@@ -19,9 +19,7 @@
 
 ## 2. 当前代码仓与文档位置
 
-- 代码仓：
-  - `D:\project\adb_remote_main`
-- 联调工作区与文档：
+- 代码仓与联调工作区：
   - `D:\project\adb`
 - 关键文档：
   - `D:\project\adb\docs\douyin_test_runbook.md`
@@ -290,22 +288,22 @@
 
 ### 代码文件
 
-- `D:\project\adb_remote_main\app\src\main\java\com\example\a11yframework\search\SearchController.kt`
+- `D:\project\adb\app\src\main\java\com\example\a11yframework\search\SearchController.kt`
   - 当前问题最集中在这里
   - 尤其是：
     - 搜索结果页识别
     - 商家候选选择
     - 结果页开店点击
 
-- `D:\project\adb_remote_main\app\src\main\java\com\example\a11yframework\search\DouyinPageClassifier.kt`
+- `D:\project\adb\app\src\main\java\com\example\a11yframework\search\DouyinPageClassifier.kt`
   - 负责统一页型判断
   - 后续如果页型又漂，要先看这个
 
-- `D:\project\adb_remote_main\app\src\main\java\com\example\a11yframework\capture\CaptureCoordinator.kt`
+- `D:\project\adb\app\src\main\java\com\example\a11yframework\capture\CaptureCoordinator.kt`
   - 负责整体采集状态推进
   - 后续如果进入店铺后又乱滚、又回放首页动作，要看这里
 
-- `D:\project\adb_remote_main\app\src\main\java\com\example\a11yframework\plugins\DouyinPlugin.kt`
+- `D:\project\adb\app\src\main\java\com\example\a11yframework\plugins\DouyinPlugin.kt`
   - 负责店铺页团购解析
   - 当前不是主 blocker，但后面全量采集团购还会回到这里
 

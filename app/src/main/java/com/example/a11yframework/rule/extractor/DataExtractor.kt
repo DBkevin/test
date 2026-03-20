@@ -1,12 +1,16 @@
 package com.example.a11yframework.rule.extractor
 
 import android.accessibilityservice.AccessibilityService
-import android.view.accessibility.AccessibilityNodeInfo
+import android.graphics.Rect
 import android.util.Log
+import android.view.accessibility.AccessibilityNodeInfo
 import com.example.a11yframework.rule.ExtractRule
-import com.example.a11yframework.rule.ExtractType
 import com.example.a11yframework.rule.ExtractLocation
+import com.example.a11yframework.rule.ExtractType
+import com.example.a11yframework.utils.NodeUtils
 import java.util.regex.Pattern
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * 数据提取器
@@ -23,6 +27,26 @@ class DataExtractor(private val service: AccessibilityService) {
     
     companion object {
         private const val TAG = "DataExtractor"
+        private const val MIN_CARD_WIDTH_PX = 600
+        private const val MIN_CARD_HEIGHT_PX = 180
+        private const val MAX_CARD_HEIGHT_PX = 900
+        private const val ROOT_REGEX_TEXT_MAX_DEPTH = 12
+        private const val ROOT_REGEX_TEXT_MAX_NODES = 260
+        private const val ROOT_REGEX_TEXT_MAX_LENGTH = 5000
+        private const val ITEM_TEXT_MAX_DEPTH = 10
+        private const val ITEM_TEXT_MAX_NODES = 120
+        private const val ITEM_TEXT_MAX_LENGTH = 2400
+        private const val CONTAINER_SEARCH_MAX_DEPTH = 18
+        private const val CONTAINER_SEARCH_MAX_NODES = 320
+        private const val LIST_SCAN_MAX_DEPTH = 10
+        private const val LIST_SCAN_MAX_NODES = 220
+        private val LIST_ITEM_SIGNAL_PATTERN = Pattern.compile(
+            "(现价\\s*\\d|原价\\s*\\d|随时退|过期退|预约|意向金|领券抢购|团购|套餐|体验|次卡|疗程)"
+        )
+        private val PRICE_SIGNAL_PATTERN = Pattern.compile(
+            "(?:现价|原价)?\\s*\\d{2,5}(?:\\.\\d+)?\\s*元?"
+        )
+        private val TITLE_SIGNAL_PATTERN = Pattern.compile("[\\u4E00-\\u9FA5A-Za-z]{2,}")
     }
     
     /**
@@ -97,114 +121,33 @@ class DataExtractor(private val service: AccessibilityService) {
      * 在顶部区域查找
      */
     private fun findInTopArea(rootNode: AccessibilityNodeInfo?, keywords: List<String>, maxDepth: Int): String? {
-        if (rootNode == null) return null
-        
-        fun traverse(node: AccessibilityNodeInfo, depth: Int): String? {
-            if (depth > maxDepth) return null
-            
-            // 检查节点文本
-            val text = node.text?.toString() ?: ""
-            val contentDesc = node.contentDescription?.toString() ?: ""
-            val combinedText = "$text $contentDesc".trim()
-            
-            // 检查是否包含关键词
-            for (keyword in keywords) {
-                if (combinedText.contains(keyword, ignoreCase = true)) {
-                    return combinedText
-                }
-            }
-            
-            // 遍历子节点（优先前面的子节点）
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    val result = traverse(child, depth + 1)
-                    child.recycle()
-                    if (result != null) return result
-                }
-            }
-            
-            return null
-        }
-        
-        return traverse(rootNode, 0)
+        return collectKeywordMatches(rootNode, keywords, maxDepth).firstOrNull()
     }
     
     /**
      * 在中部区域查找
      */
     private fun findInMiddleArea(rootNode: AccessibilityNodeInfo?, keywords: List<String>, maxDepth: Int): String? {
-        // 简化实现：遍历所有节点，返回第一个匹配
-        return findAllMatches(rootNode, keywords, maxDepth).firstOrNull()
+        val matches = collectKeywordMatches(rootNode, keywords, maxDepth)
+        if (matches.isEmpty()) {
+            return null
+        }
+
+        return matches[matches.size / 2]
     }
     
     /**
      * 在底部区域查找
      */
     private fun findInBottomArea(rootNode: AccessibilityNodeInfo?, keywords: List<String>, maxDepth: Int): String? {
-        if (rootNode == null) return null
-        
-        val matches = mutableListOf<String>()
-        
-        fun traverse(node: AccessibilityNodeInfo, depth: Int) {
-            if (depth > maxDepth) return
-            
-            val text = node.text?.toString() ?: ""
-            val contentDesc = node.contentDescription?.toString() ?: ""
-            val combinedText = "$text $contentDesc".trim()
-            
-            for (keyword in keywords) {
-                if (combinedText.contains(keyword, ignoreCase = true)) {
-                    matches.add(combinedText)
-                    break
-                }
-            }
-            
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    traverse(child, depth + 1)
-                    child.recycle()
-                }
-            }
-        }
-        
-        traverse(rootNode, 0)
-        
-        // 返回最后一个匹配
-        return matches.lastOrNull()
+        return collectKeywordMatches(rootNode, keywords, maxDepth).lastOrNull()
     }
     
     /**
      * 查找所有匹配
      */
     private fun findAllMatches(rootNode: AccessibilityNodeInfo?, keywords: List<String>, maxDepth: Int): List<String> {
-        if (rootNode == null) return emptyList()
-        
-        val matches = mutableListOf<String>()
-        
-        fun traverse(node: AccessibilityNodeInfo, depth: Int) {
-            if (depth > maxDepth) return
-            
-            val text = node.text?.toString() ?: ""
-            val contentDesc = node.contentDescription?.toString() ?: ""
-            val combinedText = "$text $contentDesc".trim()
-            
-            for (keyword in keywords) {
-                if (combinedText.contains(keyword, ignoreCase = true)) {
-                    matches.add(combinedText)
-                    break
-                }
-            }
-            
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    traverse(child, depth + 1)
-                    child.recycle()
-                }
-            }
-        }
-        
-        traverse(rootNode, 0)
-        return matches
+        return collectKeywordMatches(rootNode, keywords, maxDepth)
     }
     
     /**
@@ -212,7 +155,12 @@ class DataExtractor(private val service: AccessibilityService) {
      */
     private fun extractByRegex(rule: ExtractRule, rootNode: AccessibilityNodeInfo?): String? {
         val pattern = rule.pattern ?: return null
-        val pageText = getAllNodeText(rootNode)
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = ROOT_REGEX_TEXT_MAX_DEPTH,
+            maxNodes = ROOT_REGEX_TEXT_MAX_NODES,
+            maxTextLength = ROOT_REGEX_TEXT_MAX_LENGTH
+        )
         
         return try {
             val regex = Pattern.compile(pattern)
@@ -248,10 +196,24 @@ class DataExtractor(private val service: AccessibilityService) {
         }
         
         val items = mutableListOf<Map<String, Any>>()
-        
-        // 遍历容器子节点
-        for (i in 0 until containerNode.childCount) {
-            containerNode.getChild(i)?.let { itemNode ->
+        val itemNodes = collectListItemNodes(containerNode)
+
+        if (itemNodes.isEmpty()) {
+            Log.d(TAG, "未识别到递归列表候选项，回退到容器直接子节点")
+            for (i in 0 until containerNode.childCount) {
+                containerNode.getChild(i)?.let { itemNode ->
+                    try {
+                        val itemData = extractItem(itemRules, itemNode)
+                        if (itemData.isNotEmpty()) {
+                            items.add(itemData)
+                        }
+                    } finally {
+                        itemNode.recycle()
+                    }
+                }
+            }
+        } else {
+            itemNodes.forEach { itemNode ->
                 try {
                     val itemData = extractItem(itemRules, itemNode)
                     if (itemData.isNotEmpty()) {
@@ -274,37 +236,199 @@ class DataExtractor(private val service: AccessibilityService) {
      */
     private fun findContainerNode(rootNode: AccessibilityNodeInfo?, container: com.example.a11yframework.rule.ContainerConfig): AccessibilityNodeInfo? {
         if (rootNode == null) return null
-        
-        fun traverse(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-            // 检查类名
-            if (container.className != null) {
+
+        val candidates = mutableListOf<AccessibilityNodeInfo>()
+
+        fun matches(node: AccessibilityNodeInfo): Boolean {
+            val targetClassName = container.className
+            if (targetClassName != null) {
                 val className = node.className?.toString() ?: ""
-                if (className.contains(container.className!!, ignoreCase = true)) {
-                    return node
+                if (!className.contains(targetClassName, ignoreCase = true)) {
+                    return false
                 }
             }
-            
-            // 检查 viewId
-            if (container.viewId != null) {
+
+            val targetViewId = container.viewId
+            if (targetViewId != null) {
                 val viewId = node.viewIdResourceName ?: ""
-                if (viewId.contains(container.viewId!!, ignoreCase = true)) {
-                    return node
+                if (!viewId.contains(targetViewId, ignoreCase = true)) {
+                    return false
                 }
             }
-            
-            // 遍历子节点
+
+            return container.className != null || container.viewId != null
+        }
+
+        findContainerByViewId(rootNode, container, ::matches)?.let { return it }
+
+        var visitedNodes = 0
+
+        fun traverse(node: AccessibilityNodeInfo, depth: Int): AccessibilityNodeInfo? {
+            if (depth > CONTAINER_SEARCH_MAX_DEPTH || visitedNodes >= CONTAINER_SEARCH_MAX_NODES) {
+                return null
+            }
+
+            visitedNodes++
+            if (matches(node)) {
+                candidates.add(AccessibilityNodeInfo.obtain(node))
+            }
+
             for (i in 0 until node.childCount) {
+                if (visitedNodes >= CONTAINER_SEARCH_MAX_NODES) {
+                    break
+                }
+
                 node.getChild(i)?.let { child ->
-                    val result = traverse(child)
+                    traverse(child, depth + 1)
                     child.recycle()
-                    if (result != null) return result
                 }
             }
-            
+
             return null
         }
         
-        return traverse(rootNode)
+        traverse(rootNode, 0)
+
+        val selected = candidates.maxByOrNull { candidate ->
+            scoreContainerCandidate(candidate, container)
+        }
+
+        candidates.forEach { candidate ->
+            if (candidate !== selected) {
+                candidate.recycle()
+            }
+        }
+
+        return selected
+    }
+
+    private fun collectListItemNodes(containerNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
+        val containerBounds = Rect()
+        containerNode.getBoundsInScreen(containerBounds)
+
+        val candidates = mutableListOf<ListItemCandidate>()
+        val seenKeys = mutableSetOf<String>()
+        var visitedNodes = 0
+
+        fun traverse(node: AccessibilityNodeInfo, depth: Int) {
+            if (depth > LIST_SCAN_MAX_DEPTH || visitedNodes >= LIST_SCAN_MAX_NODES) {
+                return
+            }
+
+            visitedNodes++
+            if (isLikelyListItemNode(node, containerBounds)) {
+                val bounds = Rect()
+                node.getBoundsInScreen(bounds)
+                val normalizedText = getAllNodeText(node)
+                val key = "${bounds.left},${bounds.top},${bounds.right},${bounds.bottom}:${normalizedText.hashCode()}"
+
+                if (seenKeys.add(key)) {
+                    candidates.add(
+                        ListItemCandidate(
+                            node = AccessibilityNodeInfo.obtain(node),
+                            bounds = bounds,
+                            depth = depth
+                        )
+                    )
+                }
+            }
+
+            for (i in 0 until node.childCount) {
+                if (visitedNodes >= LIST_SCAN_MAX_NODES) {
+                    break
+                }
+
+                node.getChild(i)?.let { child ->
+                    traverse(child, depth + 1)
+                    child.recycle()
+                }
+            }
+        }
+
+        for (i in 0 until containerNode.childCount) {
+            containerNode.getChild(i)?.let { child ->
+                traverse(child, 1)
+                child.recycle()
+            }
+        }
+
+        val deduplicated = deduplicateCandidates(candidates)
+        Log.d(TAG, "识别列表候选项 ${deduplicated.size} 个")
+        return deduplicated.map { it.node }
+    }
+
+    private fun isLikelyListItemNode(
+        node: AccessibilityNodeInfo,
+        containerBounds: Rect
+    ): Boolean {
+        if (node.isScrollable) {
+            return false
+        }
+
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+
+        val minWidth = max(containerBounds.width() / 2, MIN_CARD_WIDTH_PX)
+        val maxHeight = min(containerBounds.height(), MAX_CARD_HEIGHT_PX)
+        if (bounds.width() < minWidth) {
+            return false
+        }
+        if (bounds.height() < MIN_CARD_HEIGHT_PX || bounds.height() > maxHeight) {
+            return false
+        }
+
+        val text = getAllNodeText(node)
+        if (text.length < 12) {
+            return false
+        }
+
+        return LIST_ITEM_SIGNAL_PATTERN.matcher(text).find() &&
+            PRICE_SIGNAL_PATTERN.matcher(text).find() &&
+            TITLE_SIGNAL_PATTERN.matcher(text).find()
+    }
+
+    private fun deduplicateCandidates(
+        candidates: List<ListItemCandidate>
+    ): List<ListItemCandidate> {
+        val accepted = mutableListOf<ListItemCandidate>()
+
+        val sorted = candidates.sortedWith(
+            compareBy<ListItemCandidate>(
+                { it.bounds.width() * it.bounds.height() },
+                { -it.depth },
+                { it.bounds.top },
+                { it.bounds.left }
+            )
+        )
+
+        sorted.forEach { candidate ->
+            val duplicate = accepted.any { existing ->
+                isSubstantiallyOverlapping(existing.bounds, candidate.bounds)
+            }
+
+            if (duplicate) {
+                candidate.node.recycle()
+            } else {
+                accepted.add(candidate)
+            }
+        }
+
+        return accepted.sortedWith(compareBy({ it.bounds.top }, { it.bounds.left }))
+    }
+
+    private fun isSubstantiallyOverlapping(first: Rect, second: Rect): Boolean {
+        val left = max(first.left, second.left)
+        val top = max(first.top, second.top)
+        val right = min(first.right, second.right)
+        val bottom = min(first.bottom, second.bottom)
+
+        if (left >= right || top >= bottom) {
+            return false
+        }
+
+        val intersectionArea = (right - left) * (bottom - top)
+        val smallerArea = min(first.width() * first.height(), second.width() * second.height())
+        return intersectionArea >= smallerArea * 0.85
     }
     
     /**
@@ -331,32 +455,168 @@ class DataExtractor(private val service: AccessibilityService) {
      * 获取所有节点文本
      */
     private fun getAllNodeText(rootNode: AccessibilityNodeInfo?): String {
-        if (rootNode == null) return ""
-        
-        val text = StringBuilder()
-        
-        fun traverse(node: AccessibilityNodeInfo) {
-            node.text?.let {
-                text.append(it.toString()).append(" ")
+        return normalizeExtractText(
+            NodeUtils.getAllNodeText(
+                rootNode,
+                maxDepth = ITEM_TEXT_MAX_DEPTH,
+                maxNodes = ITEM_TEXT_MAX_NODES,
+                maxTextLength = ITEM_TEXT_MAX_LENGTH
+            )
+        )
+    }
+
+    private fun collectKeywordMatches(
+        rootNode: AccessibilityNodeInfo?,
+        keywords: List<String>,
+        maxDepth: Int
+    ): List<String> {
+        if (rootNode == null) {
+            return emptyList()
+        }
+
+        val matches = mutableListOf<KeywordMatch>()
+        val seenMatches = mutableSetOf<String>()
+
+        keywords.distinct().forEach keywordLoop@{ keyword ->
+            val nodes = try {
+                rootNode.findAccessibilityNodeInfosByText(keyword)
+            } catch (e: Exception) {
+                Log.w(TAG, "关键词搜索失败：$keyword", e)
+                emptyList()
             }
-            
-            node.contentDescription?.let {
-                text.append(it.toString()).append(" ")
-            }
-            
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { child ->
-                    traverse(child)
-                    child.recycle()
+
+            try {
+                nodes.forEach nodeLoop@{ node ->
+                    val combinedText = normalizeExtractText(
+                        "${node.text?.toString().orEmpty()} ${node.contentDescription?.toString().orEmpty()}"
+                    )
+                    if (combinedText.isBlank() || !combinedText.contains(keyword, ignoreCase = true)) {
+                        return@nodeLoop
+                    }
+
+                    val depth = estimateDepth(node, maxDepth + 4)
+                    if (depth > maxDepth) {
+                        return@nodeLoop
+                    }
+
+                    val bounds = Rect()
+                    node.getBoundsInScreen(bounds)
+                    val matchKey = "${bounds.top}:${bounds.left}:$combinedText"
+
+                    if (seenMatches.add(matchKey)) {
+                        matches.add(
+                            KeywordMatch(
+                                text = combinedText,
+                                top = bounds.top,
+                                left = bounds.left,
+                                depth = depth
+                            )
+                        )
+                    }
                 }
+            } finally {
+                nodes.forEach { recycleSafely(it) }
             }
         }
-        
-        traverse(rootNode)
-        
-        return text.toString().trim()
+
+        return matches
+            .sortedWith(compareBy<KeywordMatch>({ it.top }, { it.left }, { it.depth }))
+            .map { it.text }
+    }
+
+    private fun estimateDepth(node: AccessibilityNodeInfo, limit: Int): Int {
+        var depth = 0
+        var parent = node.parent
+
+        while (parent != null && depth <= limit) {
+            depth++
+            val grandParent = parent.parent
+            parent.recycle()
+            parent = grandParent
+        }
+
+        return depth
+    }
+
+    private fun findContainerByViewId(
+        rootNode: AccessibilityNodeInfo,
+        container: com.example.a11yframework.rule.ContainerConfig,
+        matcher: (AccessibilityNodeInfo) -> Boolean
+    ): AccessibilityNodeInfo? {
+        val viewId = container.viewId ?: return null
+        if (viewId.contains("*") || viewId.contains(".*")) {
+            return null
+        }
+
+        val nodes = try {
+            rootNode.findAccessibilityNodeInfosByViewId(viewId)
+        } catch (e: Exception) {
+            Log.w(TAG, "通过 viewId 查找容器失败：$viewId", e)
+            emptyList()
+        }
+
+        var selected: AccessibilityNodeInfo? = null
+        var bestScore = Int.MIN_VALUE
+
+        nodes.forEach candidateLoop@{ candidate ->
+            try {
+                if (!matcher(candidate)) {
+                    return@candidateLoop
+                }
+
+                val score = scoreContainerCandidate(candidate, container)
+                if (score > bestScore) {
+                    selected?.recycle()
+                    selected = AccessibilityNodeInfo.obtain(candidate)
+                    bestScore = score
+                }
+            } finally {
+                recycleSafely(candidate)
+            }
+        }
+
+        return selected
+    }
+
+    private fun scoreContainerCandidate(
+        candidate: AccessibilityNodeInfo,
+        container: com.example.a11yframework.rule.ContainerConfig
+    ): Int {
+        val viewId = candidate.viewIdResourceName ?: ""
+        val targetViewId = container.viewId
+        return candidate.childCount +
+            if (candidate.isScrollable) 5 else 0 +
+            if (targetViewId != null && viewId.contains(targetViewId, ignoreCase = true)) 20 else 0
+    }
+
+    private fun recycleSafely(node: AccessibilityNodeInfo?) {
+        try {
+            node?.recycle()
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun normalizeExtractText(rawText: String): String {
+        return rawText
+            .replace("\u00A0", " ")
+            .replace(Regex("[\\u200B-\\u200D\\uFEFF]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
     }
 }
+
+private data class ListItemCandidate(
+    val node: AccessibilityNodeInfo,
+    val bounds: Rect,
+    val depth: Int
+)
+
+private data class KeywordMatch(
+    val text: String,
+    val top: Int,
+    val left: Int,
+    val depth: Int
+)
 
 /**
  * 提取结果

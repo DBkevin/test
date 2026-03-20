@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
-<map>
-    <string name="plugin_config_douyin">{&quot;keywords&quot;:[&quot;团购&quot;,&quot;优惠&quot;,&quot;套餐&quot;]}</string>
-    <string name="plugin_config_meituan">{&quot;keywords&quot;:[&quot;团购&quot;,&quot;优惠&quot;,&quot;套餐&quot;]}</string>
-    <string name="plugin_config_system">{&quot;device_id&quot;:&quot;device_1773799558100&quot;}</string>
-</map>

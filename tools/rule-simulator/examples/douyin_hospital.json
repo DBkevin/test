@@ -1,11 +1,17 @@
 {
   "rule_id": "douyin_hospital_v1",
+  "rule_name": "抖音医院团购详情页",
   "app_id": "douyin",
   "app_package": "com.ss.android.ugc.aweme",
   "min_app_version": "20.0.0",
+  "priority": 200,
+  "enabled": true,
+  "version": 1,
   "pages": [
     {
+      "page_name": "医院详情页",
       "page_id": "hospital_detail",
+      "match_logic": "AND",
       "match_rules": [
         {
           "type": "text_contains",
@@ -24,7 +30,7 @@
         "honors": {
           "type": "find_by_keywords",
           "keywords": ["认证", "奖", "基地", "定点", "授权"],
-          "location": "near_hospital_name",
+          "location": "middle",
           "max_depth": 5
         },
         "group_buys": {

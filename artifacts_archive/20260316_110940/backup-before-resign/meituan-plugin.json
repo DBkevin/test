@@ -1,9 +1,0 @@
-{
-  "plugin_id": "meituan",
-  "plugin_name": "美团团购插件",
-  "version": 1,
-  "enabled": true,
-  "app_packages": ["com.sankuai.meituan"],
-  "entry_package": "com.sankuai.meituan",
-  "rule_assets": ["meituan_hospital_v1.json"]
-}

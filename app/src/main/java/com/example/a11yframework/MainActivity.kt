@@ -4,17 +4,22 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.a11yframework.appplugin.AppPluginManager
 import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.data.DataStore
+import kotlin.concurrent.thread
 
 /**
  * 主界面
@@ -29,10 +34,23 @@ class MainActivity : AppCompatActivity() {
     
     private lateinit var statusText: TextView
     private lateinit var statsText: TextView
+    private lateinit var pluginStatusText: TextView
     private lateinit var toggleButton: Button
     private lateinit var exportButton: Button
+    private lateinit var captureTargetEdit: EditText
     
     private var dataStore: DataStore? = null
+    private lateinit var appPluginManager: AppPluginManager
+
+    private val pluginImportLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) {
+            Toast.makeText(this, "未选择插件包", Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        importPluginFromUri(uri)
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +58,7 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
             
             dataStore = DataStore(this)
+            appPluginManager = AppPluginManager(this)
             
             initViews()
             setupListeners()
@@ -53,13 +72,16 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         updateStatus()
         updateStats()
+        updatePluginStatus()
     }
     
     private fun initViews() {
         statusText = findViewById(R.id.statusText)
         statsText = findViewById(R.id.statsText)
+        pluginStatusText = findViewById(R.id.pluginStatusText)
         toggleButton = findViewById(R.id.toggleButton)
         exportButton = findViewById(R.id.exportButton)
+        captureTargetEdit = findViewById(R.id.captureTargetEdit)
     }
     
     private fun setupListeners() {
@@ -75,6 +97,26 @@ class MainActivity : AppCompatActivity() {
         // 导出数据
         exportButton.setOnClickListener {
             exportData()
+        }
+
+        findViewById<Button>(R.id.importPluginButton).setOnClickListener {
+            pluginImportLauncher.launch(arrayOf("application/zip", "application/json", "*/*"))
+        }
+
+        findViewById<Button>(R.id.scanPluginInboxButton).setOnClickListener {
+            scanPluginInbox()
+        }
+
+        findViewById<Button>(R.id.reloadPluginButton).setOnClickListener {
+            reloadPlugins()
+        }
+
+        findViewById<Button>(R.id.rollbackPluginButton).setOnClickListener {
+            rollbackLastPlugin()
+        }
+
+        findViewById<Button>(R.id.startDouyinCaptureButton).setOnClickListener {
+            startLocalDouyinCapture()
         }
         
         // 保存规则
@@ -135,6 +177,34 @@ class MainActivity : AppCompatActivity() {
             statsText.text = "暂无数据"
         }
     }
+
+    private fun updatePluginStatus() {
+        try {
+            appPluginManager.reloadPlugins()
+            val statuses = appPluginManager.getRuntimePluginStatuses()
+            val inboxPath = appPluginManager.getImportInboxDir().absolutePath
+            val summary = buildString {
+                append("导入目录：\n")
+                append(inboxPath)
+                append("\n\n")
+                if (statuses.isEmpty()) {
+                    append("当前没有已安装插件")
+                } else {
+                    append("已安装插件：\n")
+                    statuses.forEach { status ->
+                        append("• ${status.pluginName} (${status.pluginId}) v${status.version}")
+                        append(if (status.enabled) " [启用]" else " [停用]")
+                        append("\n")
+                        append("  包名: ${status.appPackages.joinToString(", ")}\n")
+                        append("  规则: ${status.ruleCount}，备份: ${status.backupCount}\n")
+                    }
+                }
+            }
+            pluginStatusText.text = summary
+        } catch (e: Exception) {
+            pluginStatusText.text = "插件状态读取失败：${e.message}"
+        }
+    }
     
     /**
      * 检查无障碍服务是否启用
@@ -184,6 +254,187 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "导出失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun startLocalDouyinCapture() {
+        val hospitalName = captureTargetEdit.text.toString().trim()
+        if (hospitalName.isBlank()) {
+            Toast.makeText(this, "请输入医院名称", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!isAccessibilityServiceEnabled()) {
+            Toast.makeText(this, "请先启动无障碍服务", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val service = FrameworkAccessibilityService.instance
+        if (service == null) {
+            Toast.makeText(this, "服务尚未连接，请稍后重试", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val started = service.startLocalCapture(
+            hospitalName = hospitalName,
+            targetPackage = "com.ss.android.ugc.aweme",
+            launchTargetApp = false
+        ) { result ->
+            updateStats()
+            val message = if (result.success) {
+                "抖音采集完成：${result.recordCount} 条"
+            } else {
+                "抖音采集失败：${result.errorMessage ?: "未知错误"}"
+            }
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+
+        if (started) {
+            Toast.makeText(
+                this,
+                "已进入待命采集，请手动打开抖音",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(this, "启动采集失败", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun importPluginFromUri(uri: Uri) {
+        thread {
+            val result = runCatching {
+                contentResolver.openInputStream(uri)?.use { input ->
+                    val displayName = queryDisplayName(uri)
+                    appPluginManager.importPluginPackage(displayName, input)
+                } ?: throw IllegalStateException("无法读取插件文件")
+            }
+
+            runOnUiThread {
+                result.onSuccess { installResult ->
+                    if (installResult.success) {
+                        persistLastPluginId(installResult.pluginId)
+                        syncRuntimePluginsIfNeeded()
+                        updatePluginStatus()
+                        Toast.makeText(
+                            this,
+                            "插件已导入：${installResult.pluginName} v${installResult.version}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "插件导入失败：${installResult.errorMessage}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }.onFailure { error ->
+                    Toast.makeText(
+                        this,
+                        "插件导入失败：${error.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun scanPluginInbox() {
+        thread {
+            val result = runCatching {
+                appPluginManager.installPendingPluginPackages()
+            }
+
+            runOnUiThread {
+                result.onSuccess { batchResult ->
+                    val lastSuccess = batchResult.results.lastOrNull { it.success }
+                    if (lastSuccess != null) {
+                        persistLastPluginId(lastSuccess.pluginId)
+                        syncRuntimePluginsIfNeeded()
+                    }
+
+                    updatePluginStatus()
+                    val message = when {
+                        batchResult.results.isEmpty() -> "导入目录里没有待安装插件包"
+                        batchResult.failureCount == 0 ->
+                            "已安装 ${batchResult.successCount} 个插件包"
+                        else ->
+                            "安装完成：成功 ${batchResult.successCount}，失败 ${batchResult.failureCount}"
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                }.onFailure { error ->
+                    Toast.makeText(this, "扫描失败：${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun reloadPlugins() {
+        val reloadedCount = FrameworkAccessibilityService.instance?.reloadRuntimePlugins()
+        if (reloadedCount == null) {
+            appPluginManager.reloadPlugins()
+            updatePluginStatus()
+            Toast.makeText(this, "插件目录已重载，服务启动后会生效", Toast.LENGTH_LONG).show()
+        } else {
+            updatePluginStatus()
+            Toast.makeText(this, "已重载 $reloadedCount 个插件", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun rollbackLastPlugin() {
+        val pluginId = getLastPluginId()
+        if (pluginId.isNullOrBlank()) {
+            Toast.makeText(this, "还没有可回滚的最近插件", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        thread {
+            val result = appPluginManager.rollbackPlugin(pluginId)
+            runOnUiThread {
+                if (result.success) {
+                    syncRuntimePluginsIfNeeded()
+                    updatePluginStatus()
+                    Toast.makeText(
+                        this,
+                        "已回滚 ${result.pluginName} 到 v${result.version}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "回滚失败：${result.errorMessage}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun syncRuntimePluginsIfNeeded() {
+        FrameworkAccessibilityService.instance?.reloadRuntimePlugins()
+    }
+
+    private fun persistLastPluginId(pluginId: String) {
+        getSharedPreferences("plugin_admin", Context.MODE_PRIVATE)
+            .edit()
+            .putString("last_plugin_id", pluginId)
+            .apply()
+    }
+
+    private fun getLastPluginId(): String? {
+        return getSharedPreferences("plugin_admin", Context.MODE_PRIVATE)
+            .getString("last_plugin_id", null)
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (columnIndex >= 0) {
+                        return cursor.getString(columnIndex)
+                    }
+                }
+            }
+        return uri.lastPathSegment
     }
     
     /**

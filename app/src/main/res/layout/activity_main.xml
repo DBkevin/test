@@ -36,6 +36,73 @@
             android:text="启动服务"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="插件管理"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/pluginStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="插件状态加载中..."
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/importPluginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="导入插件包"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/scanPluginInboxButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="扫描导入目录"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/reloadPluginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="重载插件"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/rollbackPluginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="回滚最近插件"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="本地采集"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/captureTargetEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="医院名称"
+            android:text="郑州美莱"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/startDouyinCaptureButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="开始抖音采集"
+            android:layout_marginBottom="16dp" />
+
         <!-- 抓取规则设置 -->
         <TextView
             android:layout_width="wrap_content"

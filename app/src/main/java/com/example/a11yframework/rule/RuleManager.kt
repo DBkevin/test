@@ -42,6 +42,7 @@ class RuleManager(private val context: Context) {
         
         // 加载索引
         loadIndex()
+        installBundledRules()
     }
     
     /**
@@ -158,12 +159,48 @@ class RuleManager(private val context: Context) {
         parser.clearCache()
         Log.i(TAG, "缓存已清除")
     }
+
+    /**
+     * 刷新缓存与索引，供运行时热更新规则后调用。
+     */
+    fun refresh() {
+        clearCache()
+        ruleIndex.clear()
+        loadIndex()
+        Log.i(TAG, "规则状态已刷新")
+    }
     
     /**
      * 获取规则数量
      */
     fun getRuleCount(): Int {
         return ruleIndex.size
+    }
+
+    /**
+     * 获取所有规则
+     */
+    fun getAllRules(): List<Rule> {
+        val ruleFiles = rulesDir.listFiles { file ->
+            file.isFile && file.extension == "json" && file.name != RULE_INDEX_FILE
+        } ?: return emptyList()
+
+        return ruleFiles.mapNotNull { ruleFile ->
+            val ruleId = ruleFile.nameWithoutExtension
+            getRule(ruleId)
+        }.sortedWith(
+            compareByDescending<Rule> { it.priority }
+                .thenByDescending { it.version }
+        )
+    }
+
+    /**
+     * 按包名查找可用规则
+     */
+    fun findRulesByPackage(packageName: String): List<Rule> {
+        return getAllRules().filter { rule ->
+            rule.enabled && rule.appPackage == packageName
+        }
     }
     
     // ==================== 内部方法 ====================
@@ -217,6 +254,30 @@ class RuleManager(private val context: Context) {
             Log.d(TAG, "索引保存成功")
         } catch (e: Exception) {
             Log.e(TAG, "索引保存失败", e)
+        }
+    }
+
+    /**
+     * 首次启动时把 APK 内置规则安装到本地缓存目录
+     */
+    private fun installBundledRules() {
+        try {
+            val assetFiles = context.assets.list(RULES_DIR) ?: emptyArray()
+
+            assetFiles.filter { it.endsWith(".json") }.forEach { fileName ->
+                val json = context.assets.open("$RULES_DIR/$fileName").bufferedReader().use { it.readText() }
+                val rule = parser.parse(json)
+                val targetFile = File(rulesDir, "${rule.ruleId}.json")
+
+                if (targetFile.exists()) {
+                    return@forEach
+                }
+
+                updateRule(rule.ruleId, json)
+                Log.i(TAG, "已安装内置规则：${rule.ruleId}")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "安装内置规则失败，继续使用现有规则目录", e)
         }
     }
 }
