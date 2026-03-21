@@ -602,6 +602,27 @@ class CaptureCoordinator(
                 delay(800L)
             }
 
+            when (searchController.getCurrentDouyinPageKindForMerchant(activeExecution.task.hospitalName)) {
+                DouyinPageKind.RECOMMENDATION -> {
+                    Log.i(TAG, "Skip scraping current viewport because recommendation section is already visible")
+                    return
+                }
+                DouyinPageKind.UNKNOWN,
+                DouyinPageKind.MERCHANT_RESULT_LIST,
+                DouyinPageKind.GROUPBUY_HOME,
+                DouyinPageKind.HOME_FEED,
+                DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
+                    val recovered = searchController.ensureMerchantGroupBuyTab(
+                        activeExecution.task.hospitalName,
+                        timeoutMs = 900L
+                    )
+                    if (recovered) {
+                        delay(800L)
+                    }
+                }
+                else -> Unit
+            }
+
             if (searchController.getCurrentDouyinPageKindForMerchant(activeExecution.task.hospitalName) == DouyinPageKind.RECOMMENDATION) {
                 Log.i(TAG, "Skip scraping current viewport because recommendation section is already visible")
                 return
@@ -640,11 +661,15 @@ class CaptureCoordinator(
             return 0
         }
 
-        val expandedCount = searchController.clickAnyText(
-            targetTexts = expandKeywords,
-            exactMatch = false,
-            maxClicks = maxClicks
-        )
+        val expandedCount = if (activeCapture?.targetPackage?.let(::isDouyinPackage) == true) {
+            searchController.expandVisibleDouyinMerchantSections(maxClicks = maxClicks)
+        } else {
+            searchController.clickAnyText(
+                targetTexts = expandKeywords,
+                exactMatch = false,
+                maxClicks = maxClicks
+            )
+        }
 
         if (expandedCount > 0) {
             Log.i(

@@ -24,8 +24,14 @@ Use Kotlin with 4-space indentation and standard Android/Kotlin style. Class and
 ## Testing Guidelines
 Prefer focused unit tests for parsing, rule evaluation, and dedup logic. Add tests beside the relevant package in `app/src/test/java`. New test files should end with `Test.kt`. For automation-flow changes, include the related artifact or XML sample needed to reproduce the case.
 
+For Douyin end-to-end tests, follow the fixed route from `docs/douyin_test_runbook.md`: cold-start Douyin, enter `团购` only if it is not already selected, open the group-buy search entry, search the merchant name, tap the upper half of the merchant card, close coupon popups immediately, then expand the merchant’s group-buy list until `收起` appears.
+Treat Douyin taps as region-based by default. Prefer bounds or documented tap ranges over one hard-coded pixel, especially for the home `团购` tab, the group-buy search entry, the merchant-card upper half, and `展开更多` / `展开全部`.
+When adding a new list-page collector, a new page boundary, or a new stop condition, do a real-device manual-assisted replay first. Capture screenshots, then XML, derive the valid click region and stop markers, and only then update code.
+
 ## Commit & Pull Request Guidelines
 Follow the repository’s existing conventional style: `ci: ...`, `chore: ...`, `refactor: ...`, `fix: ...`. Keep subjects short and imperative. PRs should summarize the user-visible or automation-flow impact, list verification steps, and link any relevant issue or doc. For UI/automation changes, include screenshots, XML captures, or the GitHub Actions run used to validate the build.
 
 ## Security & Agent Notes
 Do not commit secrets, personal tokens, or unnecessary large artifacts. Prefer GitHub Actions for build verification and `gh` for artifact retrieval. If local Android tooling is missing, state that explicitly instead of implying local verification. When testing on-device, confirm `adb devices` is stable before install or launch steps, then install the latest CI-built APK rather than stale local files.
+
+For this repository, treat the Douyin collection flow as project memory, not disposable context. Do not replace the documented route with heuristic shortcuts without updating the runbook first.

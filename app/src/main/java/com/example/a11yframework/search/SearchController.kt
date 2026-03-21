@@ -10,6 +10,7 @@ import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.utils.NodeUtils
 import java.io.File
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * 搜索控制器
@@ -61,7 +62,13 @@ class SearchController(
         private const val DOUYIN_HOME_PREPARE_MAX_ATTEMPTS = 4
         private const val TAP_TRACE_FILE_NAME = "tap-trace-latest.txt"
         private const val TAP_TRACE_MAX_BYTES = 64 * 1024L
-        
+        private const val DOUYIN_EXPAND_ACTION_VALIDATION_DELAY_MS = 700L
+        private const val DOUYIN_EXPAND_BAND_MIN_HEIGHT = 56
+        private const val DOUYIN_EXPAND_BAND_MAX_HEIGHT = 180
+        private const val DOUYIN_EXPAND_SERVICE_OFFSET_TOP = 170
+        private const val DOUYIN_EXPAND_SERVICE_OFFSET_BOTTOM = 36
+        private const val DOUYIN_EXPAND_CARD_GAP_MIN = 24
+
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
         private val SEARCH_BUTTON_KEYWORDS = listOf("搜索", "查找", "search", "🔍")
@@ -106,6 +113,28 @@ class SearchController(
             "次卡"
         )
         private val MERCHANT_OVERLAY_CLOSE_HINTS = listOf("关闭", "跳过", "暂不", "以后再说", "我知道了", "知道了")
+        private val MERCHANT_SERVICE_SECTION_HINTS = listOf("热门服务", "咨询", "免费获取报价")
+        private val MERCHANT_GROUPBUY_CARD_SIGNAL_HINTS = listOf(
+            "领券抢购",
+            "去抢购",
+            "已售",
+            "现价",
+            "原价",
+            "人逛过",
+            "至少提前",
+            "随时退"
+        )
+        private val DOUYIN_GROUPBUY_TAB_TAP_RECT = Rect(900, 150, 1200, 300)
+        private val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT = Rect(80, 320, 500, 420)
+        private val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT = Rect(80, 300, 320, 500)
+        private val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT = Rect(1220, 138, 1440, 292)
+        private val DOUYIN_SEARCH_SUBMIT_TAP_RECT = Rect(1220, 138, 1440, 292)
+        private val DOUYIN_MERCHANT_ENTRY_BAND_RECT = Rect(263, 487, 1384, 708)
+        private val DOUYIN_EXPAND_TAP_POINTS = listOf(
+            0.50f to 0.68f,
+            0.62f to 0.64f,
+            0.50f to 0.34f
+        )
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -410,6 +439,31 @@ class SearchController(
         }
 
         return clickCount
+    }
+
+    fun expandVisibleDouyinMerchantSections(maxClicks: Int = 2): Int {
+        if (maxClicks <= 0) {
+            return 0
+        }
+
+        var expandedCount = clickAnyText(
+            targetTexts = listOf("展开更多", "展开全部"),
+            exactMatch = false,
+            maxClicks = maxClicks
+        )
+        if (expandedCount >= maxClicks) {
+            return expandedCount
+        }
+
+        repeat(maxClicks - expandedCount) { round ->
+            val label = "douyin_expand_band_r${expandedCount + round}"
+            if (!tapDouyinMerchantExpandBand(label)) {
+                return expandedCount
+            }
+            expandedCount++
+        }
+
+        return expandedCount
     }
 
     fun clickViewId(viewId: String, maxScrollRounds: Int = 0): Boolean {
@@ -807,13 +861,14 @@ class SearchController(
             }
 
             if (isOnDouyinSearchInputPage()) {
-                val tapped = tapScreen(
-                    DOUYIN_SEARCH_SUBMIT_TAP_X,
-                    DOUYIN_SEARCH_SUBMIT_TAP_Y,
-                    "douyin_search_submit_preset"
+                val tapped = tapRect(
+                    DOUYIN_SEARCH_SUBMIT_TAP_RECT,
+                    "douyin_search_submit_rect",
+                    horizontalBias = 0.54f,
+                    verticalBias = 0.52f
                 )
                 if (tapped) {
-                    Log.d(TAG, "Tapped Douyin search submit button with preset tap")
+                    Log.d(TAG, "Tapped Douyin search submit button with rect tap")
                     return true
                 }
             }
@@ -919,25 +974,29 @@ class SearchController(
                 rootNode,
                 condition = { node: AccessibilityNodeInfo ->
                     val nodeText = getComparableNodeText(node)
-                    nodeText.contains("团购", ignoreCase = true)
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    nodeText.contains("团购", ignoreCase = true) &&
+                        isRectUsable(bounds) &&
+                        overlaps(bounds, DOUYIN_GROUPBUY_TAB_TAP_RECT)
                 },
                 maxDepth = 24
             )
 
             if (tabNode != null) {
                 try {
-                    val nodeText = getComparableNodeText(tabNode)
-                    if (nodeText.contains("已选中，团购", ignoreCase = true) ||
-                        nodeText.contains("团购，按钮", ignoreCase = true)
-                    ) {
-                        Log.d(TAG, "Douyin group buy tab already selected by node")
-                        return true
-                    }
-
                     val clicked = NodeUtils.clickNode(tabNode)
                     recordNodeClickTrace("douyin_groupbuy_tab_node", tabNode, clicked)
                     Log.d(TAG, "Selected Douyin group buy tab: $clicked")
                     if (clicked) {
+                        return true
+                    }
+
+                    val tapped = tapNodeCenterWithinRect(
+                        tabNode,
+                        DOUYIN_GROUPBUY_TAB_TAP_RECT,
+                        "douyin_groupbuy_tab_bounds"
+                    )
+                    if (tapped) {
                         return true
                     }
                 } finally {
@@ -945,13 +1004,14 @@ class SearchController(
                 }
             }
 
-            val tapped = tapScreen(
-                DOUYIN_GROUPBUY_TAB_TAP_X,
-                DOUYIN_GROUPBUY_TAB_TAP_Y,
-                "douyin_groupbuy_tab_preset"
+            val tapped = tapRect(
+                DOUYIN_GROUPBUY_TAB_TAP_RECT,
+                "douyin_groupbuy_tab_rect",
+                horizontalBias = 0.60f,
+                verticalBias = 0.52f
             )
             if (tapped) {
-                Log.d(TAG, "Selected Douyin group buy tab with preset tap")
+                Log.d(TAG, "Selected Douyin group buy tab with rect tap")
                 return true
             }
 
@@ -1093,6 +1153,17 @@ class SearchController(
                 }
             }
 
+            val entryTapped = tapRect(
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
+                "douyin_groupbuy_search_entry_rect",
+                horizontalBias = 0.50f,
+                verticalBias = 0.50f
+            )
+            if (entryTapped) {
+                Log.d(TAG, "Opened Douyin group buy search entry with rect tap")
+                return true
+            }
+
             val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
             if (topSearchButton != null) {
                 try {
@@ -1114,20 +1185,22 @@ class SearchController(
             }
 
             val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                tapScreen(
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X,
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y,
-                    "douyin_groupbuy_top_search_preset"
+                tapRect(
+                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT,
+                    "douyin_groupbuy_top_search_rect",
+                    horizontalBias = 0.52f,
+                    verticalBias = 0.52f
                 )
             } else {
-                tapScreen(
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X,
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y,
-                    "douyin_groupbuy_search_entry_preset"
+                tapRect(
+                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
+                    "douyin_groupbuy_search_entry_rect_fallback",
+                    horizontalBias = 0.50f,
+                    verticalBias = 0.50f
                 )
             }
             if (tapped) {
-                Log.d(TAG, "Opened Douyin group buy search entry with preset tap")
+                Log.d(TAG, "Opened Douyin group buy search entry with rect fallback")
             }
             return tapped
         } finally {
@@ -1462,10 +1535,11 @@ class SearchController(
             rootNode.recycle()
         }
 
-        val tapped = tapScreen(
-            DOUYIN_MERCHANT_ENTRY_BAND_TAP_X,
-            DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y,
-            "merchant_result_preset_band_r$round"
+        val tapped = tapRect(
+            DOUYIN_MERCHANT_ENTRY_BAND_RECT,
+            "merchant_result_preset_band_r$round",
+            horizontalBias = 0.50f,
+            verticalBias = 0.20f
         )
         if (!tapped) {
             return false
@@ -1573,8 +1647,8 @@ class SearchController(
                         false
                     } else {
                         val bounds = Rect().also { node.getBoundsInScreen(it) }
-                        bounds.top in 240..560 &&
-                            bounds.left <= service.resources.displayMetrics.widthPixels / 3
+                        isRectUsable(bounds) &&
+                            overlaps(bounds, DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT)
                     }
                 },
                 maxDepth = 24
@@ -1591,7 +1665,11 @@ class SearchController(
                         }
                     }
 
-                    val tapped = tapNodeCenter(groupBuyTabNode, "douyin_merchant_groupbuy_tab_bounds")
+                    val tapped = tapNodeCenterWithinRect(
+                        groupBuyTabNode,
+                        DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT,
+                        "douyin_merchant_groupbuy_tab_bounds"
+                    )
                     if (tapped) {
                         Thread.sleep(1_000L)
                         if (waitForMerchantHomepageAnchors(merchantName, timeoutMs)) {
@@ -1609,9 +1687,15 @@ class SearchController(
         val presetTapped = tapScreen(
             DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X,
             DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y,
-            "douyin_merchant_groupbuy_tab_preset"
+            "douyin_merchant_groupbuy_tab_point_fallback"
         )
-        if (!presetTapped) {
+        if (!presetTapped && !tapRect(
+                DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT,
+                "douyin_merchant_groupbuy_tab_rect",
+                horizontalBias = 0.42f,
+                verticalBias = 0.52f
+            )
+        ) {
             return false
         }
 
@@ -1734,8 +1818,8 @@ class SearchController(
                 val nodeText = getComparableNodeText(node)
                 viewId.contains("et_search_kw") &&
                     !isLikelySearchInput(node) &&
-                    bounds.top in 280..420 &&
-                    bounds.bottom in 340..460 &&
+                    isRectUsable(bounds) &&
+                    overlaps(bounds, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT) &&
                     DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
                         nodeText.contains(hint, ignoreCase = true)
                     }
@@ -1752,8 +1836,8 @@ class SearchController(
                 val text = getComparableNodeText(node)
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
                 val className = node.className?.toString().orEmpty()
-                bounds.top in 120..320 &&
-                    bounds.right >= service.resources.displayMetrics.widthPixels - 260 &&
+                isRectUsable(bounds) &&
+                    overlaps(bounds, DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT) &&
                     (
                         text.contains("搜索", ignoreCase = true) ||
                             viewId.contains("4_s") ||
@@ -2106,12 +2190,234 @@ class SearchController(
         recordNodeClickTrace(label, node, clicked)
         return clicked
     }
-    
+
+    private fun tapDouyinMerchantExpandBand(label: String): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+        val beforeCardCount: Int
+        val expandBand: Rect
+
+        try {
+            val snapshot = douyinPageClassifier.classify(rootNode)
+            if (snapshot.kind != DouyinPageKind.MERCHANT_HOME &&
+                snapshot.kind != DouyinPageKind.MERCHANT_TAIL
+            ) {
+                return false
+            }
+
+            beforeCardCount = countVisibleDouyinMerchantCards(rootNode)
+            expandBand = findDouyinMerchantExpandBand(rootNode) ?: return false
+        } finally {
+            rootNode.recycle()
+        }
+
+        DOUYIN_EXPAND_TAP_POINTS.forEachIndexed { index, (horizontalBias, verticalBias) ->
+            val tapped = tapRect(
+                expandBand,
+                "${label}_a$index",
+                horizontalBias = horizontalBias,
+                verticalBias = verticalBias
+            )
+            if (!tapped) {
+                return@forEachIndexed
+            }
+
+            Thread.sleep(DOUYIN_EXPAND_ACTION_VALIDATION_DELAY_MS)
+            if (didDouyinExpandBandTakeEffect(beforeCardCount, expandBand)) {
+                Log.i(TAG, "Expanded Douyin merchant section by band tap: label=$label, attempt=$index, band=${expandBand.flattenToString()}")
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private fun didDouyinExpandBandTakeEffect(beforeCardCount: Int, beforeBand: Rect): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        return try {
+            val snapshot = douyinPageClassifier.classify(rootNode)
+            if (snapshot.kind == DouyinPageKind.MERCHANT_TAIL) {
+                return true
+            }
+            if (snapshot.kind == DouyinPageKind.RECOMMENDATION) {
+                return false
+            }
+
+            val afterCardCount = countVisibleDouyinMerchantCards(rootNode)
+            if (afterCardCount > beforeCardCount) {
+                return true
+            }
+
+            val afterBand = findDouyinMerchantExpandBand(rootNode)
+            if (afterBand == null) {
+                return true
+            }
+
+            val movedEnough =
+                abs(afterBand.top - beforeBand.top) > 120 ||
+                    abs(afterBand.bottom - beforeBand.bottom) > 120
+            movedEnough && afterCardCount >= beforeCardCount
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun findDouyinMerchantExpandBand(rootNode: AccessibilityNodeInfo): Rect? {
+        val cardBounds = findVisibleDouyinMerchantCardBounds(rootNode)
+        if (cardBounds.isEmpty()) {
+            return null
+        }
+
+        val lastCardBottom = cardBounds.maxOf { it.bottom }
+        val metrics = service.resources.displayMetrics
+
+        val bandCandidates = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val text = getComparableNodeText(node)
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                text.isBlank() &&
+                    isRectUsable(bounds) &&
+                    bounds.top >= lastCardBottom - 40 &&
+                    bounds.top in 760..1900 &&
+                    bounds.height() in DOUYIN_EXPAND_BAND_MIN_HEIGHT..DOUYIN_EXPAND_BAND_MAX_HEIGHT &&
+                    bounds.width() >= metrics.widthPixels - 360 &&
+                    bounds.left <= 320 &&
+                    !node.isScrollable
+            },
+            maxDepth = 30
+        )
+
+        try {
+            val bestBand = bandCandidates
+                .map { node -> Rect().also { node.getBoundsInScreen(it) } }
+                .filter { bounds ->
+                    bounds.top >= lastCardBottom - 40 &&
+                        bounds.bottom > lastCardBottom + DOUYIN_EXPAND_CARD_GAP_MIN
+                }
+                .minByOrNull { bounds ->
+                    (bounds.top - lastCardBottom).coerceAtLeast(0) * 4 - bounds.width()
+                }
+            if (bestBand != null) {
+                return bestBand
+            }
+        } finally {
+            NodeUtils.recycleNodes(bandCandidates)
+        }
+
+        val serviceSectionTop = findFirstMerchantServiceSectionTop(rootNode, lastCardBottom)
+        if (serviceSectionTop != null) {
+            val top = maxOf(
+                lastCardBottom + DOUYIN_EXPAND_CARD_GAP_MIN,
+                serviceSectionTop - DOUYIN_EXPAND_SERVICE_OFFSET_TOP
+            )
+            val bottom = maxOf(
+                top + DOUYIN_EXPAND_BAND_MIN_HEIGHT,
+                serviceSectionTop - DOUYIN_EXPAND_SERVICE_OFFSET_BOTTOM
+            )
+            if (bottom > top) {
+                return Rect(80, top, metrics.widthPixels - 80, bottom)
+            }
+        }
+
+        return null
+    }
+
+    private fun findVisibleDouyinMerchantCardBounds(rootNode: AccessibilityNodeInfo): List<Rect> {
+        val cardNodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val text = getComparableNodeText(node)
+                if (text.isBlank()) {
+                    return@findNodesByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                isRectUsable(bounds) &&
+                    bounds.top in 320..2600 &&
+                    bounds.height() in 120..420 &&
+                    bounds.width() >= 900 &&
+                    bounds.left <= 120 &&
+                    MERCHANT_GROUPBUY_CARD_SIGNAL_HINTS.any { hint ->
+                        text.contains(hint, ignoreCase = true)
+                    } &&
+                    !MERCHANT_OVERLAY_CLOSE_HINTS.any { hint ->
+                        text.contains(hint, ignoreCase = true)
+                    }
+            },
+            maxDepth = 30
+        )
+
+        return try {
+            cardNodes
+                .map { node -> Rect().also { node.getBoundsInScreen(it) } }
+                .distinctBy { it.flattenToString() }
+                .sortedBy { it.top }
+        } finally {
+            NodeUtils.recycleNodes(cardNodes)
+        }
+    }
+
+    private fun countVisibleDouyinMerchantCards(rootNode: AccessibilityNodeInfo): Int {
+        return findVisibleDouyinMerchantCardBounds(rootNode).size
+    }
+
+    private fun findFirstMerchantServiceSectionTop(
+        rootNode: AccessibilityNodeInfo,
+        lastCardBottom: Int
+    ): Int? {
+        val serviceNodes = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node ->
+                val text = getComparableNodeText(node)
+                if (text.isBlank()) {
+                    return@findNodesByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                isRectUsable(bounds) &&
+                    bounds.top > lastCardBottom &&
+                    bounds.top in 900..2300 &&
+                    MERCHANT_SERVICE_SECTION_HINTS.any { hint ->
+                        text.contains(hint, ignoreCase = true)
+                    }
+            },
+            maxDepth = 30
+        )
+
+        return try {
+            serviceNodes
+                .map { node -> Rect().also { node.getBoundsInScreen(it) }.top }
+                .minOrNull()
+        } finally {
+            NodeUtils.recycleNodes(serviceNodes)
+        }
+    }
+
     /**
      * 点击坐标
      */
     private fun click(x: Int, y: Int) {
         tapScreen(x, y, "click")
+    }
+
+    private fun tapRect(
+        rect: Rect,
+        label: String,
+        horizontalBias: Float = 0.5f,
+        verticalBias: Float = 0.5f
+    ): Boolean {
+        if (!isRectUsable(rect)) {
+            return false
+        }
+
+        val x = (rect.left + rect.width() * horizontalBias)
+            .roundToInt()
+            .coerceIn(rect.left + 1, rect.right - 1)
+        val y = (rect.top + rect.height() * verticalBias)
+            .roundToInt()
+            .coerceIn(rect.top + 1, rect.bottom - 1)
+        return tapScreen(x, y, label)
     }
 
     fun tapScreen(x: Int, y: Int, label: String = "tap"): Boolean {
@@ -2135,6 +2441,49 @@ class SearchController(
             return false
         }
         return tapScreen(bounds.centerX(), bounds.centerY(), label)
+    }
+
+    private fun tapNodeCenterWithinRect(
+        node: AccessibilityNodeInfo,
+        targetRect: Rect,
+        label: String
+    ): Boolean {
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        if (!isRectUsable(bounds)) {
+            return false
+        }
+
+        val clampedLeft = maxOf(bounds.left, targetRect.left)
+        val clampedTop = maxOf(bounds.top, targetRect.top)
+        val clampedRight = minOf(bounds.right, targetRect.right)
+        val clampedBottom = minOf(bounds.bottom, targetRect.bottom)
+        if (clampedRight <= clampedLeft || clampedBottom <= clampedTop) {
+            return false
+        }
+
+        return tapRect(
+            Rect(clampedLeft, clampedTop, clampedRight, clampedBottom),
+            label
+        )
+    }
+
+    private fun isRectUsable(rect: Rect): Boolean {
+        return !rect.isEmpty && rect.width() > 1 && rect.height() > 1
+    }
+
+    private fun overlaps(bounds: Rect, target: Rect): Boolean {
+        if (!isRectUsable(bounds) || !isRectUsable(target)) {
+            return false
+        }
+
+        val overlap = Rect(bounds)
+        if (!overlap.intersect(target)) {
+            return false
+        }
+
+        return overlap.width() >= minOf(bounds.width(), target.width()) / 4 &&
+            overlap.height() >= minOf(bounds.height(), target.height()) / 4
     }
 
     private data class MerchantCandidateScore(
