@@ -241,10 +241,6 @@ class SearchController(
                 }
             }
 
-            if (openMerchantWithPresetEntryBand(merchantName, settleRound, fallbackOnly = true)) {
-                return true
-            }
-
             if (settleRound < 2) {
                 Thread.sleep(1200)
             }
@@ -261,10 +257,6 @@ class SearchController(
                 } finally {
                     merchantNode.recycle()
                 }
-            }
-
-            if (openMerchantWithPresetEntryBand(merchantName, round, fallbackOnly = true)) {
-                return true
             }
 
             if (round == maxScrollRounds) {
@@ -1178,7 +1170,7 @@ class SearchController(
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
-                    if (douyinPageClassifier.classify(rootNode, merchantName).kind == DouyinPageKind.MERCHANT_RESULT_LIST) {
+                    if (isLikelyDouyinMerchantResultPage(rootNode, merchantName)) {
                         return true
                     }
                 } finally {
@@ -1194,74 +1186,99 @@ class SearchController(
         rootNode: AccessibilityNodeInfo,
         merchantName: String
     ): Boolean {
-        return douyinPageClassifier.classify(rootNode, merchantName).kind == DouyinPageKind.MERCHANT_RESULT_LIST
+        val snapshot = douyinPageClassifier.classify(rootNode, merchantName)
+        if (snapshot.kind == DouyinPageKind.MERCHANT_RESULT_LIST) {
+            return true
+        }
+
+        if (!isCurrentDouyinSearchResultActivity()) {
+            return false
+        }
+
+        val merchantNode = findMerchantResultNode(rootNode, merchantName)
+        merchantNode?.recycle()
+        return merchantNode != null
     }
 
     private fun findMerchantResultNode(merchantName: String): AccessibilityNodeInfo? {
         val rootNode = service.rootInActiveWindow ?: return null
 
         try {
-            val normalizedTarget = normalizeText(merchantName)
-            if (normalizedTarget.isBlank()) {
-                return null
-            }
-
-            val candidates = NodeUtils.findNodesByCondition(
-                rootNode,
-                condition = { node: AccessibilityNodeInfo ->
-                    if (node.isFocused || isLikelySearchInput(node)) {
-                        return@findNodesByCondition false
-                    }
-
-                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                    if (viewId.contains("et_search") || viewId.contains("search_kw")) {
-                        return@findNodesByCondition false
-                    }
-
-                    val contentDesc = node.contentDescription?.toString().orEmpty()
-                    if (contentDesc.contains("填入搜索框")) {
-                        return@findNodesByCondition false
-                    }
-
-                    val text = normalizeText(getComparableNodeText(node))
-                    text.isNotBlank() && (
-                        text.contains(normalizedTarget) || normalizedTarget.contains(text)
-                    )
-                },
-                maxDepth = MERCHANT_RESULT_NODE_MAX_DEPTH
-            )
-
-            val scoredCandidates = candidates
-                .map { candidate ->
-                    val contextText = buildMerchantCandidateContext(candidate)
-                    val score = scoreMerchantCandidate(candidate, normalizedTarget, contextText)
-                    MerchantCandidateScore(
-                        node = candidate,
-                        score = score,
-                        comparableText = getComparableNodeText(candidate),
-                        context = contextText
-                    )
-                }
-            logTopMerchantCandidates(scoredCandidates)
-
-            val bestCandidate = scoredCandidates
-                .filter { it.score > 0 }
-                .maxByOrNull { it.score }
-
-            val bestNode = bestCandidate?.node
-            val result = bestNode?.let { AccessibilityNodeInfo.obtain(it) }
-
-            candidates.forEach { candidate ->
-                if (candidate !== bestNode) {
-                    candidate.recycle()
-                }
-            }
-            bestNode?.recycle()
-
-            return result
+            return findMerchantResultNode(rootNode, merchantName)
         } finally {
             rootNode.recycle()
         }
+    }
+
+    private fun findMerchantResultNode(
+        rootNode: AccessibilityNodeInfo,
+        merchantName: String
+    ): AccessibilityNodeInfo? {
+        val normalizedTarget = normalizeText(merchantName)
+        if (normalizedTarget.isBlank()) {
+            return null
+        }
+
+        val candidates = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node: AccessibilityNodeInfo ->
+                if (node.isFocused || isLikelySearchInput(node)) {
+                    return@findNodesByCondition false
+                }
+
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                if (viewId.contains("et_search") || viewId.contains("search_kw")) {
+                    return@findNodesByCondition false
+                }
+
+                val contentDesc = node.contentDescription?.toString().orEmpty()
+                if (contentDesc.contains("填入搜索框")) {
+                    return@findNodesByCondition false
+                }
+
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val text = normalizeText(getComparableNodeText(node))
+                text.isNotBlank() &&
+                    bounds.top in 360..1800 &&
+                    (
+                        text.contains(normalizedTarget) || normalizedTarget.contains(text)
+                    )
+            },
+            maxDepth = MERCHANT_RESULT_NODE_MAX_DEPTH
+        )
+
+        val scoredCandidates = candidates
+            .map { candidate ->
+                val contextText = buildMerchantCandidateContext(candidate)
+                val score = scoreMerchantCandidate(candidate, normalizedTarget, contextText)
+                MerchantCandidateScore(
+                    node = candidate,
+                    score = score,
+                    comparableText = getComparableNodeText(candidate),
+                    context = contextText
+                )
+            }
+        logTopMerchantCandidates(scoredCandidates)
+
+        val bestCandidate = scoredCandidates
+            .filter { it.score > 0 }
+            .maxByOrNull { it.score }
+
+        val bestNode = bestCandidate?.node
+        val result = bestNode?.let { AccessibilityNodeInfo.obtain(it) }
+
+        candidates.forEach { candidate ->
+            if (candidate !== bestNode) {
+                candidate.recycle()
+            }
+        }
+        bestNode?.recycle()
+
+        return result
+    }
+
+    private fun isCurrentDouyinSearchResultActivity(): Boolean {
+        return service.getCurrentWindowClassName() == DOUYIN_SEARCH_ACTIVITY
     }
 
     private fun scoreMerchantCandidate(

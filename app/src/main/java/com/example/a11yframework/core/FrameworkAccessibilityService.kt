@@ -75,6 +75,8 @@ class FrameworkAccessibilityService : AccessibilityService() {
     private var lastScrapeTime = 0L
     @Volatile
     private var lastPackageName: String = ""
+    @Volatile
+    private var lastWindowClassName: String = ""
     private val SCRAPE_COOLDOWN = 3000L
     
     override fun onCreate() {
@@ -126,9 +128,10 @@ class FrameworkAccessibilityService : AccessibilityService() {
         
         val packageName = event.packageName?.toString() ?: return
         val eventType = event.eventType
+        val windowClassName = event.className?.toString().orEmpty()
         
         if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            handleWindowChange(packageName)
+            handleWindowChange(packageName, windowClassName)
         }
         
         if (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
@@ -136,11 +139,20 @@ class FrameworkAccessibilityService : AccessibilityService() {
         }
     }
     
-    private fun handleWindowChange(packageName: String) {
-        if (packageName == lastPackageName) return
-        
+    private fun handleWindowChange(packageName: String, windowClassName: String) {
+        val previousPackageName = lastPackageName
+        val previousWindowClassName = lastWindowClassName
+        val resolvedWindowClassName = if (windowClassName.isNotBlank()) {
+            windowClassName
+        } else {
+            previousWindowClassName
+        }
+
+        if (packageName == previousPackageName && resolvedWindowClassName == previousWindowClassName) return
+
         lastPackageName = packageName
-        Log.d(TAG, "Window changed to: $packageName")
+        lastWindowClassName = resolvedWindowClassName
+        Log.d(TAG, "Window changed to: $packageName, class=$resolvedWindowClassName")
         captureCoordinator.onWindowChanged(packageName)
         
         activePlugin?.onDeactivate()
@@ -357,6 +369,10 @@ class FrameworkAccessibilityService : AccessibilityService() {
         }
 
         return lastPackageName
+    }
+
+    fun getCurrentWindowClassName(): String {
+        return lastWindowClassName
     }
 
     fun reloadRuntimePlugins(): Int {
