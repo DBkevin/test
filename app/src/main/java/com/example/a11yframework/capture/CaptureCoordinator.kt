@@ -7,6 +7,7 @@ import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.core.ScrapedData
 import com.example.a11yframework.core.ScrapedRecordIdentity
 import com.example.a11yframework.remote.HospitalTask
+import com.example.a11yframework.search.DouyinPageKind
 import com.example.a11yframework.search.SearchController
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -59,6 +60,7 @@ class CaptureCoordinator(
         private const val COLLECTING_SCRAPE_COOLDOWN_MS = 1_200L
         private val DEFAULT_EXPAND_KEYWORDS = listOf(
             "展开更多",
+            "展开全部",
             "查看全部",
             "更多团购",
             "更多套餐",
@@ -438,13 +440,13 @@ class CaptureCoordinator(
             return activeExecution.snapshotRecords()
         }
 
-        if (shouldStopCollection(collectionConfig)) {
+        if (shouldStopCollection(activeExecution, collectionConfig)) {
             Log.i(TAG, "Stop collection after initial viewport capture")
             return activeExecution.snapshotRecords()
         }
 
         while (scrollRounds < maxScrollRounds && remainingTime(deadline) > 0) {
-            if (shouldStopCollection(collectionConfig)) {
+            if (shouldStopCollection(activeExecution, collectionConfig)) {
                 Log.i(TAG, "Stop collection before next scroll: round=$scrollRounds")
                 break
             }
@@ -458,9 +460,13 @@ class CaptureCoordinator(
 
             scrollRounds++
             delay(resolveScrollSettleMs(collectionConfig))
+            if (shouldStopCollection(activeExecution, collectionConfig)) {
+                Log.i(TAG, "Stop collection after scroll settle before scrape: round=$scrollRounds")
+                break
+            }
             collectCurrentViewport(activeExecution, collectionConfig, deadline)
 
-            if (shouldStopCollection(collectionConfig)) {
+            if (shouldStopCollection(activeExecution, collectionConfig)) {
                 Log.i(TAG, "Stop collection after scroll round=$scrollRounds")
                 break
             }
@@ -494,7 +500,16 @@ class CaptureCoordinator(
         deadline: Long
     ): Boolean {
         repeat(INITIAL_VIEWPORT_MAX_ATTEMPTS) { attempt ->
+            if (shouldStopCollection(activeExecution, collectionConfig)) {
+                Log.i(TAG, "Stop initial viewport capture before scrape: attempt=${attempt + 1}")
+                return activeExecution.recordCount() > 0
+            }
             collectCurrentViewport(activeExecution, collectionConfig, deadline)
+
+            if (shouldStopCollection(activeExecution, collectionConfig)) {
+                Log.i(TAG, "Stop initial viewport capture after scrape: attempt=${attempt + 1}")
+                return activeExecution.recordCount() > 0
+            }
 
             if (activeExecution.recordCount() > 0) {
                 Log.i(TAG, "Initial viewport captured records before first scroll: count=${activeExecution.recordCount()}")
@@ -530,7 +545,20 @@ class CaptureCoordinator(
         return activeExecution.recordCount() > 0 || service.isCurrentTargetPage(activeExecution.targetPackage)
     }
 
-    private fun shouldStopCollection(collectionConfig: CollectionConfig?): Boolean {
+    private fun shouldStopCollection(
+        activeExecution: ActiveCapture,
+        collectionConfig: CollectionConfig?
+    ): Boolean {
+        if (isDouyinPackage(activeExecution.targetPackage)) {
+            when (searchController.getCurrentDouyinPageKindForMerchant(activeExecution.task.hospitalName)) {
+                DouyinPageKind.RECOMMENDATION -> {
+                    Log.i(TAG, "Detected Douyin recommendation boundary, stop merchant collection")
+                    return true
+                }
+                else -> Unit
+            }
+        }
+
         val stopTextsAll = resolveStopTextsAll(collectionConfig)
         val stopTextsAny = resolveStopTextsAny(collectionConfig)
         val stopTextsNone = resolveStopTextsNone(collectionConfig)
@@ -559,6 +587,18 @@ class CaptureCoordinator(
         collectionConfig: CollectionConfig?,
         deadline: Long
     ) {
+        if (isDouyinPackage(activeExecution.targetPackage)) {
+            val dismissedOverlay = searchController.dismissDouyinMerchantOverlay()
+            if (dismissedOverlay) {
+                delay(800L)
+            }
+
+            if (searchController.getCurrentDouyinPageKindForMerchant(activeExecution.task.hospitalName) == DouyinPageKind.RECOMMENDATION) {
+                Log.i(TAG, "Skip scraping current viewport because recommendation section is already visible")
+                return
+            }
+        }
+
         val baselineRevision = activeExecution.revision()
         val expandedCount = expandVisibleSections(collectionConfig)
         if (expandedCount > 0) {

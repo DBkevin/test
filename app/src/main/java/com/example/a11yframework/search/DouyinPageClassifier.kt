@@ -19,6 +19,7 @@ internal enum class DouyinPageKind {
 internal data class DouyinPageSignals(
     val pageText: String = "",
     val hasSelectedGroupBuyTab: Boolean = false,
+    val hasSelectedRecommendationTab: Boolean = false,
     val hasTopSearchButton: Boolean = false,
     val hasSearchEntryNode: Boolean = false,
     val hasSearchSignal: Boolean = false,
@@ -33,6 +34,7 @@ internal data class DouyinPageSignals(
     val hasMerchantBottomActionBar: Boolean = false,
     val hasMerchantTailSignal: Boolean = false,
     val hasMerchantCommerceSignal: Boolean = false,
+    val hasDistanceRecommendationSignal: Boolean = false,
     val hasRecommendationSignal: Boolean = false
 )
 
@@ -50,7 +52,7 @@ internal class DouyinPageClassifier(
         private val GROUPBUY_SEARCH_ENTRY_HINTS = listOf("美莱团购", "郑州", "搜索")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
-        private val MERCHANT_TAIL_SECTION_HINTS = listOf("展开更多", "收起", "预约到店送好礼", "预约到店专属礼", "用户评价")
+        private val MERCHANT_TAIL_SECTION_HINTS = listOf("展开更多", "展开全部", "收起", "预约到店送好礼", "预约到店专属礼", "用户评价")
         private val MERCHANT_DETAIL_CARD_HINTS = listOf(
             "去抢购",
             "领券抢购",
@@ -63,18 +65,19 @@ internal class DouyinPageClassifier(
             "随时退",
             "次卡"
         )
-        private val RECOMMENDATION_HINTS = listOf("你可能感兴趣的地点", "你可能感兴趣", "猜你喜欢")
+        private val RECOMMENDATION_HINTS = listOf("你可能感兴趣的地点", "你可能感兴趣", "猜你喜欢", "发现同城")
         private val BOTTOM_ACTION_BAR_HINTS = listOf("医疗美容", "订单", "预约有礼", "在线咨询")
+        private val DISTANCE_HINT_REGEX = Regex("""\d+(?:\.\d+)?\s*(?:km|m)""", RegexOption.IGNORE_CASE)
 
         internal fun resolveKind(signals: DouyinPageSignals): DouyinPageKind {
             if (signals.hasSearchInput && signals.hasSearchSubmitButton) {
                 return DouyinPageKind.GROUPBUY_SEARCH_INPUT
             }
-            if (signals.hasMerchantHeaderAnchor && signals.hasMerchantBottomActionBar) {
-                return DouyinPageKind.MERCHANT_HOME
-            }
             if (signals.hasRecommendationSignal) {
                 return DouyinPageKind.RECOMMENDATION
+            }
+            if (signals.hasMerchantHeaderAnchor && signals.hasMerchantBottomActionBar) {
+                return DouyinPageKind.MERCHANT_HOME
             }
             if (signals.hasMerchantBottomActionBar &&
                 signals.hasMerchantTailSignal &&
@@ -133,6 +136,29 @@ internal class DouyinPageClassifier(
                     text.contains("团购，按钮", ignoreCase = true)
             },
             maxDepth = 32
+        )?.let { node ->
+            node.recycle()
+            true
+        } ?: false
+        val hasSelectedRecommendationTab = NodeUtils.findNodeByCondition(
+            rootNode,
+            condition = { node ->
+                val text = NodeUtils.getNodeText(node)
+                if (text.isBlank()) {
+                    false
+                } else {
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    bounds.top in 320..760 &&
+                        bounds.height() in 40..180 &&
+                        (
+                            text.contains("已选中，推荐", ignoreCase = true) ||
+                                text.contains("推荐，已选中", ignoreCase = true) ||
+                                (text == "推荐" && (node.isSelected || node.isChecked || node.isFocused)) ||
+                                (text.contains("推荐", ignoreCase = true) && node.isSelected)
+                            )
+                }
+            },
+            maxDepth = 28
         )?.let { node ->
             node.recycle()
             true
@@ -243,13 +269,24 @@ internal class DouyinPageClassifier(
         val hasMerchantCommerceSignal = MERCHANT_DETAIL_CARD_HINTS.any { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
-        val hasRecommendationSignal = RECOMMENDATION_HINTS.any { hint ->
-            pageText.contains(hint, ignoreCase = true)
-        }
+        val distanceSignalCount = DISTANCE_HINT_REGEX.findAll(pageText).take(3).count()
+        val hasDistanceRecommendationSignal = distanceSignalCount >= 2
+        val hasRecommendationSignal =
+            hasSelectedRecommendationTab ||
+                RECOMMENDATION_HINTS.any { hint ->
+                    pageText.contains(hint, ignoreCase = true)
+                } ||
+                (
+                    hasDistanceRecommendationSignal &&
+                        hasMerchantBottomActionBar &&
+                        !hasMerchantHeaderAnchor &&
+                        !hasMerchantTailSignal
+                    )
 
         return DouyinPageSignals(
             pageText = pageText,
             hasSelectedGroupBuyTab = hasSelectedGroupBuyTab,
+            hasSelectedRecommendationTab = hasSelectedRecommendationTab,
             hasTopSearchButton = hasTopSearchButton,
             hasSearchEntryNode = hasSearchEntryNode,
             hasSearchSignal = hasSearchSignal,
@@ -264,6 +301,7 @@ internal class DouyinPageClassifier(
             hasMerchantBottomActionBar = hasMerchantBottomActionBar,
             hasMerchantTailSignal = hasMerchantTailSignal,
             hasMerchantCommerceSignal = hasMerchantCommerceSignal,
+            hasDistanceRecommendationSignal = hasDistanceRecommendationSignal,
             hasRecommendationSignal = hasRecommendationSignal
         )
     }

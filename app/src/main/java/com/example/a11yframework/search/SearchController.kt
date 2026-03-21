@@ -85,6 +85,7 @@ class SearchController(
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
         private val MERCHANT_TAIL_SECTION_HINTS = listOf(
             "展开更多",
+            "展开全部",
             "收起",
             "预约到店送好礼",
             "预约到店专属礼",
@@ -102,6 +103,7 @@ class SearchController(
             "随时退",
             "次卡"
         )
+        private val MERCHANT_OVERLAY_CLOSE_HINTS = listOf("关闭", "跳过", "暂不", "以后再说", "我知道了", "知道了")
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
@@ -1539,6 +1541,22 @@ class SearchController(
         } finally {
             rootNode.recycle()
         }
+    }
+
+    fun getCurrentDouyinPageKindForMerchant(merchantName: String): DouyinPageKind {
+        return getCurrentDouyinPageKind(merchantName)
+    }
+
+    fun dismissDouyinMerchantOverlay(): Boolean {
+        val dismissed = clickAnyText(
+            targetTexts = MERCHANT_OVERLAY_CLOSE_HINTS,
+            exactMatch = false,
+            maxClicks = 1
+        ) > 0
+        if (dismissed) {
+            Log.i(TAG, "Dismissed Douyin merchant overlay by close hint")
+        }
+        return dismissed
     }
 
     private fun pollMerchantHomepageAnchors(normalizedTarget: String, timeoutMs: Long): Boolean {
