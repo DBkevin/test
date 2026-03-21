@@ -379,6 +379,11 @@ class CaptureCoordinator(
             return true
         }
 
+        if (searchController.ensureMerchantGroupBuyTab(merchantName, detailWaitMs)) {
+            Log.i(TAG, "Recovered Douyin merchant viewport by switching back to group-buy tab")
+            return true
+        }
+
         if (service.isCurrentTargetPage(activeExecution.targetPackage)) {
             return true
         }
@@ -400,6 +405,10 @@ class CaptureCoordinator(
             delay(resolveScrollSettleMs(null))
 
             if (searchController.waitForMerchantHomepageAnchors(merchantName, 900L)) {
+                return true
+            }
+            if (searchController.ensureMerchantGroupBuyTab(merchantName, 900L)) {
+                Log.i(TAG, "Recovered Douyin merchant viewport after upward adjustment: step=${attempt + 1}")
                 return true
             }
             if (service.isCurrentTargetPage(activeExecution.targetPackage)) {

@@ -45,6 +45,8 @@ class SearchController(
         private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
         private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
+        private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X = 177
+        private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y = 392
         private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X = 1340
         private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y = 219
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
@@ -107,6 +109,7 @@ class SearchController(
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
+        private const val DOUYIN_LIFE_POI_ACTIVITY = "com.bytedance.locallife.page.poi.LifePoiActivity"
         
         // 美团搜索页面特征
         private const val MEITUAN_SEARCH_ACTIVITY = "com.sankuai.meituan.search.activity.SearchActivity"
@@ -162,9 +165,6 @@ class SearchController(
         when (getCurrentDouyinPageKind(keyword)) {
             DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
                 Log.d(TAG, "Douyin search input already visible, skip home/group-buy preparation")
-            }
-            DouyinPageKind.GROUPBUY_HOME -> {
-                Log.d(TAG, "Douyin group-buy home already visible, skip tab selection")
             }
             else -> {
                 if (!prepareDouyinHomePage()) {
@@ -905,10 +905,6 @@ class SearchController(
 
         try {
             val pageSnapshot = douyinPageClassifier.classify(rootNode)
-            if (pageSnapshot.kind == DouyinPageKind.GROUPBUY_HOME) {
-                return true
-            }
-
             if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
                 Log.d(TAG, "Douyin group buy tab already selected")
                 return true
@@ -1489,6 +1485,13 @@ class SearchController(
         val startAt = System.currentTimeMillis()
 
         while (System.currentTimeMillis() - startAt < timeoutMs) {
+            val currentWindowClassName = (service as? FrameworkAccessibilityService)
+                ?.getCurrentWindowClassName()
+                .orEmpty()
+            if (currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true)) {
+                return true
+            }
+
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
@@ -1547,6 +1550,75 @@ class SearchController(
         return getCurrentDouyinPageKind(merchantName)
     }
 
+    fun ensureMerchantGroupBuyTab(merchantName: String, timeoutMs: Long = 2_500L): Boolean {
+        val currentWindowClassName = (service as? FrameworkAccessibilityService)
+            ?.getCurrentWindowClassName()
+            .orEmpty()
+        if (!currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true)) {
+            return false
+        }
+
+        val rootNode = service.rootInActiveWindow ?: return false
+        try {
+            val snapshot = douyinPageClassifier.classify(rootNode, merchantName)
+            if (snapshot.kind == DouyinPageKind.MERCHANT_HOME || snapshot.kind == DouyinPageKind.MERCHANT_TAIL) {
+                return true
+            }
+
+            val groupBuyTabNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node ->
+                    val text = getComparableNodeText(node)
+                    if (!text.contains("团购", ignoreCase = true)) {
+                        false
+                    } else {
+                        val bounds = Rect().also { node.getBoundsInScreen(it) }
+                        bounds.top in 240..560 &&
+                            bounds.left <= service.resources.displayMetrics.widthPixels / 3
+                    }
+                },
+                maxDepth = 24
+            )
+
+            if (groupBuyTabNode != null) {
+                try {
+                    val clicked = NodeUtils.clickNode(groupBuyTabNode)
+                    recordNodeClickTrace("douyin_merchant_groupbuy_tab_node", groupBuyTabNode, clicked)
+                    if (clicked) {
+                        Thread.sleep(1_000L)
+                        if (waitForMerchantHomepageAnchors(merchantName, timeoutMs)) {
+                            return true
+                        }
+                    }
+
+                    val tapped = tapNodeCenter(groupBuyTabNode, "douyin_merchant_groupbuy_tab_bounds")
+                    if (tapped) {
+                        Thread.sleep(1_000L)
+                        if (waitForMerchantHomepageAnchors(merchantName, timeoutMs)) {
+                            return true
+                        }
+                    }
+                } finally {
+                    groupBuyTabNode.recycle()
+                }
+            }
+        } finally {
+            rootNode.recycle()
+        }
+
+        val presetTapped = tapScreen(
+            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X,
+            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y,
+            "douyin_merchant_groupbuy_tab_preset"
+        )
+        if (!presetTapped) {
+            return false
+        }
+
+        Thread.sleep(1_000L)
+        return waitForMerchantHomepageAnchors(merchantName, timeoutMs)
+    }
+
     fun dismissDouyinMerchantOverlay(): Boolean {
         val dismissed = clickAnyText(
             targetTexts = MERCHANT_OVERLAY_CLOSE_HINTS,
@@ -1583,6 +1655,13 @@ class SearchController(
         rootNode: AccessibilityNodeInfo,
         normalizedTarget: String
     ): Boolean {
+        val currentWindowClassName = (service as? FrameworkAccessibilityService)
+            ?.getCurrentWindowClassName()
+            .orEmpty()
+        if (currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true)) {
+            return true
+        }
+
         val kind = douyinPageClassifier.classify(rootNode, normalizedTarget).kind
         if (kind == DouyinPageKind.MERCHANT_HOME || kind == DouyinPageKind.MERCHANT_TAIL) {
             return true

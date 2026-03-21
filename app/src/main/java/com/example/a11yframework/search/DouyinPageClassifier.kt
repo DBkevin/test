@@ -131,9 +131,19 @@ internal class DouyinPageClassifier(
             rootNode,
             condition = { node ->
                 val text = NodeUtils.getNodeText(node)
-                text.contains("已选中，团购", ignoreCase = true) ||
-                    text == "团购" ||
-                    text.contains("团购，按钮", ignoreCase = true)
+                if (text.isBlank()) {
+                    false
+                } else {
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    bounds.top in 260..760 &&
+                        bounds.height() in 40..180 &&
+                        (
+                            text.contains("已选中，团购", ignoreCase = true) ||
+                                text.contains("团购，已选中", ignoreCase = true) ||
+                                (text == "团购" && (node.isSelected || node.isChecked || node.isFocused)) ||
+                                (text.contains("团购", ignoreCase = true) && node.isSelected)
+                            )
+                }
             },
             maxDepth = 32
         )?.let { node ->
