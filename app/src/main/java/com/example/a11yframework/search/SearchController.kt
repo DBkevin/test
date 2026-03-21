@@ -1543,7 +1543,7 @@ class SearchController(
         }
     }
 
-    fun getCurrentDouyinPageKindForMerchant(merchantName: String): DouyinPageKind {
+    internal fun getCurrentDouyinPageKindForMerchant(merchantName: String): DouyinPageKind {
         return getCurrentDouyinPageKind(merchantName)
     }
 
