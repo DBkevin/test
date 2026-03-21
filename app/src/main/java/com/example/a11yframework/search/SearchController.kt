@@ -6,6 +6,7 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
+import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.utils.NodeUtils
 import java.io.File
 import kotlin.math.abs
@@ -1278,7 +1279,8 @@ class SearchController(
     }
 
     private fun isCurrentDouyinSearchResultActivity(): Boolean {
-        return service.getCurrentWindowClassName() == DOUYIN_SEARCH_ACTIVITY
+        val frameworkService = service as? FrameworkAccessibilityService ?: return false
+        return frameworkService.getCurrentWindowClassName() == DOUYIN_SEARCH_ACTIVITY
     }
 
     private fun scoreMerchantCandidate(
