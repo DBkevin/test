@@ -151,7 +151,18 @@ class SearchController(
 
         // 抖音搜索页面特征
         private const val DOUYIN_SEARCH_ACTIVITY = "com.ss.android.ugc.aweme.search.activity.SearchResultActivity"
+        private const val DOUYIN_SEARCH_BULLET_ACTIVITY = "com.ss.android.ugc.aweme.bullet.SearchSynthesisBulletActivity"
         private const val DOUYIN_LIFE_POI_ACTIVITY = "com.bytedance.locallife.page.poi.LifePoiActivity"
+        private val DOUYIN_SIDE_DRAWER_HINTS = listOf(
+            "通知消息",
+            "常用小程序",
+            "常用功能",
+            "更多功能",
+            "钱包服务",
+            "扫一扫",
+            "乘车码",
+            "设置"
+        )
         
         // 美团搜索页面特征
         private const val MEITUAN_SEARCH_ACTIVITY = "com.sankuai.meituan.search.activity.SearchActivity"
@@ -558,12 +569,16 @@ class SearchController(
             if (rootNode != null) {
                 try {
                     val snapshot = douyinPageClassifier.classify(rootNode)
+                    val currentWindowClassName = getCurrentDouyinWindowClassName()
                     when (snapshot.kind) {
                         DouyinPageKind.GROUPBUY_HOME,
                         DouyinPageKind.HOME_FEED -> return true
                         else -> Unit
                     }
-                    if (isLikelyDouyinHomePage(rootNode)) {
+                    if (isLikelyDouyinHomePage(rootNode) &&
+                        !isDouyinSearchDriftWindow(currentWindowClassName) &&
+                        !isDouyinSideDrawerPage(rootNode)
+                    ) {
                         Log.d(TAG, "Accept Douyin home-like page before selecting group buy: attempt=${attempt + 1}, kind=${snapshot.kind}")
                         return true
                     }
@@ -576,19 +591,40 @@ class SearchController(
             if (currentRoot != null) {
                 try {
                     val snapshot = douyinPageClassifier.classify(currentRoot)
-                    if (isLikelyDouyinHomePage(currentRoot)) {
+                    val currentWindowClassName = getCurrentDouyinWindowClassName()
+                    if (isLikelyDouyinHomePage(currentRoot) &&
+                        !isDouyinSearchDriftWindow(currentWindowClassName) &&
+                        !isDouyinSideDrawerPage(currentRoot)
+                    ) {
                         Log.d(TAG, "Stay on Douyin home-like page without backing out: attempt=${attempt + 1}, kind=${snapshot.kind}")
                         return true
                     }
-                    when (snapshot.kind) {
-                        DouyinPageKind.MERCHANT_HOME,
-                        DouyinPageKind.MERCHANT_TAIL,
-                        DouyinPageKind.MERCHANT_RESULT_LIST,
-                        DouyinPageKind.RECOMMENDATION -> {
-                        val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
-                        Log.d(TAG, "Back from intermediate Douyin page to reach home: attempt=${attempt + 1}, success=$backed")
-                        Thread.sleep(1200)
-                        return@repeat
+                    when {
+                        isDouyinSearchDriftWindow(currentWindowClassName) -> {
+                            val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                            Log.d(
+                                TAG,
+                                "Back from Douyin drift search page to reach home: attempt=${attempt + 1}, class=$currentWindowClassName, success=$backed"
+                            )
+                            Thread.sleep(1200)
+                            return@repeat
+                        }
+                        isDouyinSideDrawerPage(currentRoot) -> {
+                            val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                            Log.d(TAG, "Back from Douyin side drawer to reach home: attempt=${attempt + 1}, success=$backed")
+                            Thread.sleep(1200)
+                            return@repeat
+                        }
+                        snapshot.kind in setOf(
+                            DouyinPageKind.MERCHANT_HOME,
+                            DouyinPageKind.MERCHANT_TAIL,
+                            DouyinPageKind.MERCHANT_RESULT_LIST,
+                            DouyinPageKind.RECOMMENDATION
+                        ) -> {
+                            val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                            Log.d(TAG, "Back from intermediate Douyin page to reach home: attempt=${attempt + 1}, success=$backed")
+                            Thread.sleep(1200)
+                            return@repeat
                         }
                         else -> Unit
                     }
@@ -1095,6 +1131,18 @@ class SearchController(
     }
 
     private fun tapDouyinHomeBottomTab(): Boolean {
+        val currentRoot = service.rootInActiveWindow
+        if (currentRoot != null) {
+            try {
+                if (isDouyinSearchDriftWindow(getCurrentDouyinWindowClassName()) || isDouyinSideDrawerPage(currentRoot)) {
+                    Log.w(TAG, "Skip Douyin home bottom tab tap on drift-search page or side drawer")
+                    return false
+                }
+            } finally {
+                currentRoot.recycle()
+            }
+        }
+
         val minBottomTabTop = (service.resources.displayMetrics.heightPixels * 0.82f).toInt()
         val rootNode = service.rootInActiveWindow
         if (rootNode != null) {
@@ -1866,11 +1914,36 @@ class SearchController(
     }
 
     private fun isSafeToTapDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
+        if (isDouyinSearchDriftWindow(getCurrentDouyinWindowClassName()) || isDouyinSideDrawerPage(rootNode)) {
+            return false
+        }
         return when (douyinPageClassifier.classify(rootNode).kind) {
             DouyinPageKind.HOME_FEED,
             DouyinPageKind.GROUPBUY_HOME -> true
             else -> isLikelyDouyinHomePage(rootNode)
         }
+    }
+
+    private fun getCurrentDouyinWindowClassName(): String {
+        return service.getCurrentWindowClassName()
+    }
+
+    private fun isDouyinSearchDriftWindow(windowClassName: String): Boolean {
+        return windowClassName.contains(DOUYIN_SEARCH_BULLET_ACTIVITY, ignoreCase = true) ||
+            windowClassName.contains(DOUYIN_SEARCH_ACTIVITY, ignoreCase = true)
+    }
+
+    private fun isDouyinSideDrawerPage(rootNode: AccessibilityNodeInfo): Boolean {
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 20,
+            maxNodes = 420,
+            maxTextLength = 7000
+        )
+        val hintCount = DOUYIN_SIDE_DRAWER_HINTS.count { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+        return hintCount >= 3
     }
 
     private fun findDouyinGroupBuySearchEntryNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
