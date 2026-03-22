@@ -35,3 +35,5 @@ Follow the repository’s existing conventional style: `ci: ...`, `chore: ...`, 
 Do not commit secrets, personal tokens, or unnecessary large artifacts. Prefer GitHub Actions for build verification and `gh` for artifact retrieval. If local Android tooling is missing, state that explicitly instead of implying local verification. When testing on-device, confirm `adb devices` is stable before install or launch steps, then install the latest CI-built APK rather than stale local files.
 
 For this repository, treat the Douyin collection flow as project memory, not disposable context. Do not replace the documented route with heuristic shortcuts without updating the runbook first.
+When changing code or the runbook for a verified real-device flow, commit and push the update promptly so the local worktree stays aligned with GitHub and the desktop app does not accumulate a large dirty state.
+Treat pulled screenshots, XML dumps, logs, and CI artifact downloads as transient by default. Delete useless captures after analysis, and keep them out of Git unless they are promoted into a documented baseline asset on purpose.
