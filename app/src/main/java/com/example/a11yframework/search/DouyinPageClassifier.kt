@@ -142,7 +142,7 @@ internal class DouyinPageClassifier(
                     false
                 } else {
                     val bounds = Rect().also { node.getBoundsInScreen(it) }
-                    bounds.top in 260..760 &&
+                    bounds.top in 120..760 &&
                         bounds.height() in 40..180 &&
                         (
                             text.contains("已选中，团购", ignoreCase = true) ||
@@ -165,7 +165,7 @@ internal class DouyinPageClassifier(
                     false
                 } else {
                     val bounds = Rect().also { node.getBoundsInScreen(it) }
-                    bounds.top in 320..760 &&
+                    bounds.top in 120..760 &&
                         bounds.height() in 40..180 &&
                         (
                             text.contains("已选中，推荐", ignoreCase = true) ||

@@ -60,6 +60,9 @@ class SearchController(
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS = 7_000L
         private const val DOUYIN_HOME_PREPARE_MAX_ATTEMPTS = 4
+        private const val DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS = 2
+        private const val DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_SETTLE_MS = 900L
+        private const val DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS = 15_000L
         private const val TAP_TRACE_FILE_NAME = "tap-trace-latest.txt"
         private const val TAP_TRACE_MAX_BYTES = 64 * 1024L
         private const val DOUYIN_EXPAND_ACTION_VALIDATION_DELAY_MS = 700L
@@ -214,6 +217,10 @@ class SearchController(
             !waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)
         ) {
             Log.w(TAG, "Douyin group buy page not confirmed after tab selection")
+        }
+
+        if (getCurrentDouyinPageKind(keyword) == DouyinPageKind.GROUPBUY_HOME) {
+            stabilizeDouyinGroupBuyBeforeSearch()
         }
 
         val searchEntryOpened = openDouyinGroupBuySearchEntry()
@@ -1117,6 +1124,34 @@ class SearchController(
             Thread.sleep(300)
         }
         return false
+    }
+
+    private fun stabilizeDouyinGroupBuyBeforeSearch() {
+        Log.i(
+            TAG,
+            "Stabilize Douyin group-buy page before search: down=${DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS}, up=${DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS}, wait=${DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS}ms"
+        )
+
+        repeat(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS) { round ->
+            val scrolled = scrollCurrentPage(forward = true)
+            Log.d(TAG, "Douyin pre-search downward settle scroll=${round + 1}, success=$scrolled")
+            if (!scrolled) {
+                return@repeat
+            }
+            Thread.sleep(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_SETTLE_MS)
+        }
+
+        repeat(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS) { round ->
+            val scrolled = scrollCurrentPage(forward = false)
+            Log.d(TAG, "Douyin pre-search upward restore scroll=${round + 1}, success=$scrolled")
+            if (!scrolled) {
+                return@repeat
+            }
+            Thread.sleep(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_SETTLE_MS)
+        }
+
+        // Let transient live-reminder overlays dismiss themselves before opening search.
+        Thread.sleep(DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS)
     }
 
     private fun openDouyinGroupBuySearchEntry(): Boolean {
