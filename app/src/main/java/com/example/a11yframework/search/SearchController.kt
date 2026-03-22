@@ -137,7 +137,8 @@ class SearchController(
             "随时退"
         )
         private val DOUYIN_GROUPBUY_TAB_TAP_RECT = Rect(900, 150, 1200, 300)
-        private val DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT = Rect(24, 96, 1130, 220)
+        private val DOUYIN_GROUPBUY_INLINE_SEARCH_BAR_RECT = Rect(28, 292, 1139, 436)
+        private val DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT = Rect(220, 300, 930, 440)
         private val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT = Rect(80, 320, 500, 420)
         private val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT = Rect(80, 300, 320, 500)
         private val DOUYIN_SEARCH_SUBMIT_TAP_RECT = Rect(1220, 138, 1440, 292)
@@ -1222,7 +1223,7 @@ class SearchController(
             val entryTapped = tapRect(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect",
-                horizontalBias = if (entryTapRect == DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT) 0.56f else 0.50f,
+                horizontalBias = if (entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) 0.50f else 0.50f,
                 verticalBias = 0.50f
             )
             if (entryTapped) {
@@ -1234,7 +1235,7 @@ class SearchController(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect_fallback",
                 horizontalBias = when {
-                    entryTapRect == DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT -> 0.62f
+                    entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT -> 0.34f
                     pageSnapshot.signals.hasSelectedGroupBuyTab -> 0.46f
                     else -> 0.50f
                 },
@@ -1874,32 +1875,35 @@ class SearchController(
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val nodeText = getComparableNodeText(node)
-                viewId.contains("et_search_kw") &&
-                    !isLikelySearchInput(node) &&
+                !isLikelySearchInput(node) &&
                     isRectUsable(bounds) &&
                     (
-                        overlaps(bounds, DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT) ||
+                        overlaps(bounds, DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) ||
                             overlaps(bounds, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT)
                     ) &&
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
-                        nodeText.contains(hint, ignoreCase = true)
-                    }
+                    (
+                        viewId.contains("et_search_kw") ||
+                            DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
+                                nodeText.contains(hint, ignoreCase = true)
+                            }
+                        )
             },
             maxDepth = 24
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
     private fun resolveDouyinGroupBuySearchEntryTapRect(rootNode: AccessibilityNodeInfo): Rect {
-        val hasTopBarSearchEntry = NodeUtils.findNodeByCondition(
+        val hasInlineKeywordEntry = NodeUtils.findNodeByCondition(
             rootNode,
             condition = { node ->
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = getComparableNodeText(node)
                 isRectUsable(bounds) &&
-                    overlaps(bounds, DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT) &&
+                    overlaps(bounds, DOUYIN_GROUPBUY_INLINE_SEARCH_BAR_RECT) &&
                     !isLikelySearchInput(node) &&
                     (
-                        text.contains("搜索", ignoreCase = true) ||
+                        node.viewIdResourceName?.lowercase()?.contains("et_search_kw") == true ||
+                            text.contains("搜索", ignoreCase = true) ||
                             text.contains("郑州", ignoreCase = true) ||
                             text.contains("美莱", ignoreCase = true)
                         )
@@ -1907,8 +1911,8 @@ class SearchController(
             maxDepth = 24
         ) != null
 
-        return if (hasTopBarSearchEntry) {
-            DOUYIN_GROUPBUY_TOP_BAR_SEARCH_ENTRY_TAP_RECT
+        return if (hasInlineKeywordEntry) {
+            DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT
         } else {
             DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT
         }
