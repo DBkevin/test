@@ -255,11 +255,7 @@ class SearchController(
             return false
         }
 
-        val submitted = search(
-            keyword = keyword,
-            entryKeywords = DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS,
-            buttonKeywords = listOf("搜索")
-        )
+        val submitted = submitDouyinDedicatedSearch(keyword)
 
         if (!submitted) {
             return false
@@ -270,6 +266,87 @@ class SearchController(
         }
 
         return true
+    }
+
+    private fun submitDouyinDedicatedSearch(keyword: String): Boolean {
+        if (!isOnDouyinSearchInputPage()) {
+            Log.e(TAG, "Abort Douyin dedicated search submit: current page is not dedicated search input")
+            return false
+        }
+
+        val searchBox = findDouyinDedicatedSearchBox()
+        if (searchBox == null) {
+            Log.e(TAG, "Douyin dedicated search box not found")
+            return false
+        }
+
+        return try {
+            clearSearchBox(searchBox)
+            inputText(searchBox, keyword)
+
+            val submitted = clickDouyinDedicatedSearchSubmit(searchBox)
+            Log.i(TAG, "Douyin dedicated search executed: $keyword, submitted=$submitted")
+            submitted
+        } finally {
+            searchBox.recycle()
+        }
+    }
+
+    private fun findDouyinDedicatedSearchBox(): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val searchBox = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    viewId.contains("et_search_kw") &&
+                        isLikelySearchInput(node) &&
+                        bounds.top in 80..360 &&
+                        bounds.height() in 60..180
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
+
+            if (searchBox != null) {
+                recordNodeClickTrace("douyin_search_input_box_candidate", searchBox)
+                return AccessibilityNodeInfo.obtain(searchBox)
+            }
+
+            return null
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
+    private fun clickDouyinDedicatedSearchSubmit(searchBox: AccessibilityNodeInfo?): Boolean {
+        if (!isOnDouyinSearchInputPage()) {
+            return false
+        }
+
+        val tapped = tapRect(
+            DOUYIN_SEARCH_SUBMIT_TAP_RECT,
+            "douyin_dedicated_search_submit_rect",
+            horizontalBias = 0.54f,
+            verticalBias = 0.52f
+        )
+        if (tapped) {
+            Log.d(TAG, "Tapped Douyin dedicated search submit button with rect tap")
+            return true
+        }
+
+        if (searchBox != null) {
+            val imeResult = searchBox.performAction(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id
+            )
+            if (imeResult) {
+                Log.d(TAG, "Submitted Douyin dedicated search with IME action")
+                return true
+            }
+        }
+
+        return false
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
