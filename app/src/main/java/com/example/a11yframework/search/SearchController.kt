@@ -1857,7 +1857,7 @@ class SearchController(
         return when (douyinPageClassifier.classify(rootNode).kind) {
             DouyinPageKind.HOME_FEED,
             DouyinPageKind.GROUPBUY_HOME -> true
-            else -> false
+            else -> isLikelyDouyinHomePage(rootNode)
         }
     }
 
