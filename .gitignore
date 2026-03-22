@@ -64,6 +64,22 @@ artifacts_archive/
 artifacts/backup-before-*/
 artifacts/backup-runtime-plugin-*/
 artifacts/run_*/
+artifacts/run-*/
 artifacts/flow_boundary_seek/
 artifacts/flow_boundary_seek_next/
 artifacts/flow_expand_chain/
+
+# Transient device/CI captures and debugging output under artifacts/.
+# If a new baseline asset is worth keeping, add it explicitly with `git add -f`.
+artifacts/*.png
+artifacts/*.xml
+artifacts/*.txt
+artifacts/*.err
+artifacts/*.log
+artifacts/gha-*/
+artifacts/manual-flow-*/
+artifacts/poi-structure-*/
+artifacts/regression-*/
+artifacts/post-install-*
+artifacts/cold-rerun-*
+artifacts/rerun-*
