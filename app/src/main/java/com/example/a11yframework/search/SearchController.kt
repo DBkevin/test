@@ -1925,7 +1925,9 @@ class SearchController(
     }
 
     private fun getCurrentDouyinWindowClassName(): String {
-        return service.getCurrentWindowClassName()
+        return (service as? FrameworkAccessibilityService)
+            ?.getCurrentWindowClassName()
+            .orEmpty()
     }
 
     private fun isDouyinSearchDriftWindow(windowClassName: String): Boolean {
