@@ -555,10 +555,15 @@ class SearchController(
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
-                    when (douyinPageClassifier.classify(rootNode).kind) {
+                    val snapshot = douyinPageClassifier.classify(rootNode)
+                    when (snapshot.kind) {
                         DouyinPageKind.GROUPBUY_HOME,
                         DouyinPageKind.HOME_FEED -> return true
                         else -> Unit
+                    }
+                    if (isLikelyDouyinHomePage(rootNode)) {
+                        Log.d(TAG, "Accept Douyin home-like page before selecting group buy: attempt=${attempt + 1}, kind=${snapshot.kind}")
+                        return true
                     }
                 } finally {
                     rootNode.recycle()
@@ -568,7 +573,12 @@ class SearchController(
             val currentRoot = service.rootInActiveWindow
             if (currentRoot != null) {
                 try {
-                    when (douyinPageClassifier.classify(currentRoot).kind) {
+                    val snapshot = douyinPageClassifier.classify(currentRoot)
+                    if (isLikelyDouyinHomePage(currentRoot)) {
+                        Log.d(TAG, "Stay on Douyin home-like page without backing out: attempt=${attempt + 1}, kind=${snapshot.kind}")
+                        return true
+                    }
+                    when (snapshot.kind) {
                         DouyinPageKind.MERCHANT_HOME,
                         DouyinPageKind.MERCHANT_TAIL,
                         DouyinPageKind.MERCHANT_RESULT_LIST,
@@ -602,7 +612,7 @@ class SearchController(
             when (douyinPageClassifier.classify(rootNode).kind) {
                 DouyinPageKind.GROUPBUY_HOME,
                 DouyinPageKind.HOME_FEED -> true
-                else -> false
+                else -> isLikelyDouyinHomePage(rootNode)
             }
         } finally {
             rootNode.recycle()
@@ -983,9 +993,12 @@ class SearchController(
 
         try {
             val pageSnapshot = douyinPageClassifier.classify(rootNode)
-            if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                Log.d(TAG, "Douyin group buy tab already selected")
+            if (pageSnapshot.kind == DouyinPageKind.GROUPBUY_HOME) {
+                Log.d(TAG, "Douyin group buy home already visible")
                 return true
+            }
+            if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
+                Log.d(TAG, "Douyin group buy channel looks selected but group-buy home is not confirmed yet")
             }
 
             if (!isSafeToTapDouyinGroupBuyTab(rootNode)) {
