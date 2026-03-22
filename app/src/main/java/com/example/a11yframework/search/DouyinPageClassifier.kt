@@ -101,16 +101,15 @@ internal class DouyinPageClassifier(
             if (signals.hasMerchantNodeForTarget && signals.hasMerchantResultSignals) {
                 return DouyinPageKind.MERCHANT_RESULT_LIST
             }
-            if ((signals.hasSelectedGroupBuyTab || signals.hasSearchEntryNode) &&
+            if (signals.hasSelectedGroupBuyTab &&
                 (signals.hasTopSearchButton || signals.hasSearchSignal || signals.hasSearchEntryNode) &&
                 (signals.hasLocationSignal || signals.hasBottomHomeTab || signals.hasGroupBuyKeywordCluster)
             ) {
                 return DouyinPageKind.GROUPBUY_HOME
             }
-            if (signals.hasTopSearchButton &&
-                signals.hasSearchSignal &&
-                signals.hasBottomHomeTab &&
-                signals.hasGroupBuyKeywordCluster
+            if (signals.hasSelectedGroupBuyTab &&
+                signals.hasTopSearchButton &&
+                (signals.hasSearchSignal || signals.hasSearchEntryNode)
             ) {
                 return DouyinPageKind.GROUPBUY_HOME
             }

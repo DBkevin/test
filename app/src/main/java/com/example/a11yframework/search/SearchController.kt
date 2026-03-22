@@ -219,6 +219,9 @@ class SearchController(
             DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
                 Log.d(TAG, "Douyin search input already visible, skip home/group-buy preparation")
             }
+            DouyinPageKind.GROUPBUY_HOME -> {
+                Log.d(TAG, "Douyin group-buy page already visible, skip group-buy tab selection")
+            }
             else -> {
                 if (!prepareDouyinHomePage()) {
                     Log.w(TAG, "Douyin home page not confirmed before selecting group buy tab")
@@ -226,18 +229,19 @@ class SearchController(
                 }
 
                 val tabSelected = selectDouyinGroupBuyTab()
-                if (tabSelected) {
-                    Thread.sleep(1200)
-                } else {
-                    Log.w(TAG, "Douyin group buy tab not explicitly selected, fallback to direct search")
+                if (!tabSelected) {
+                    Log.e(TAG, "Abort Douyin search because group-buy tab could not be selected")
+                    return false
                 }
+                Thread.sleep(1200)
             }
         }
 
         if (getCurrentDouyinPageKind(keyword) != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
             !waitForDouyinGroupBuyPage(DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS)
         ) {
-            Log.w(TAG, "Douyin group buy page not confirmed after tab selection")
+            Log.e(TAG, "Abort Douyin search because group-buy page was not confirmed after tab selection")
+            return false
         }
 
         if (getCurrentDouyinPageKind(keyword) == DouyinPageKind.GROUPBUY_HOME) {
@@ -262,7 +266,8 @@ class SearchController(
         }
 
         if (!waitForDouyinMerchantResultPage(keyword, DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS)) {
-            Log.w(TAG, "Douyin merchant result page not confirmed after search submit")
+            Log.e(TAG, "Douyin merchant result page not confirmed after search submit")
+            return false
         }
 
         return true
@@ -281,8 +286,14 @@ class SearchController(
         }
 
         return try {
-            clearSearchBox(searchBox)
-            inputText(searchBox, keyword)
+            if (!clearDouyinDedicatedSearchBox(searchBox)) {
+                Log.e(TAG, "Failed to clear Douyin dedicated search box")
+                return false
+            }
+            if (!inputDouyinDedicatedSearchText(searchBox, keyword)) {
+                Log.e(TAG, "Failed to input Douyin dedicated search keyword")
+                return false
+            }
 
             val submitted = clickDouyinDedicatedSearchSubmit(searchBox)
             Log.i(TAG, "Douyin dedicated search executed: $keyword, submitted=$submitted")
@@ -325,6 +336,30 @@ class SearchController(
             return false
         }
 
+        val submitNode = findDouyinDedicatedSearchSubmitNode()
+        try {
+            if (submitNode != null) {
+                val tapped = tapNodeCenterWithinRect(
+                    submitNode,
+                    DOUYIN_SEARCH_SUBMIT_TAP_RECT,
+                    "douyin_dedicated_search_submit_bounds"
+                )
+                if (tapped) {
+                    Log.d(TAG, "Tapped Douyin dedicated search submit button with node bounds")
+                    return true
+                }
+
+                val clicked = NodeUtils.clickNode(submitNode)
+                recordNodeClickTrace("douyin_dedicated_search_submit_node", submitNode, clicked)
+                if (clicked) {
+                    Log.d(TAG, "Clicked Douyin dedicated search submit button by node action")
+                    return true
+                }
+            }
+        } finally {
+            submitNode?.recycle()
+        }
+
         val tapped = tapRect(
             DOUYIN_SEARCH_SUBMIT_TAP_RECT,
             "douyin_dedicated_search_submit_rect",
@@ -347,6 +382,73 @@ class SearchController(
         }
 
         return false
+    }
+
+    private fun clearDouyinDedicatedSearchBox(searchBox: AccessibilityNodeInfo): Boolean {
+        if (!isOnDouyinSearchInputPage()) {
+            return false
+        }
+
+        return trySetDouyinDedicatedSearchText(searchBox, "")
+    }
+
+    private fun inputDouyinDedicatedSearchText(searchBox: AccessibilityNodeInfo, text: String): Boolean {
+        if (!isOnDouyinSearchInputPage()) {
+            return false
+        }
+
+        return trySetDouyinDedicatedSearchText(searchBox, text)
+    }
+
+    private fun trySetDouyinDedicatedSearchText(
+        searchBox: AccessibilityNodeInfo,
+        text: String
+    ): Boolean {
+        if (trySetText(searchBox, text)) {
+            Log.d(TAG, "Set Douyin dedicated search text with direct setText: $text")
+            return true
+        }
+
+        val refreshedSearchBox = findDouyinDedicatedSearchBox()
+        try {
+            if (refreshedSearchBox != null && trySetText(refreshedSearchBox, text)) {
+                Log.d(TAG, "Set Douyin dedicated search text with refreshed setText: $text")
+                return true
+            }
+        } finally {
+            refreshedSearchBox?.recycle()
+        }
+
+        return false
+    }
+
+    private fun findDouyinDedicatedSearchSubmitNode(): AccessibilityNodeInfo? {
+        val rootNode = service.rootInActiveWindow ?: return null
+
+        try {
+            val submitNode = NodeUtils.findNodeByCondition(
+                rootNode,
+                condition = { node: AccessibilityNodeInfo ->
+                    val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                    val bounds = Rect().also { node.getBoundsInScreen(it) }
+                    val nodeText = getComparableNodeText(node)
+                    !isLikelySearchInput(node) &&
+                        isRectUsable(bounds) &&
+                        overlaps(bounds, DOUYIN_SEARCH_SUBMIT_TAP_RECT) &&
+                        bounds.top in 80..340 &&
+                        (
+                            nodeText.contains("搜索", ignoreCase = true) ||
+                                node.contentDescription?.toString().orEmpty().contains("搜索", ignoreCase = true) ||
+                                viewId.contains("search")
+                            )
+                },
+                maxDepth = SEARCH_NODE_MAX_DEPTH
+            )
+
+            return submitNode?.let { AccessibilityNodeInfo.obtain(it) }
+        } finally {
+            rootNode.recycle()
+        }
     }
 
     fun openMerchantResult(merchantName: String, maxScrollRounds: Int = 3): Boolean {
@@ -646,18 +748,10 @@ class SearchController(
             if (rootNode != null) {
                 try {
                     val snapshot = douyinPageClassifier.classify(rootNode)
-                    val currentWindowClassName = getCurrentDouyinWindowClassName()
                     when (snapshot.kind) {
                         DouyinPageKind.GROUPBUY_HOME,
                         DouyinPageKind.HOME_FEED -> return true
                         else -> Unit
-                    }
-                    if (isLikelyDouyinHomePage(rootNode) &&
-                        !isDouyinSearchDriftWindow(currentWindowClassName) &&
-                        !isDouyinSideDrawerPage(rootNode)
-                    ) {
-                        Log.d(TAG, "Accept Douyin home-like page before selecting group buy: attempt=${attempt + 1}, kind=${snapshot.kind}")
-                        return true
                     }
                 } finally {
                     rootNode.recycle()
@@ -669,13 +763,6 @@ class SearchController(
                 try {
                     val snapshot = douyinPageClassifier.classify(currentRoot)
                     val currentWindowClassName = getCurrentDouyinWindowClassName()
-                    if (isLikelyDouyinHomePage(currentRoot) &&
-                        !isDouyinSearchDriftWindow(currentWindowClassName) &&
-                        !isDouyinSideDrawerPage(currentRoot)
-                    ) {
-                        Log.d(TAG, "Stay on Douyin home-like page without backing out: attempt=${attempt + 1}, kind=${snapshot.kind}")
-                        return true
-                    }
                     when {
                         isDouyinSearchDriftWindow(currentWindowClassName) -> {
                             val backed = service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
@@ -727,7 +814,7 @@ class SearchController(
             when (douyinPageClassifier.classify(rootNode).kind) {
                 DouyinPageKind.GROUPBUY_HOME,
                 DouyinPageKind.HOME_FEED -> true
-                else -> isLikelyDouyinHomePage(rootNode)
+                else -> false
             }
         } finally {
             rootNode.recycle()
@@ -2020,7 +2107,7 @@ class SearchController(
         return when (douyinPageClassifier.classify(rootNode).kind) {
             DouyinPageKind.HOME_FEED,
             DouyinPageKind.GROUPBUY_HOME -> true
-            else -> isLikelyDouyinHomePage(rootNode)
+            else -> false
         }
     }
 
