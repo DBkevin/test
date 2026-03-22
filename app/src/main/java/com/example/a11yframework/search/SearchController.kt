@@ -1153,17 +1153,6 @@ class SearchController(
                 }
             }
 
-            val entryTapped = tapRect(
-                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
-                "douyin_groupbuy_search_entry_rect",
-                horizontalBias = 0.50f,
-                verticalBias = 0.50f
-            )
-            if (entryTapped) {
-                Log.d(TAG, "Opened Douyin group buy search entry with rect tap")
-                return true
-            }
-
             val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
             if (topSearchButton != null) {
                 try {
@@ -1182,6 +1171,30 @@ class SearchController(
                 } finally {
                     topSearchButton.recycle()
                 }
+            }
+
+            if (pageSnapshot.signals.hasTopSearchButton) {
+                val topSearchTapped = tapRect(
+                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT,
+                    "douyin_groupbuy_top_search_rect",
+                    horizontalBias = 0.52f,
+                    verticalBias = 0.52f
+                )
+                if (topSearchTapped) {
+                    Log.d(TAG, "Opened Douyin top search button with rect tap")
+                    return true
+                }
+            }
+
+            val entryTapped = tapRect(
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
+                "douyin_groupbuy_search_entry_rect",
+                horizontalBias = 0.50f,
+                verticalBias = 0.50f
+            )
+            if (entryTapped) {
+                Log.d(TAG, "Opened Douyin group buy search entry with rect tap")
+                return true
             }
 
             val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
