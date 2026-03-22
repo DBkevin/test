@@ -183,11 +183,9 @@
 
 ### 第 1 轮
 
-产物：
-- `D:\project\adb\artifacts\app85_round1_end.png`
-- `D:\project\adb\artifacts\app85_round1_end.xml`
-- `D:\project\adb\artifacts\app85_round1_log.txt`
-- `D:\project\adb\artifacts\app85_round1_tap_trace.txt`
+说明：
+- 当时留过 `app85_round1_*` 取证文件。
+- 这批历史交接证据包已经在后续 artifacts 瘦身中删除，不再作为长期基线保留。
 
 结论：
 - 最终停在抖音商家结果页
@@ -195,12 +193,9 @@
 
 ### 第 2 轮
 
-产物：
-- `D:\project\adb\artifacts\app85_round2_end.png`
-- `D:\project\adb\artifacts\app85_round2_end.xml`
-- `D:\project\adb\artifacts\app85_round2_log.txt`
-- `D:\project\adb\artifacts\app85_round2_tap_trace.txt`
-- `D:\project\adb\artifacts\app85_round2_keylog.txt`
+说明：
+- 当时留过 `app85_round2_*` 取证文件。
+- 这批历史交接证据包已经在后续 artifacts 瘦身中删除，不再作为长期基线保留。
 
 结论：
 - 最终停到了抖音视频页

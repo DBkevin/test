@@ -25,14 +25,8 @@
 
 ## 已抓到的客观证据
 
-本地冷启动复测过程的关键素材：
-
-- `D:\project\adb\artifacts\cold_start_06s.png`
-- `D:\project\adb\artifacts\cold_start_12s.png`
-- `D:\project\adb\artifacts\cold_start_18s.png`
-- `D:\project\adb\artifacts\cold_start_26s.png`
-- `D:\project\adb\artifacts\cold_start_final.xml`
-- `D:\project\adb\artifacts\cold_start_log.txt`
+本地冷启动复测过程当时留过一组 `cold_start_*` 取证素材。
+这组文件已经在后续 artifacts 瘦身中移除，只保留这里的分析结论，不再继续把那批历史失败截图/XML 当作长期基线。
 
 对应时间线：
 
@@ -82,7 +76,7 @@
 
 ### 根因 2：进入店铺尾部后，页面识别把“当前仍在目标店铺页”判断丢了
 
-`cold_start_26s.png` / `cold_start_final.xml` 对应的页面，并不是“猜你喜欢”或“推荐频道页”，而仍然是目标店铺体系内的尾部页面，具有这些信号：
+当时 `cold_start_26s` / `cold_start_final` 对应的页面，并不是“猜你喜欢”或“推荐频道页”，而仍然是目标店铺体系内的尾部页面，具有这些信号：
 
 - 顶部仍有 `收藏`
 - 页面中仍有团购卡
