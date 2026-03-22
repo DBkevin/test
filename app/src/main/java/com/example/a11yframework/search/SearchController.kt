@@ -1246,29 +1246,33 @@ class SearchController(
                 return false
             }
 
-            val entryNode = findDouyinGroupBuySearchEntryNode(rootNode)
-
-            if (entryNode != null) {
-                try {
-                    val clicked = NodeUtils.clickNode(entryNode)
-                    recordNodeClickTrace("douyin_groupbuy_search_entry_node", entryNode, clicked)
-                    if (clicked) {
-                        Log.d(TAG, "Opened Douyin group buy search entry by node click")
-                        return true
-                    }
-
-                    val tapped = tapNodeCenter(entryNode, "douyin_groupbuy_search_entry_bounds")
-                    if (tapped) {
-                        Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
-                        return true
-                    }
-                } finally {
-                    entryNode.recycle()
-                }
-            }
-
             val entryTapRect = resolveDouyinGroupBuySearchEntryTapRect(rootNode)
             val isInlineKeywordEntry = entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT
+
+            if (!isInlineKeywordEntry) {
+                val entryNode = findDouyinGroupBuySearchEntryNode(rootNode)
+                try {
+                    if (entryNode != null) {
+                        val clicked = NodeUtils.clickNode(entryNode)
+                        recordNodeClickTrace("douyin_groupbuy_search_entry_node", entryNode, clicked)
+                        if (clicked) {
+                            Log.d(TAG, "Opened Douyin group buy search entry by node click")
+                            return true
+                        }
+
+                        val tapped = tapNodeCenter(entryNode, "douyin_groupbuy_search_entry_bounds")
+                        if (tapped) {
+                            Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
+                            return true
+                        }
+                    }
+                } finally {
+                    entryNode?.recycle()
+                }
+            } else {
+                Log.d(TAG, "Skip node click for inline Douyin keyword entry; use rect tap only")
+            }
+
             val entryTapped = tapRect(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect",
