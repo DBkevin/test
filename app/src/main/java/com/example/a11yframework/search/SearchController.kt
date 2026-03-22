@@ -33,6 +33,17 @@ class SearchController(
         val matchedAnyTexts: List<String> = emptyList(),
         val presentNoneTexts: List<String> = emptyList()
     )
+
+    private enum class DouyinMerchantActionBandType {
+        EXPAND,
+        TAIL_COLLAPSE
+    }
+
+    private data class DouyinMerchantActionBand(
+        val bounds: Rect,
+        val type: DouyinMerchantActionBandType,
+        val bottomBarOffset: Int
+    )
     
     companion object {
         private const val TAG = "SearchController"
@@ -44,12 +55,8 @@ class SearchController(
         private const val MERCHANT_RESULT_OPEN_GRACE_MS = 1500L
         private const val DOUYIN_GROUPBUY_TAB_TAP_X = 1016
         private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
-        private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_X = 383
-        private const val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_Y = 373
         private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X = 177
         private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y = 392
-        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_X = 1340
-        private const val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_Y = 219
         private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
         private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
         private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
@@ -68,9 +75,12 @@ class SearchController(
         private const val DOUYIN_EXPAND_ACTION_VALIDATION_DELAY_MS = 700L
         private const val DOUYIN_EXPAND_BAND_MIN_HEIGHT = 56
         private const val DOUYIN_EXPAND_BAND_MAX_HEIGHT = 180
-        private const val DOUYIN_EXPAND_SERVICE_OFFSET_TOP = 170
-        private const val DOUYIN_EXPAND_SERVICE_OFFSET_BOTTOM = 36
         private const val DOUYIN_EXPAND_CARD_GAP_MIN = 24
+        private const val DOUYIN_EXPAND_BAND_MIN_BOTTOM_BAR_OFFSET = 1_350
+        private const val DOUYIN_EXPAND_BAND_MAX_BOTTOM_BAR_OFFSET = 2_100
+        private const val DOUYIN_TAIL_BAND_MIN_BOTTOM_BAR_OFFSET = 760
+        private const val DOUYIN_TAIL_BAND_MAX_BOTTOM_BAR_OFFSET = 1_260
+        private const val DOUYIN_ACTION_BAND_BOTTOM_BAR_CLEARANCE = 320
 
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -116,7 +126,6 @@ class SearchController(
             "次卡"
         )
         private val MERCHANT_OVERLAY_CLOSE_HINTS = listOf("关闭", "跳过", "暂不", "以后再说", "我知道了", "知道了")
-        private val MERCHANT_SERVICE_SECTION_HINTS = listOf("热门服务", "咨询", "免费获取报价")
         private val MERCHANT_GROUPBUY_CARD_SIGNAL_HINTS = listOf(
             "领券抢购",
             "去抢购",
@@ -130,7 +139,6 @@ class SearchController(
         private val DOUYIN_GROUPBUY_TAB_TAP_RECT = Rect(900, 150, 1200, 300)
         private val DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT = Rect(80, 320, 500, 420)
         private val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT = Rect(80, 300, 320, 500)
-        private val DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT = Rect(1220, 138, 1440, 292)
         private val DOUYIN_SEARCH_SUBMIT_TAP_RECT = Rect(1220, 138, 1440, 292)
         private val DOUYIN_MERCHANT_ENTRY_BAND_RECT = Rect(263, 487, 1384, 708)
         private val DOUYIN_EXPAND_TAP_POINTS = listOf(
@@ -453,6 +461,11 @@ class SearchController(
             return 0
         }
 
+        if (hasVisibleDouyinMerchantTailBoundary()) {
+            Log.d(TAG, "Skip expanding Douyin merchant sections because tail boundary is already visible")
+            return 0
+        }
+
         var expandedCount = clickAnyText(
             targetTexts = listOf("展开更多", "展开全部"),
             exactMatch = false,
@@ -463,6 +476,9 @@ class SearchController(
         }
 
         repeat(maxClicks - expandedCount) { round ->
+            if (hasVisibleDouyinMerchantTailBoundary()) {
+                return expandedCount
+            }
             val label = "douyin_expand_band_r${expandedCount + round}"
             if (!tapDouyinMerchantExpandBand(label)) {
                 return expandedCount
@@ -1188,39 +1204,6 @@ class SearchController(
                 }
             }
 
-            val topSearchButton = findDouyinTopSearchButtonNode(rootNode)
-            if (topSearchButton != null) {
-                try {
-                    val clicked = NodeUtils.clickNode(topSearchButton)
-                    recordNodeClickTrace("douyin_groupbuy_top_search_node", topSearchButton, clicked)
-                    if (clicked) {
-                        Log.d(TAG, "Opened Douyin top search button by node click")
-                        return true
-                    }
-
-                    val tapped = tapNodeCenter(topSearchButton, "douyin_groupbuy_top_search_bounds")
-                    if (tapped) {
-                        Log.d(TAG, "Opened Douyin top search button by node bounds")
-                        return true
-                    }
-                } finally {
-                    topSearchButton.recycle()
-                }
-            }
-
-            if (pageSnapshot.signals.hasTopSearchButton) {
-                val topSearchTapped = tapRect(
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT,
-                    "douyin_groupbuy_top_search_rect",
-                    horizontalBias = 0.52f,
-                    verticalBias = 0.52f
-                )
-                if (topSearchTapped) {
-                    Log.d(TAG, "Opened Douyin top search button with rect tap")
-                    return true
-                }
-            }
-
             val entryTapped = tapRect(
                 DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
                 "douyin_groupbuy_search_entry_rect",
@@ -1232,21 +1215,12 @@ class SearchController(
                 return true
             }
 
-            val tapped = if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
-                tapRect(
-                    DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT,
-                    "douyin_groupbuy_top_search_rect",
-                    horizontalBias = 0.52f,
-                    verticalBias = 0.52f
-                )
-            } else {
-                tapRect(
-                    DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
-                    "douyin_groupbuy_search_entry_rect_fallback",
-                    horizontalBias = 0.50f,
-                    verticalBias = 0.50f
-                )
-            }
+            val tapped = tapRect(
+                DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT,
+                "douyin_groupbuy_search_entry_rect_fallback",
+                horizontalBias = if (pageSnapshot.signals.hasSelectedGroupBuyTab) 0.46f else 0.50f,
+                verticalBias = 0.50f
+            )
             if (tapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with rect fallback")
             }
@@ -1672,6 +1646,23 @@ class SearchController(
         return getCurrentDouyinPageKind(merchantName)
     }
 
+    fun hasVisibleDouyinMerchantTailBoundary(): Boolean {
+        val rootNode = service.rootInActiveWindow ?: return false
+
+        return try {
+            val snapshot = douyinPageClassifier.classify(rootNode)
+            if (snapshot.kind == DouyinPageKind.RECOMMENDATION ||
+                snapshot.kind == DouyinPageKind.MERCHANT_TAIL
+            ) {
+                return true
+            }
+
+            findDouyinMerchantActionBand(rootNode)?.type == DouyinMerchantActionBandType.TAIL_COLLAPSE
+        } finally {
+            rootNode.recycle()
+        }
+    }
+
     fun ensureMerchantGroupBuyTab(merchantName: String, timeoutMs: Long = 2_500L): Boolean {
         val currentWindowClassName = (service as? FrameworkAccessibilityService)
             ?.getCurrentWindowClassName()
@@ -1876,26 +1867,6 @@ class SearchController(
         )?.let { AccessibilityNodeInfo.obtain(it) }
     }
 
-    private fun findDouyinTopSearchButtonNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-        return NodeUtils.findNodeByCondition(
-            rootNode,
-            condition = { node ->
-                val bounds = Rect().also { node.getBoundsInScreen(it) }
-                val text = getComparableNodeText(node)
-                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                val className = node.className?.toString().orEmpty()
-                isRectUsable(bounds) &&
-                    overlaps(bounds, DOUYIN_GROUPBUY_TOP_SEARCH_TAP_RECT) &&
-                    (
-                        text.contains("搜索", ignoreCase = true) ||
-                            viewId.contains("4_s") ||
-                            (className.contains("Button", ignoreCase = true) && text.isNotBlank())
-                    )
-            },
-            maxDepth = 32
-        )?.let { AccessibilityNodeInfo.obtain(it) }
-    }
-
     private fun hasSelectedDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
         val groupBuyTabNode = NodeUtils.findNodeByCondition(
             rootNode,
@@ -1964,30 +1935,7 @@ class SearchController(
     }
 
     private fun hasMerchantBottomActionBarAnchor(rootNode: AccessibilityNodeInfo): Boolean {
-        val metrics = service.resources.displayMetrics
-        val minTop = (metrics.heightPixels * 0.88f).toInt()
-        val minWidth = (metrics.widthPixels * 0.98f).toInt()
-
-        val bottomBarNode = NodeUtils.findNodeByCondition(
-            rootNode,
-            condition = { node ->
-                val bounds = Rect()
-                node.getBoundsInScreen(bounds)
-                !bounds.isEmpty &&
-                    bounds.top >= minTop &&
-                    bounds.left <= 10 &&
-                    bounds.right >= metrics.widthPixels - 10 &&
-                    bounds.width() >= minWidth &&
-                    bounds.height() in 140..260 &&
-                    !node.isScrollable
-            },
-            maxDepth = 18
-        )
-
-        return bottomBarNode?.let { node ->
-            node.recycle()
-            true
-        } ?: false
+        return findMerchantBottomActionBarRect(rootNode) != null
     }
 
     private fun tapMerchantEntryBand(
@@ -2242,7 +2190,7 @@ class SearchController(
     private fun tapDouyinMerchantExpandBand(label: String): Boolean {
         val rootNode = service.rootInActiveWindow ?: return false
         val beforeCardCount: Int
-        val expandBand: Rect
+        val actionBand: DouyinMerchantActionBand
 
         try {
             val snapshot = douyinPageClassifier.classify(rootNode)
@@ -2253,14 +2201,21 @@ class SearchController(
             }
 
             beforeCardCount = countVisibleDouyinMerchantCards(rootNode)
-            expandBand = findDouyinMerchantExpandBand(rootNode) ?: return false
+            actionBand = findDouyinMerchantActionBand(rootNode) ?: return false
+            if (actionBand.type != DouyinMerchantActionBandType.EXPAND) {
+                Log.d(
+                    TAG,
+                    "Skip Douyin merchant band tap because current action band is tail: offset=${actionBand.bottomBarOffset}, band=${actionBand.bounds.flattenToString()}"
+                )
+                return false
+            }
         } finally {
             rootNode.recycle()
         }
 
         DOUYIN_EXPAND_TAP_POINTS.forEachIndexed { index, (horizontalBias, verticalBias) ->
             val tapped = tapRect(
-                expandBand,
+                actionBand.bounds,
                 "${label}_a$index",
                 horizontalBias = horizontalBias,
                 verticalBias = verticalBias
@@ -2270,8 +2225,11 @@ class SearchController(
             }
 
             Thread.sleep(DOUYIN_EXPAND_ACTION_VALIDATION_DELAY_MS)
-            if (didDouyinExpandBandTakeEffect(beforeCardCount, expandBand)) {
-                Log.i(TAG, "Expanded Douyin merchant section by band tap: label=$label, attempt=$index, band=${expandBand.flattenToString()}")
+            if (didDouyinExpandBandTakeEffect(beforeCardCount, actionBand)) {
+                Log.i(
+                    TAG,
+                    "Expanded Douyin merchant section by band tap: label=$label, attempt=$index, offset=${actionBand.bottomBarOffset}, band=${actionBand.bounds.flattenToString()}"
+                )
                 return true
             }
         }
@@ -2279,7 +2237,10 @@ class SearchController(
         return false
     }
 
-    private fun didDouyinExpandBandTakeEffect(beforeCardCount: Int, beforeBand: Rect): Boolean {
+    private fun didDouyinExpandBandTakeEffect(
+        beforeCardCount: Int,
+        beforeBand: DouyinMerchantActionBand
+    ): Boolean {
         val rootNode = service.rootInActiveWindow ?: return false
 
         return try {
@@ -2296,30 +2257,35 @@ class SearchController(
                 return true
             }
 
-            val afterBand = findDouyinMerchantExpandBand(rootNode)
+            val afterBand = findDouyinMerchantActionBand(rootNode)
             if (afterBand == null) {
+                return true
+            }
+            if (afterBand.type == DouyinMerchantActionBandType.TAIL_COLLAPSE) {
                 return true
             }
 
             val movedEnough =
-                abs(afterBand.top - beforeBand.top) > 120 ||
-                    abs(afterBand.bottom - beforeBand.bottom) > 120
+                abs(afterBand.bounds.top - beforeBand.bounds.top) > 120 ||
+                    abs(afterBand.bounds.bottom - beforeBand.bounds.bottom) > 120 ||
+                    abs(afterBand.bottomBarOffset - beforeBand.bottomBarOffset) > 120
             movedEnough && afterCardCount >= beforeCardCount
         } finally {
             rootNode.recycle()
         }
     }
 
-    private fun findDouyinMerchantExpandBand(rootNode: AccessibilityNodeInfo): Rect? {
+    private fun findDouyinMerchantActionBand(rootNode: AccessibilityNodeInfo): DouyinMerchantActionBand? {
         val cardBounds = findVisibleDouyinMerchantCardBounds(rootNode)
         if (cardBounds.isEmpty()) {
             return null
         }
 
         val lastCardBottom = cardBounds.maxOf { it.bottom }
+        val bottomBarRect = findMerchantBottomActionBarRect(rootNode) ?: return null
         val metrics = service.resources.displayMetrics
 
-        val bandCandidates = NodeUtils.findNodesByCondition(
+        val bandNodes = NodeUtils.findNodesByCondition(
             rootNode,
             condition = { node ->
                 val text = getComparableNodeText(node)
@@ -2327,48 +2293,52 @@ class SearchController(
                 text.isBlank() &&
                     isRectUsable(bounds) &&
                     bounds.top >= lastCardBottom - 40 &&
-                    bounds.top in 760..1900 &&
+                    bounds.top in 760 until bottomBarRect.top &&
                     bounds.height() in DOUYIN_EXPAND_BAND_MIN_HEIGHT..DOUYIN_EXPAND_BAND_MAX_HEIGHT &&
                     bounds.width() >= metrics.widthPixels - 360 &&
                     bounds.left <= 320 &&
+                    bounds.bottom <= bottomBarRect.top - DOUYIN_ACTION_BAND_BOTTOM_BAR_CLEARANCE &&
                     !node.isScrollable
             },
             maxDepth = 30
         )
 
         try {
-            val bestBand = bandCandidates
+            return bandNodes
                 .map { node -> Rect().also { node.getBoundsInScreen(it) } }
+                .distinctBy { it.flattenToString() }
                 .filter { bounds ->
                     bounds.top >= lastCardBottom - 40 &&
                         bounds.bottom > lastCardBottom + DOUYIN_EXPAND_CARD_GAP_MIN
                 }
-                .minByOrNull { bounds ->
-                    (bounds.top - lastCardBottom).coerceAtLeast(0) * 4 - bounds.width()
+                .sortedBy { bounds -> bounds.top }
+                .mapNotNull { bounds ->
+                    classifyDouyinMerchantActionBand(bounds, bottomBarRect.top)
                 }
-            if (bestBand != null) {
-                return bestBand
-            }
+                .firstOrNull()
         } finally {
-            NodeUtils.recycleNodes(bandCandidates)
+            NodeUtils.recycleNodes(bandNodes)
         }
+    }
 
-        val serviceSectionTop = findFirstMerchantServiceSectionTop(rootNode, lastCardBottom)
-        if (serviceSectionTop != null) {
-            val top = maxOf(
-                lastCardBottom + DOUYIN_EXPAND_CARD_GAP_MIN,
-                serviceSectionTop - DOUYIN_EXPAND_SERVICE_OFFSET_TOP
-            )
-            val bottom = maxOf(
-                top + DOUYIN_EXPAND_BAND_MIN_HEIGHT,
-                serviceSectionTop - DOUYIN_EXPAND_SERVICE_OFFSET_BOTTOM
-            )
-            if (bottom > top) {
-                return Rect(80, top, metrics.widthPixels - 80, bottom)
-            }
-        }
+    private fun classifyDouyinMerchantActionBand(
+        bounds: Rect,
+        bottomBarTop: Int
+    ): DouyinMerchantActionBand? {
+        val offset = bottomBarTop - bounds.centerY()
+        val type = when (offset) {
+            in DOUYIN_EXPAND_BAND_MIN_BOTTOM_BAR_OFFSET..DOUYIN_EXPAND_BAND_MAX_BOTTOM_BAR_OFFSET ->
+                DouyinMerchantActionBandType.EXPAND
+            in DOUYIN_TAIL_BAND_MIN_BOTTOM_BAR_OFFSET..DOUYIN_TAIL_BAND_MAX_BOTTOM_BAR_OFFSET ->
+                DouyinMerchantActionBandType.TAIL_COLLAPSE
+            else -> null
+        } ?: return null
 
-        return null
+        return DouyinMerchantActionBand(
+            bounds = Rect(bounds),
+            type = type,
+            bottomBarOffset = offset
+        )
     }
 
     private fun findVisibleDouyinMerchantCardBounds(rootNode: AccessibilityNodeInfo): List<Rect> {
@@ -2410,35 +2380,32 @@ class SearchController(
         return findVisibleDouyinMerchantCardBounds(rootNode).size
     }
 
-    private fun findFirstMerchantServiceSectionTop(
-        rootNode: AccessibilityNodeInfo,
-        lastCardBottom: Int
-    ): Int? {
-        val serviceNodes = NodeUtils.findNodesByCondition(
+    private fun findMerchantBottomActionBarRect(rootNode: AccessibilityNodeInfo): Rect? {
+        val metrics = service.resources.displayMetrics
+        val minTop = (metrics.heightPixels * 0.88f).toInt()
+        val minWidth = (metrics.widthPixels * 0.98f).toInt()
+
+        val bottomBarNodes = NodeUtils.findNodesByCondition(
             rootNode,
             condition = { node ->
-                val text = getComparableNodeText(node)
-                if (text.isBlank()) {
-                    return@findNodesByCondition false
-                }
-
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 isRectUsable(bounds) &&
-                    bounds.top > lastCardBottom &&
-                    bounds.top in 900..2300 &&
-                    MERCHANT_SERVICE_SECTION_HINTS.any { hint ->
-                        text.contains(hint, ignoreCase = true)
-                    }
+                    bounds.top >= minTop &&
+                    bounds.left <= 10 &&
+                    bounds.right >= metrics.widthPixels - 10 &&
+                    bounds.width() >= minWidth &&
+                    bounds.height() in 140..260 &&
+                    !node.isScrollable
             },
-            maxDepth = 30
+            maxDepth = 18
         )
 
         return try {
-            serviceNodes
-                .map { node -> Rect().also { node.getBoundsInScreen(it) }.top }
-                .minOrNull()
+            bottomBarNodes
+                .map { node -> Rect().also { node.getBoundsInScreen(it) } }
+                .maxByOrNull { bounds -> bounds.top }
         } finally {
-            NodeUtils.recycleNodes(serviceNodes)
+            NodeUtils.recycleNodes(bottomBarNodes)
         }
     }
 

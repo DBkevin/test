@@ -563,6 +563,11 @@ class CaptureCoordinator(
         collectionConfig: CollectionConfig?
     ): Boolean {
         if (isDouyinPackage(activeExecution.targetPackage)) {
+            if (searchController.hasVisibleDouyinMerchantTailBoundary()) {
+                Log.i(TAG, "Detected Douyin merchant tail boundary, stop merchant collection")
+                return true
+            }
+
             when (searchController.getCurrentDouyinPageKindForMerchant(activeExecution.task.hospitalName)) {
                 DouyinPageKind.RECOMMENDATION -> {
                     Log.i(TAG, "Detected Douyin recommendation boundary, stop merchant collection")
