@@ -114,8 +114,12 @@ class CaptureCoordinator(
                 delay(resolveAppStartDelayMs(appPlugin))
 
                 val attemptResult = when {
-                    appPlugin?.captureFlow != null -> executePluginCapture(activeExecution, appPlugin)
+                    // Douyin has a dedicated navigation path in SearchController that tracks
+                    // the current verified real-device route more closely than the bundled
+                    // runtime plugin capture_flow. Keep using runtime rules for scraping, but
+                    // let Douyin navigation prefer the specialized coordinator path.
                     isDouyinPackage(targetPackage) -> executeDouyinCapture(activeExecution)
+                    appPlugin?.captureFlow != null -> executePluginCapture(activeExecution, appPlugin)
                     else -> executeGenericCapture(activeExecution)
                 }
 
