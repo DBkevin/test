@@ -1246,47 +1246,66 @@ class SearchController(
                 return false
             }
 
-            val entryTapRect = resolveDouyinGroupBuySearchEntryTapRect(rootNode)
-            val isInlineKeywordEntry = entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT
+            val useInlineKeywordEntry =
+                pageSnapshot.signals.hasSelectedGroupBuyTab &&
+                    pageSnapshot.signals.hasTopSearchButton
 
-            if (!isInlineKeywordEntry) {
-                val entryNode = findDouyinGroupBuySearchEntryNode(rootNode)
+            if (useInlineKeywordEntry) {
+                val inlineEntryNode = findDouyinInlineKeywordEntryNode(rootNode)
                 try {
-                    if (entryNode != null) {
-                        val clicked = NodeUtils.clickNode(entryNode)
-                        recordNodeClickTrace("douyin_groupbuy_search_entry_node", entryNode, clicked)
-                        if (clicked) {
-                            Log.d(TAG, "Opened Douyin group buy search entry by node click")
-                            return true
-                        }
+                    if (inlineEntryNode == null) {
+                        Log.w(TAG, "Abort inline Douyin keyword entry tap because no stable keyword node was resolved")
+                        return false
+                    }
 
-                        val tapped = tapNodeCenter(entryNode, "douyin_groupbuy_search_entry_bounds")
-                        if (tapped) {
-                            Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
-                            return true
-                        }
+                    recordNodeClickTrace("douyin_groupbuy_inline_keyword_candidate", inlineEntryNode)
+                    val tapped = tapNodeCenterWithinRect(
+                        inlineEntryNode,
+                        DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT,
+                        "douyin_groupbuy_inline_keyword_bounds"
+                    )
+                    if (tapped) {
+                        Log.d(TAG, "Opened Douyin group buy search entry with inline keyword node bounds")
+                        return true
                     }
                 } finally {
-                    entryNode?.recycle()
+                    inlineEntryNode?.recycle()
                 }
-            } else {
-                Log.d(TAG, "Skip node click for inline Douyin keyword entry; use rect tap only")
+
+                Log.w(TAG, "Abort inline Douyin keyword entry tap because node-bounds tap failed")
+                return false
+            }
+
+            val entryTapRect = resolveDouyinGroupBuySearchEntryTapRect(rootNode)
+            val entryNode = findDouyinGroupBuySearchEntryNode(rootNode)
+            try {
+                if (entryNode != null) {
+                    val clicked = NodeUtils.clickNode(entryNode)
+                    recordNodeClickTrace("douyin_groupbuy_search_entry_node", entryNode, clicked)
+                    if (clicked) {
+                        Log.d(TAG, "Opened Douyin group buy search entry by node click")
+                        return true
+                    }
+
+                    val tapped = tapNodeCenter(entryNode, "douyin_groupbuy_search_entry_bounds")
+                    if (tapped) {
+                        Log.d(TAG, "Opened Douyin group buy search entry by node bounds")
+                        return true
+                    }
+                }
+            } finally {
+                entryNode?.recycle()
             }
 
             val entryTapped = tapRect(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect",
-                horizontalBias = if (isInlineKeywordEntry) 0.24f else 0.50f,
-                verticalBias = if (isInlineKeywordEntry) 0.52f else 0.50f
+                horizontalBias = 0.50f,
+                verticalBias = 0.50f
             )
             if (entryTapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with rect tap")
                 return true
-            }
-
-            if (isInlineKeywordEntry) {
-                Log.w(TAG, "Abort extra rect fallback for inline keyword entry to avoid drawer/right-top search drift")
-                return false
             }
 
             val tapped = tapRect(
@@ -1952,6 +1971,75 @@ class SearchController(
         return hintCount >= 3
     }
 
+    private fun findDouyinInlineKeywordEntryNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val candidates = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node: AccessibilityNodeInfo ->
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                val nodeText = getComparableNodeText(node)
+                !isLikelySearchInput(node) &&
+                    isRectUsable(bounds) &&
+                    overlaps(bounds, DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) &&
+                    bounds.left >= DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT.left - 40 &&
+                    bounds.right <= DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT.right + 40 &&
+                    bounds.top in 280..460 &&
+                    (
+                        viewId.contains("et_search_kw") ||
+                            DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
+                                nodeText.contains(hint, ignoreCase = true)
+                            }
+                        )
+            },
+            maxDepth = 28
+        )
+
+        try {
+            val bestCandidate = candidates.maxByOrNull { candidate ->
+                val bounds = Rect().also { candidate.getBoundsInScreen(it) }
+                val viewId = candidate.viewIdResourceName?.lowercase().orEmpty()
+                val text = getComparableNodeText(candidate)
+
+                var score = 0
+                if (viewId.contains("et_search_kw")) {
+                    score += 280
+                }
+                if (text.isNotBlank()) {
+                    score += 120
+                }
+                if (DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint -> text.contains(hint, ignoreCase = true) }) {
+                    score += 120
+                }
+                if (bounds.left in 220..360) {
+                    score += 180
+                }
+                if (bounds.right in 820..980) {
+                    score += 180
+                }
+                if (bounds.width() in 420..760) {
+                    score += 260
+                } else if (bounds.width() in 180..420) {
+                    score += 120
+                } else {
+                    score -= 140
+                }
+                if (bounds.height() in 80..160) {
+                    score += 180
+                } else if (bounds.height() in 36..100) {
+                    score += 100
+                } else {
+                    score -= 80
+                }
+                score -= bounds.width() * bounds.height() / 500
+                score
+            } ?: return null
+
+            return AccessibilityNodeInfo.obtain(bestCandidate)
+        } finally {
+            NodeUtils.recycleNodes(candidates)
+        }
+    }
+
     private fun findDouyinGroupBuySearchEntryNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
         return NodeUtils.findNodeByCondition(
             rootNode,
@@ -1961,10 +2049,7 @@ class SearchController(
                 val nodeText = getComparableNodeText(node)
                 !isLikelySearchInput(node) &&
                     isRectUsable(bounds) &&
-                    (
-                        overlaps(bounds, DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) ||
-                            overlaps(bounds, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT)
-                    ) &&
+                    overlaps(bounds, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT) &&
                     (
                         viewId.contains("et_search_kw") ||
                             DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
