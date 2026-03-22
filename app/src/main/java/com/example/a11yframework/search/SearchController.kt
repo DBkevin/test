@@ -1220,22 +1220,27 @@ class SearchController(
             }
 
             val entryTapRect = resolveDouyinGroupBuySearchEntryTapRect(rootNode)
+            val isInlineKeywordEntry = entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT
             val entryTapped = tapRect(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect",
-                horizontalBias = if (entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) 0.50f else 0.50f,
-                verticalBias = 0.50f
+                horizontalBias = if (isInlineKeywordEntry) 0.24f else 0.50f,
+                verticalBias = if (isInlineKeywordEntry) 0.52f else 0.50f
             )
             if (entryTapped) {
                 Log.d(TAG, "Opened Douyin group buy search entry with rect tap")
                 return true
             }
 
+            if (isInlineKeywordEntry) {
+                Log.w(TAG, "Abort extra rect fallback for inline keyword entry to avoid drawer/right-top search drift")
+                return false
+            }
+
             val tapped = tapRect(
                 entryTapRect,
                 "douyin_groupbuy_search_entry_rect_fallback",
                 horizontalBias = when {
-                    entryTapRect == DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT -> 0.34f
                     pageSnapshot.signals.hasSelectedGroupBuyTab -> 0.46f
                     else -> 0.50f
                 },

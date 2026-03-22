@@ -3,6 +3,7 @@ package com.example.a11yframework.search
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
+import com.example.a11yframework.core.FrameworkAccessibilityService
 import com.example.a11yframework.utils.NodeUtils
 
 internal enum class DouyinPageKind {
@@ -18,6 +19,7 @@ internal enum class DouyinPageKind {
 
 internal data class DouyinPageSignals(
     val pageText: String = "",
+    val currentWindowClassName: String = "",
     val hasSelectedGroupBuyTab: Boolean = false,
     val hasSelectedRecommendationTab: Boolean = false,
     val hasTopSearchButton: Boolean = false,
@@ -25,6 +27,8 @@ internal data class DouyinPageSignals(
     val hasSearchSignal: Boolean = false,
     val hasSearchInput: Boolean = false,
     val hasSearchSubmitButton: Boolean = false,
+    val hasSearchHistorySignal: Boolean = false,
+    val hasSearchSuggestionSignal: Boolean = false,
     val hasLocationSignal: Boolean = false,
     val hasBottomHomeTab: Boolean = false,
     val hasGroupBuyKeywordCluster: Boolean = false,
@@ -67,10 +71,19 @@ internal class DouyinPageClassifier(
         )
         private val RECOMMENDATION_HINTS = listOf("你可能感兴趣的地点", "你可能感兴趣", "猜你喜欢", "发现同城")
         private val BOTTOM_ACTION_BAR_HINTS = listOf("医疗美容", "订单", "预约有礼", "在线咨询")
+        private val SEARCH_HISTORY_HINTS = listOf("历史记录")
+        private val SEARCH_SUGGESTION_HINTS = listOf("猜你想搜", "换一换", "语音搜索")
+        private const val DOUYIN_LIFE_POI_ACTIVITY = "com.bytedance.locallife.page.poi.LifePoiActivity"
         private val DISTANCE_HINT_REGEX = Regex("""\d+(?:\.\d+)?\s*(?:km|m)""", RegexOption.IGNORE_CASE)
 
         internal fun resolveKind(signals: DouyinPageSignals): DouyinPageKind {
-            if (signals.hasSearchInput && signals.hasSearchSubmitButton) {
+            if (signals.hasSearchInput &&
+                signals.hasSearchSubmitButton &&
+                !signals.currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true) &&
+                !signals.hasMerchantBottomActionBar &&
+                !signals.hasMerchantCommerceSignal &&
+                (signals.hasSearchHistorySignal || signals.hasSearchSuggestionSignal)
+            ) {
                 return DouyinPageKind.GROUPBUY_SEARCH_INPUT
             }
             if (signals.hasRecommendationSignal) {
@@ -132,6 +145,9 @@ internal class DouyinPageClassifier(
             maxNodes = 520,
             maxTextLength = 9000
         )
+        val currentWindowClassName = (service as? FrameworkAccessibilityService)
+            ?.getCurrentWindowClassName()
+            .orEmpty()
         val normalizedTarget = normalizeText(merchantName)
 
         val hasSelectedGroupBuyTab = NodeUtils.findNodeByCondition(
@@ -249,6 +265,12 @@ internal class DouyinPageClassifier(
 
         val hasBottomHomeTab = pageText.contains("首页", ignoreCase = true) &&
             pageText.contains("我", ignoreCase = true)
+        val hasSearchHistorySignal = SEARCH_HISTORY_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+        val hasSearchSuggestionSignal = SEARCH_SUGGESTION_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
         val hasLocationSignal = pageText.contains("郑州", ignoreCase = true) ||
             pageText.contains("同城", ignoreCase = true)
         val hasSearchSignal = pageText.contains("搜索", ignoreCase = true)
@@ -302,6 +324,7 @@ internal class DouyinPageClassifier(
 
         return DouyinPageSignals(
             pageText = pageText,
+            currentWindowClassName = currentWindowClassName,
             hasSelectedGroupBuyTab = hasSelectedGroupBuyTab,
             hasSelectedRecommendationTab = hasSelectedRecommendationTab,
             hasTopSearchButton = hasTopSearchButton,
@@ -309,6 +332,8 @@ internal class DouyinPageClassifier(
             hasSearchSignal = hasSearchSignal,
             hasSearchInput = hasSearchInput,
             hasSearchSubmitButton = hasSearchSubmitButton,
+            hasSearchHistorySignal = hasSearchHistorySignal,
+            hasSearchSuggestionSignal = hasSearchSuggestionSignal,
             hasLocationSignal = hasLocationSignal,
             hasBottomHomeTab = hasBottomHomeTab,
             hasGroupBuyKeywordCluster = hasGroupBuyKeywordCluster,
