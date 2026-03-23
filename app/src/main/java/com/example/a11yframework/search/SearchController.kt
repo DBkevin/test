@@ -2137,6 +2137,19 @@ class SearchController(
     }
 
     private fun findDouyinInlineKeywordEntryNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val exactCandidates = runCatching {
+            rootNode.findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme:id/et_search_kw")
+        }.getOrElse { emptyList() }
+
+        try {
+            selectBestDouyinInlineKeywordEntryNode(exactCandidates)?.let { bestCandidate ->
+                Log.d(TAG, "Resolved Douyin inline keyword entry by exact view-id")
+                return AccessibilityNodeInfo.obtain(bestCandidate)
+            }
+        } finally {
+            NodeUtils.recycleNodes(exactCandidates)
+        }
+
         val candidates = NodeUtils.findNodesByCondition(
             rootNode,
             condition = { node: AccessibilityNodeInfo ->
@@ -2161,44 +2174,7 @@ class SearchController(
         )
 
         try {
-            val bestCandidate = candidates.maxByOrNull { candidate ->
-                val bounds = Rect().also { candidate.getBoundsInScreen(it) }
-                val viewId = candidate.viewIdResourceName?.lowercase().orEmpty()
-                val text = getComparableNodeText(candidate)
-
-                var score = 0
-                if (viewId.contains("et_search_kw")) {
-                    score += 280
-                }
-                if (text.isNotBlank()) {
-                    score += 120
-                }
-                if (DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint -> text.contains(hint, ignoreCase = true) }) {
-                    score += 120
-                }
-                if (bounds.left in 220..360) {
-                    score += 180
-                }
-                if (bounds.right in 820..980) {
-                    score += 180
-                }
-                if (bounds.width() in 420..760) {
-                    score += 260
-                } else if (bounds.width() in 180..420) {
-                    score += 120
-                } else {
-                    score -= 140
-                }
-                if (bounds.height() in 80..160) {
-                    score += 180
-                } else if (bounds.height() in 36..100) {
-                    score += 100
-                } else {
-                    score -= 80
-                }
-                score -= bounds.width() * bounds.height() / 500
-                score
-            } ?: return null
+            val bestCandidate = selectBestDouyinInlineKeywordEntryNode(candidates) ?: return null
 
             return AccessibilityNodeInfo.obtain(bestCandidate)
         } finally {
@@ -2275,24 +2251,12 @@ class SearchController(
     }
 
     private fun resolveDouyinGroupBuySearchEntryTapRect(rootNode: AccessibilityNodeInfo): Rect {
-        val hasInlineKeywordEntry = NodeUtils.findNodeByCondition(
-            rootNode,
-            condition = { node ->
-                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
-                val bounds = Rect().also { node.getBoundsInScreen(it) }
-                val text = getComparableNodeText(node)
-                isRectUsable(bounds) &&
-                    overlaps(bounds, DOUYIN_GROUPBUY_INLINE_SEARCH_BAR_RECT) &&
-                    (!isLikelySearchInput(node) || isDouyinInlineKeywordEntryNode(viewId)) &&
-                    (
-                        isDouyinInlineKeywordEntryNode(viewId) ||
-                            text.contains("搜索", ignoreCase = true) ||
-                            text.contains("郑州", ignoreCase = true) ||
-                            text.contains("美莱", ignoreCase = true)
-                        )
-            },
-            maxDepth = 24
-        ) != null
+        val inlineKeywordEntryNode = findDouyinInlineKeywordEntryNode(rootNode)
+        val hasInlineKeywordEntry = try {
+            inlineKeywordEntryNode != null
+        } finally {
+            inlineKeywordEntryNode?.recycle()
+        }
 
         return if (hasInlineKeywordEntry) {
             DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT
@@ -2551,6 +2515,49 @@ class SearchController(
 
     private fun isDouyinInlineKeywordEntryNode(viewId: String): Boolean {
         return viewId.contains("et_search_kw")
+    }
+
+    private fun selectBestDouyinInlineKeywordEntryNode(
+        candidates: List<AccessibilityNodeInfo>
+    ): AccessibilityNodeInfo? {
+        return candidates.maxByOrNull { candidate ->
+            val bounds = Rect().also { candidate.getBoundsInScreen(it) }
+            val viewId = candidate.viewIdResourceName?.lowercase().orEmpty()
+            val text = getComparableNodeText(candidate)
+
+            var score = 0
+            if (viewId.contains("et_search_kw")) {
+                score += 280
+            }
+            if (text.isNotBlank()) {
+                score += 120
+            }
+            if (DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint -> text.contains(hint, ignoreCase = true) }) {
+                score += 120
+            }
+            if (bounds.left in 220..360) {
+                score += 180
+            }
+            if (bounds.right in 820..980) {
+                score += 180
+            }
+            if (bounds.width() in 420..760) {
+                score += 260
+            } else if (bounds.width() in 180..420) {
+                score += 120
+            } else {
+                score -= 140
+            }
+            if (bounds.height() in 80..160) {
+                score += 180
+            } else if (bounds.height() in 36..100) {
+                score += 100
+            } else {
+                score -= 80
+            }
+            score -= bounds.width() * bounds.height() / 500
+            score
+        }
     }
     
     /**
