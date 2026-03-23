@@ -1208,17 +1208,7 @@ class SearchController(
                 return false
             }
 
-            val tabNode = NodeUtils.findNodeByCondition(
-                rootNode,
-                condition = { node: AccessibilityNodeInfo ->
-                    val nodeText = getComparableNodeText(node)
-                    val bounds = Rect().also { node.getBoundsInScreen(it) }
-                    nodeText.contains("团购", ignoreCase = true) &&
-                        isRectUsable(bounds) &&
-                        overlaps(bounds, DOUYIN_GROUPBUY_TAB_TAP_RECT)
-                },
-                maxDepth = 24
-            )
+            val tabNode = findDouyinGroupBuyTabNode(rootNode)
 
             if (tabNode != null) {
                 try {
@@ -1229,11 +1219,7 @@ class SearchController(
                         return true
                     }
 
-                    val tapped = tapNodeCenterWithinRect(
-                        tabNode,
-                        DOUYIN_GROUPBUY_TAB_TAP_RECT,
-                        "douyin_groupbuy_tab_bounds"
-                    )
+                    val tapped = tapNodeCenter(tabNode, "douyin_groupbuy_tab_bounds")
                     if (tapped) {
                         return true
                     }
@@ -1242,17 +1228,7 @@ class SearchController(
                 }
             }
 
-            val tapped = tapRect(
-                DOUYIN_GROUPBUY_TAB_TAP_RECT,
-                "douyin_groupbuy_tab_rect",
-                horizontalBias = 0.60f,
-                verticalBias = 0.52f
-            )
-            if (tapped) {
-                Log.d(TAG, "Selected Douyin group buy tab with rect tap")
-                return true
-            }
-
+            Log.w(TAG, "Abort Douyin group buy tab tap because no stable group-buy tab node was resolved")
             return false
         } finally {
             rootNode.recycle()
@@ -2195,6 +2171,52 @@ class SearchController(
                     score -= 80
                 }
                 score -= bounds.width() * bounds.height() / 500
+                score
+            } ?: return null
+
+            return AccessibilityNodeInfo.obtain(bestCandidate)
+        } finally {
+            NodeUtils.recycleNodes(candidates)
+        }
+    }
+
+    private fun findDouyinGroupBuyTabNode(rootNode: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val candidates = NodeUtils.findNodesByCondition(
+            rootNode,
+            condition = { node: AccessibilityNodeInfo ->
+                val nodeText = getComparableNodeText(node)
+                val bounds = Rect().also { node.getBoundsInScreen(it) }
+                nodeText.contains("团购", ignoreCase = true) &&
+                    isRectUsable(bounds) &&
+                    bounds.top in 120..340 &&
+                    bounds.height() in 60..220 &&
+                    bounds.width() in 80..280
+            },
+            maxDepth = 32
+        )
+
+        try {
+            val bestCandidate = candidates.maxByOrNull { candidate ->
+                val nodeText = getComparableNodeText(candidate)
+                val contentDesc = candidate.contentDescription?.toString().orEmpty()
+                val bounds = Rect().also { candidate.getBoundsInScreen(it) }
+
+                var score = 0
+                if (contentDesc.contains("团购，按钮", ignoreCase = true)) {
+                    score += 300
+                }
+                if (nodeText == "团购") {
+                    score += 260
+                } else if (nodeText.contains("团购", ignoreCase = true)) {
+                    score += 180
+                }
+                if (bounds.centerX() in 300..800) {
+                    score += 180
+                }
+                if (bounds.centerY() in 160..260) {
+                    score += 120
+                }
+                score -= kotlin.math.abs(bounds.centerX() - 520) / 2
                 score
             } ?: return null
 
