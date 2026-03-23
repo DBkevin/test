@@ -34,6 +34,7 @@ internal data class DouyinPageSignals(
     val hasGroupBuyKeywordCluster: Boolean = false,
     val hasMerchantNodeForTarget: Boolean = false,
     val hasMerchantResultSignals: Boolean = false,
+    val hasSearchResultTabCluster: Boolean = false,
     val hasMerchantHeaderAnchor: Boolean = false,
     val hasMerchantBottomActionBar: Boolean = false,
     val hasMerchantTailSignal: Boolean = false,
@@ -74,6 +75,8 @@ internal class DouyinPageClassifier(
         private val SEARCH_HISTORY_HINTS = listOf("历史记录")
         private val SEARCH_SUGGESTION_HINTS = listOf("猜你想搜", "换一换", "语音搜索")
         private const val DOUYIN_LIFE_POI_ACTIVITY = "com.bytedance.locallife.page.poi.LifePoiActivity"
+        private const val DOUYIN_SEARCH_RESULT_ACTIVITY =
+            "com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity"
         private val DISTANCE_HINT_REGEX = Regex("""\d+(?:\.\d+)?\s*(?:km|m)""", RegexOption.IGNORE_CASE)
 
         internal fun resolveKind(signals: DouyinPageSignals): DouyinPageKind {
@@ -97,6 +100,12 @@ internal class DouyinPageClassifier(
             if (signals.hasRecommendationSignal) {
                 return DouyinPageKind.RECOMMENDATION
             }
+            if (signals.hasMerchantNodeForTarget &&
+                !signals.hasMerchantBottomActionBar &&
+                (signals.hasMerchantResultSignals || signals.hasSearchResultTabCluster)
+            ) {
+                return DouyinPageKind.MERCHANT_RESULT_LIST
+            }
             if (signals.hasMerchantHeaderAnchor && signals.hasMerchantBottomActionBar) {
                 return DouyinPageKind.MERCHANT_HOME
             }
@@ -106,18 +115,19 @@ internal class DouyinPageClassifier(
             ) {
                 return DouyinPageKind.MERCHANT_TAIL
             }
-            if (signals.hasMerchantNodeForTarget && signals.hasMerchantResultSignals) {
-                return DouyinPageKind.MERCHANT_RESULT_LIST
-            }
             if (signals.hasSelectedGroupBuyTab &&
                 (signals.hasTopSearchButton || signals.hasSearchSignal || signals.hasSearchEntryNode) &&
-                (signals.hasLocationSignal || signals.hasBottomHomeTab || signals.hasGroupBuyKeywordCluster)
+                (signals.hasLocationSignal || signals.hasBottomHomeTab || signals.hasGroupBuyKeywordCluster || signals.hasSearchEntryNode) &&
+                !signals.hasSearchResultTabCluster &&
+                !signals.hasMerchantBottomActionBar
             ) {
                 return DouyinPageKind.GROUPBUY_HOME
             }
             if (signals.hasSelectedGroupBuyTab &&
                 signals.hasTopSearchButton &&
-                (signals.hasSearchSignal || signals.hasSearchEntryNode)
+                (signals.hasSearchSignal || signals.hasSearchEntryNode) &&
+                !signals.hasSearchResultTabCluster &&
+                !signals.hasMerchantBottomActionBar
             ) {
                 return DouyinPageKind.GROUPBUY_HOME
             }
@@ -233,8 +243,8 @@ internal class DouyinPageClassifier(
                 val text = NodeUtils.getNodeText(node)
                 viewId.contains("et_search_kw") &&
                     !isLikelySearchInput(node) &&
-                    bounds.top in 280..420 &&
-                    bounds.bottom in 340..460 &&
+                    bounds.top in 220..520 &&
+                    bounds.bottom in 280..620 &&
                     GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
                         text.contains(hint, ignoreCase = true)
                     }
@@ -290,6 +300,13 @@ internal class DouyinPageClassifier(
                 pageText.contains("/人") ||
                 pageText.contains("消费人数") ||
                 pageText.contains("回头客")
+        val hasSearchResultTabCluster =
+            currentWindowClassName.contains(DOUYIN_SEARCH_RESULT_ACTIVITY, ignoreCase = true) ||
+                (
+                    pageText.contains("团购", ignoreCase = true) &&
+                        pageText.contains("直播", ignoreCase = true) &&
+                        pageText.contains("视频", ignoreCase = true)
+                    )
 
         val hasMerchantNodeForTarget = normalizedTarget.isNotBlank() && NodeUtils.findNodeByCondition(
             rootNode,
@@ -299,7 +316,7 @@ internal class DouyinPageClassifier(
                 }
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = normalizeText(NodeUtils.getNodeText(node))
-                bounds.top in 420..1400 && text.isNotBlank() && text.contains(normalizedTarget)
+                bounds.top in 180..1700 && text.isNotBlank() && text.contains(normalizedTarget)
             },
             maxDepth = 32
         )?.let { node ->
@@ -346,6 +363,7 @@ internal class DouyinPageClassifier(
             hasGroupBuyKeywordCluster = hasGroupBuyKeywordCluster,
             hasMerchantNodeForTarget = hasMerchantNodeForTarget,
             hasMerchantResultSignals = hasMerchantResultSignals,
+            hasSearchResultTabCluster = hasSearchResultTabCluster,
             hasMerchantHeaderAnchor = hasMerchantHeaderAnchor,
             hasMerchantBottomActionBar = hasMerchantBottomActionBar,
             hasMerchantTailSignal = hasMerchantTailSignal,

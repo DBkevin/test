@@ -215,12 +215,20 @@ class SearchController(
     fun searchDouyinGroupBuy(keyword: String): Boolean {
         beginTapTraceRun("douyin_search:$keyword")
 
-        when (getCurrentDouyinPageKind(keyword)) {
-            DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
+        val initialSnapshot = getCurrentDouyinPageSnapshot(keyword)
+        if (initialSnapshot != null) {
+            Log.d(TAG, "Douyin search start snapshot: ${describeDouyinSnapshot(initialSnapshot)}")
+        }
+
+        when {
+            initialSnapshot?.kind == DouyinPageKind.GROUPBUY_SEARCH_INPUT -> {
                 Log.d(TAG, "Douyin search input already visible, skip home/group-buy preparation")
             }
-            DouyinPageKind.GROUPBUY_HOME -> {
-                Log.d(TAG, "Douyin group-buy page already visible, skip group-buy tab selection")
+            initialSnapshot != null && isUsableDouyinGroupBuySnapshot(initialSnapshot) -> {
+                Log.d(
+                    TAG,
+                    "Douyin group-buy state already usable, skip group-buy tab selection: ${describeDouyinSnapshot(initialSnapshot)}"
+                )
             }
             else -> {
                 if (!prepareDouyinHomePage()) {
@@ -244,7 +252,11 @@ class SearchController(
             return false
         }
 
-        if (getCurrentDouyinPageKind(keyword) == DouyinPageKind.GROUPBUY_HOME) {
+        val currentSnapshot = getCurrentDouyinPageSnapshot(keyword)
+        if (currentSnapshot != null &&
+            currentSnapshot.kind != DouyinPageKind.GROUPBUY_SEARCH_INPUT &&
+            isUsableDouyinGroupBuySnapshot(currentSnapshot)
+        ) {
             if (!stabilizeDouyinGroupBuyBeforeSearch()) {
                 Log.e(TAG, "Abort Douyin search because group-buy page drifted during pre-search stabilization")
                 return false
@@ -737,12 +749,44 @@ class SearchController(
     }
 
     private fun getCurrentDouyinPageKind(merchantName: String = ""): DouyinPageKind {
-        val rootNode = service.rootInActiveWindow ?: return DouyinPageKind.UNKNOWN
+        return getCurrentDouyinPageSnapshot(merchantName)?.kind ?: DouyinPageKind.UNKNOWN
+    }
+
+    private fun getCurrentDouyinPageSnapshot(merchantName: String = ""): DouyinPageSnapshot? {
+        val rootNode = service.rootInActiveWindow ?: return null
         return try {
-            douyinPageClassifier.classify(rootNode, merchantName).kind
+            douyinPageClassifier.classify(rootNode, merchantName)
         } finally {
             rootNode.recycle()
         }
+    }
+
+    private fun isUsableDouyinGroupBuySnapshot(snapshot: DouyinPageSnapshot): Boolean {
+        if (snapshot.kind == DouyinPageKind.GROUPBUY_HOME ||
+            snapshot.kind == DouyinPageKind.GROUPBUY_SEARCH_INPUT
+        ) {
+            return true
+        }
+
+        val signals = snapshot.signals
+        val hasInlineEntryAnchor = signals.hasSearchEntryNode && !signals.hasSearchInput
+        val hasGroupBuyChrome = signals.hasSelectedGroupBuyTab || hasInlineEntryAnchor
+        return hasGroupBuyChrome &&
+            (signals.hasTopSearchButton || signals.hasSearchSignal || hasInlineEntryAnchor) &&
+            !signals.hasMerchantBottomActionBar &&
+            !signals.hasMerchantCommerceSignal &&
+            !signals.hasMerchantResultSignals &&
+            !signals.hasSearchResultTabCluster &&
+            !signals.hasRecommendationSignal
+    }
+
+    private fun describeDouyinSnapshot(snapshot: DouyinPageSnapshot): String {
+        val signals = snapshot.signals
+        return "kind=${snapshot.kind}, selectedGroupBuy=${signals.hasSelectedGroupBuyTab}, " +
+            "topSearchButton=${signals.hasTopSearchButton}, searchEntry=${signals.hasSearchEntryNode}, " +
+            "searchInput=${signals.hasSearchInput}, merchantNode=${signals.hasMerchantNodeForTarget}, " +
+            "merchantResultSignals=${signals.hasMerchantResultSignals}, searchResultTabs=${signals.hasSearchResultTabCluster}, " +
+            "merchantBottomActionBar=${signals.hasMerchantBottomActionBar}, recommendation=${signals.hasRecommendationSignal}"
     }
 
     private fun prepareDouyinHomePage(): Boolean {
@@ -1198,8 +1242,8 @@ class SearchController(
 
         try {
             val pageSnapshot = douyinPageClassifier.classify(rootNode)
-            if (pageSnapshot.kind == DouyinPageKind.GROUPBUY_HOME) {
-                Log.d(TAG, "Douyin group buy home already visible")
+            if (isUsableDouyinGroupBuySnapshot(pageSnapshot)) {
+                Log.d(TAG, "Douyin group-buy state already usable before tab tap: ${describeDouyinSnapshot(pageSnapshot)}")
                 return true
             }
             if (pageSnapshot.signals.hasSelectedGroupBuyTab) {
@@ -1239,7 +1283,7 @@ class SearchController(
     }
 
     private fun isLikelyDouyinGroupBuyPage(rootNode: AccessibilityNodeInfo): Boolean {
-        return douyinPageClassifier.classify(rootNode).kind == DouyinPageKind.GROUPBUY_HOME
+        return isUsableDouyinGroupBuySnapshot(douyinPageClassifier.classify(rootNode))
     }
 
     private fun isLikelyDouyinHomePage(rootNode: AccessibilityNodeInfo): Boolean {
@@ -1335,8 +1379,10 @@ class SearchController(
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
-                    val kind = douyinPageClassifier.classify(rootNode).kind
-                    if (kind == DouyinPageKind.GROUPBUY_HOME) {
+                    val snapshot = douyinPageClassifier.classify(rootNode)
+                    if (isUsableDouyinGroupBuySnapshot(snapshot) &&
+                        snapshot.kind != DouyinPageKind.GROUPBUY_SEARCH_INPUT
+                    ) {
                         return true
                     }
                 } finally {
@@ -1360,7 +1406,8 @@ class SearchController(
             if (!scrolled) {
                 return@repeat
             }
-            if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+            val snapshot = getCurrentDouyinPageSnapshot()
+            if (snapshot == null || !isUsableDouyinGroupBuySnapshot(snapshot)) {
                 Log.e(TAG, "Douyin group-buy page drifted after downward pre-search settle scroll=${round + 1}")
                 return false
             }
@@ -1373,7 +1420,8 @@ class SearchController(
             if (!scrolled) {
                 return@repeat
             }
-            if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+            val snapshot = getCurrentDouyinPageSnapshot()
+            if (snapshot == null || !isUsableDouyinGroupBuySnapshot(snapshot)) {
                 Log.e(TAG, "Douyin group-buy page drifted after upward pre-search restore scroll=${round + 1}")
                 return false
             }
@@ -1382,7 +1430,8 @@ class SearchController(
 
         // Let transient live-reminder overlays dismiss themselves before opening search.
         Thread.sleep(DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS)
-        if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+        val snapshot = getCurrentDouyinPageSnapshot()
+        if (snapshot == null || !isUsableDouyinGroupBuySnapshot(snapshot)) {
             Log.e(TAG, "Douyin group-buy page not preserved after live-reminder wait")
             return false
         }
@@ -1406,8 +1455,11 @@ class SearchController(
             if (pageSnapshot.kind == DouyinPageKind.GROUPBUY_SEARCH_INPUT) {
                 return true
             }
-            if (pageSnapshot.kind != DouyinPageKind.GROUPBUY_HOME) {
-                Log.w(TAG, "Skip Douyin group buy search entry tap: current page is not group-buy home")
+            if (!isUsableDouyinGroupBuySnapshot(pageSnapshot)) {
+                Log.w(
+                    TAG,
+                    "Skip Douyin group buy search entry tap: current page is not a usable group-buy state, snapshot=${describeDouyinSnapshot(pageSnapshot)}"
+                )
                 return false
             }
 
@@ -1521,10 +1573,12 @@ class SearchController(
 
     private fun waitForDouyinMerchantResultPage(merchantName: String, timeoutMs: Long): Boolean {
         val startAt = System.currentTimeMillis()
+        var lastSnapshot: DouyinPageSnapshot? = null
         while (System.currentTimeMillis() - startAt < timeoutMs) {
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
+                    lastSnapshot = douyinPageClassifier.classify(rootNode, merchantName)
                     if (isLikelyDouyinMerchantResultPage(rootNode, merchantName)) {
                         return true
                     }
@@ -1533,6 +1587,9 @@ class SearchController(
                 }
             }
             Thread.sleep(300)
+        }
+        if (lastSnapshot != null) {
+            Log.d(TAG, "Douyin merchant result timeout snapshot: ${describeDouyinSnapshot(lastSnapshot!!)}")
         }
         return false
     }
@@ -1543,6 +1600,12 @@ class SearchController(
     ): Boolean {
         val snapshot = douyinPageClassifier.classify(rootNode, merchantName)
         if (snapshot.kind == DouyinPageKind.MERCHANT_RESULT_LIST) {
+            return true
+        }
+        if (snapshot.signals.hasMerchantNodeForTarget &&
+            snapshot.signals.hasSearchResultTabCluster &&
+            !snapshot.signals.hasMerchantBottomActionBar
+        ) {
             return true
         }
 
@@ -1594,7 +1657,7 @@ class SearchController(
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = normalizeText(getComparableNodeText(node))
                 text.isNotBlank() &&
-                    bounds.top in 360..1800 &&
+                    bounds.top in 180..2200 &&
                     (
                         text.contains(normalizedTarget) || normalizedTarget.contains(text)
                     )
@@ -1669,8 +1732,8 @@ class SearchController(
         merchantEntryBand?.getBoundsInScreen(entryBandBounds)
         merchantEntryBand?.recycle()
         val hasEntryBand = !entryBandBounds.isEmpty
-        val entryBandInPrimaryZone = hasEntryBand && entryBandBounds.top in 420..1400
-        val entryBandTooLow = hasEntryBand && entryBandBounds.top >= 1800
+        val entryBandInPrimaryZone = hasEntryBand && entryBandBounds.top in 220..1500
+        val entryBandTooLow = hasEntryBand && entryBandBounds.top >= 2100
         val hasProductContext = MERCHANT_RESULT_PRODUCT_HINTS.any { hint ->
             contextText.contains(hint, ignoreCase = true)
         }
@@ -1723,7 +1786,7 @@ class SearchController(
             score += 140
         } else if (entryBandTooLow) {
             score -= 260
-        } else if (bounds.top in 420..1200) {
+        } else if (bounds.top in 220..1400) {
             score += 35
         } else {
             score -= 120
