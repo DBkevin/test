@@ -86,6 +86,14 @@ internal class DouyinPageClassifier(
             ) {
                 return DouyinPageKind.GROUPBUY_SEARCH_INPUT
             }
+            if (signals.hasBottomHomeTab &&
+                !signals.hasSelectedGroupBuyTab &&
+                !signals.hasMerchantBottomActionBar &&
+                !signals.hasMerchantCommerceSignal &&
+                (signals.hasSelectedRecommendationTab || signals.hasTopSearchButton)
+            ) {
+                return DouyinPageKind.HOME_FEED
+            }
             if (signals.hasRecommendationSignal) {
                 return DouyinPageKind.RECOMMENDATION
             }
