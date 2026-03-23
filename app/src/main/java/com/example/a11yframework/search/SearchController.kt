@@ -2141,16 +2141,17 @@ class SearchController(
             rootNode,
             condition = { node: AccessibilityNodeInfo ->
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val isInlineKeywordNode = isDouyinInlineKeywordEntryNode(viewId)
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val nodeText = getComparableNodeText(node)
-                !isLikelySearchInput(node) &&
+                (!isLikelySearchInput(node) || isInlineKeywordNode) &&
                     isRectUsable(bounds) &&
                     overlaps(bounds, DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT) &&
                     bounds.left >= DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT.left - 40 &&
                     bounds.right <= DOUYIN_GROUPBUY_INLINE_KEYWORD_ENTRY_TAP_RECT.right + 40 &&
                     bounds.top in 280..460 &&
                     (
-                        viewId.contains("et_search_kw") ||
+                        isInlineKeywordNode ||
                             DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
                                 nodeText.contains(hint, ignoreCase = true)
                             }
@@ -2256,13 +2257,14 @@ class SearchController(
             rootNode,
             condition = { node: AccessibilityNodeInfo ->
                 val viewId = node.viewIdResourceName?.lowercase().orEmpty()
+                val isInlineKeywordNode = isDouyinInlineKeywordEntryNode(viewId)
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val nodeText = getComparableNodeText(node)
-                !isLikelySearchInput(node) &&
+                (!isLikelySearchInput(node) || isInlineKeywordNode) &&
                     isRectUsable(bounds) &&
                     overlaps(bounds, DOUYIN_GROUPBUY_SEARCH_ENTRY_TAP_RECT) &&
                     (
-                        viewId.contains("et_search_kw") ||
+                        isInlineKeywordNode ||
                             DOUYIN_GROUPBUY_SEARCH_ENTRY_HINTS.any { hint ->
                                 nodeText.contains(hint, ignoreCase = true)
                             }
@@ -2276,13 +2278,14 @@ class SearchController(
         val hasInlineKeywordEntry = NodeUtils.findNodeByCondition(
             rootNode,
             condition = { node ->
+                val viewId = node.viewIdResourceName?.lowercase().orEmpty()
                 val bounds = Rect().also { node.getBoundsInScreen(it) }
                 val text = getComparableNodeText(node)
                 isRectUsable(bounds) &&
                     overlaps(bounds, DOUYIN_GROUPBUY_INLINE_SEARCH_BAR_RECT) &&
-                    !isLikelySearchInput(node) &&
+                    (!isLikelySearchInput(node) || isDouyinInlineKeywordEntryNode(viewId)) &&
                     (
-                        node.viewIdResourceName?.lowercase()?.contains("et_search_kw") == true ||
+                        isDouyinInlineKeywordEntryNode(viewId) ||
                             text.contains("搜索", ignoreCase = true) ||
                             text.contains("郑州", ignoreCase = true) ||
                             text.contains("美莱", ignoreCase = true)
@@ -2544,6 +2547,10 @@ class SearchController(
             viewId.contains("search_input") ||
             viewId.contains("search_edit") ||
             viewId.contains("search_kw")
+    }
+
+    private fun isDouyinInlineKeywordEntryNode(viewId: String): Boolean {
+        return viewId.contains("et_search_kw")
     }
     
     /**
