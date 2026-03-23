@@ -245,7 +245,10 @@ class SearchController(
         }
 
         if (getCurrentDouyinPageKind(keyword) == DouyinPageKind.GROUPBUY_HOME) {
-            stabilizeDouyinGroupBuyBeforeSearch()
+            if (!stabilizeDouyinGroupBuyBeforeSearch()) {
+                Log.e(TAG, "Abort Douyin search because group-buy page drifted during pre-search stabilization")
+                return false
+            }
         }
 
         val searchEntryOpened = openDouyinGroupBuySearchEntry()
@@ -1345,32 +1348,54 @@ class SearchController(
         return false
     }
 
-    private fun stabilizeDouyinGroupBuyBeforeSearch() {
+    private fun stabilizeDouyinGroupBuyBeforeSearch(): Boolean {
         Log.i(
             TAG,
             "Stabilize Douyin group-buy page before search: down=${DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS}, up=${DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS}, wait=${DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS}ms"
         )
 
         repeat(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS) { round ->
-            val scrolled = scrollCurrentPage(forward = true)
+            val scrolled = scrollDouyinGroupBuyPageWithCenterGesture(forward = true)
             Log.d(TAG, "Douyin pre-search downward settle scroll=${round + 1}, success=$scrolled")
             if (!scrolled) {
                 return@repeat
+            }
+            if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+                Log.e(TAG, "Douyin group-buy page drifted after downward pre-search settle scroll=${round + 1}")
+                return false
             }
             Thread.sleep(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_SETTLE_MS)
         }
 
         repeat(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_ROUNDS) { round ->
-            val scrolled = scrollCurrentPage(forward = false)
+            val scrolled = scrollDouyinGroupBuyPageWithCenterGesture(forward = false)
             Log.d(TAG, "Douyin pre-search upward restore scroll=${round + 1}, success=$scrolled")
             if (!scrolled) {
                 return@repeat
+            }
+            if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+                Log.e(TAG, "Douyin group-buy page drifted after upward pre-search restore scroll=${round + 1}")
+                return false
             }
             Thread.sleep(DOUYIN_GROUPBUY_PRE_SEARCH_SCROLL_SETTLE_MS)
         }
 
         // Let transient live-reminder overlays dismiss themselves before opening search.
         Thread.sleep(DOUYIN_GROUPBUY_LIVE_REMINDER_WAIT_MS)
+        if (getCurrentDouyinPageKind() != DouyinPageKind.GROUPBUY_HOME) {
+            Log.e(TAG, "Douyin group-buy page not preserved after live-reminder wait")
+            return false
+        }
+        return true
+    }
+
+    private fun scrollDouyinGroupBuyPageWithCenterGesture(forward: Boolean): Boolean {
+        // Douyin home/group-buy pages expose large horizontal pagers as scrollable nodes.
+        // For pre-search settling, always use a screen-center vertical swipe to avoid opening
+        // the left drawer or switching horizontal containers by accessibility scroll action.
+        val swiped = swipePage(forward)
+        Log.d(TAG, "Scrolled Douyin group-buy page with center gesture: forward=$forward, success=$swiped")
+        return swiped
     }
 
     private fun openDouyinGroupBuySearchEntry(): Boolean {
