@@ -294,3 +294,28 @@
 今天的详细交接结论见：
 
 - `D:\project\adb\docs\douyin_handoff_2026-03-23.md`
+
+## 十三、2026-03-24 真机结论补充
+
+今天补充确认了 4 条稳定结论：
+
+1. 新 APK 安装后，这台 HyperOS 设备会把无障碍状态清空：
+   - `enabled_accessibility_services = null`
+   - `accessibility_enabled = 0`
+2. 这台设备上，ADB 直写 secure settings 可以真正把服务 bind 起来：
+   - `2026-03-24 11:54:45` 已看到 `Service created`
+   - `2026-03-24 11:54:45` 已看到 `Service connected`
+   - `dumpsys accessibility` 同时看到本服务处于 `Bound services` 和 `Enabled services`
+3. HyperOS 的“手动风险确认”路径也已经固定下来：
+   - `无障碍功能 -> 已下载的应用 -> 智能辅助服务 -> 使用“智能辅助服务”`
+   - 风险页必须先勾选“我已知晓可能存在的风险，并自愿承担可能导致的后果”
+   - 再等待倒计时结束，点击 `确定`
+   - 风险页确认后，设置页内可能出现一次短暂 `Service destroying -> Service created -> Service connected`
+   - 这次短暂重连发生在设置页切换过程中，和上次进入抖音后被 `SmartPower` 后台解绑不是一回事
+4. 用“手动风险确认后开启”的状态重跑抖音链路时：
+   - 没有再复现 `SmartPower ... service unbind com.example.a11yframework/.core.FrameworkAccessibilityService`
+   - pending capture 正常开始，也正常被清理，不再因为服务中断丢状态
+   - 但最终 `总记录数` 仍然是 `0`
+   - 当前新 blocker 已经收敛为：商家详情页被 `DouyinPlugin` / `PageMatcher` 误判成推荐区，日志表现为
+     - `PageMatcher: 页面匹配失败：商家详情页`
+     - `DouyinPlugin: Detected distance-heavy recommendation section, skip target page`
