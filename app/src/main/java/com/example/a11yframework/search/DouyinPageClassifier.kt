@@ -79,6 +79,19 @@ internal class DouyinPageClassifier(
             "com.ss.android.ugc.aweme.search.activity.SearchResultWithAssignUiModePoiLifeActivity"
         private val DISTANCE_HINT_REGEX = Regex("""\d+(?:\.\d+)?\s*(?:km|m)""", RegexOption.IGNORE_CASE)
 
+        internal fun hasStrongGroupBuyHomeSignals(signals: DouyinPageSignals): Boolean {
+            val hasSearchAnchor =
+                signals.hasTopSearchButton || signals.hasSearchSignal || signals.hasSearchEntryNode
+            val hasGroupBuyHomeContext =
+                signals.hasBottomHomeTab ||
+                    signals.hasGroupBuyKeywordCluster ||
+                    signals.hasSearchEntryNode
+            return signals.hasSelectedGroupBuyTab &&
+                hasSearchAnchor &&
+                hasGroupBuyHomeContext &&
+                !signals.hasMerchantBottomActionBar
+        }
+
         internal fun resolveKind(signals: DouyinPageSignals): DouyinPageKind {
             if (signals.hasSearchInput &&
                 signals.hasSearchSubmitButton &&
@@ -96,6 +109,9 @@ internal class DouyinPageClassifier(
                 (signals.hasSelectedRecommendationTab || signals.hasTopSearchButton)
             ) {
                 return DouyinPageKind.HOME_FEED
+            }
+            if (hasStrongGroupBuyHomeSignals(signals) && !signals.hasRecommendationSignal) {
+                return DouyinPageKind.GROUPBUY_HOME
             }
             if (signals.hasRecommendationSignal) {
                 return DouyinPageKind.RECOMMENDATION
@@ -115,19 +131,9 @@ internal class DouyinPageClassifier(
             ) {
                 return DouyinPageKind.MERCHANT_TAIL
             }
-            if (signals.hasSelectedGroupBuyTab &&
-                (signals.hasTopSearchButton || signals.hasSearchSignal || signals.hasSearchEntryNode) &&
-                (signals.hasLocationSignal || signals.hasBottomHomeTab || signals.hasGroupBuyKeywordCluster || signals.hasSearchEntryNode) &&
+            if (hasStrongGroupBuyHomeSignals(signals) &&
                 !signals.hasSearchResultTabCluster &&
-                !signals.hasMerchantBottomActionBar
-            ) {
-                return DouyinPageKind.GROUPBUY_HOME
-            }
-            if (signals.hasSelectedGroupBuyTab &&
-                signals.hasTopSearchButton &&
-                (signals.hasSearchSignal || signals.hasSearchEntryNode) &&
-                !signals.hasSearchResultTabCluster &&
-                !signals.hasMerchantBottomActionBar
+                !signals.hasRecommendationSignal
             ) {
                 return DouyinPageKind.GROUPBUY_HOME
             }

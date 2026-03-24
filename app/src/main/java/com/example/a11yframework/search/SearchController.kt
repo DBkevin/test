@@ -759,14 +759,7 @@ class SearchController(
         }
 
         val signals = snapshot.signals
-        val hasInlineEntryAnchor = signals.hasSearchEntryNode && !signals.hasSearchInput
-        val hasGroupBuyChrome = signals.hasSelectedGroupBuyTab || hasInlineEntryAnchor
-        return hasGroupBuyChrome &&
-            (signals.hasTopSearchButton || signals.hasSearchSignal || hasInlineEntryAnchor) &&
-            !signals.hasMerchantBottomActionBar &&
-            !signals.hasMerchantCommerceSignal &&
-            !signals.hasMerchantResultSignals &&
-            !signals.hasSearchResultTabCluster &&
+        return DouyinPageClassifier.hasStrongGroupBuyHomeSignals(signals) &&
             !signals.hasRecommendationSignal
     }
 
@@ -1362,11 +1355,13 @@ class SearchController(
 
     private fun waitForDouyinGroupBuyPage(timeoutMs: Long): Boolean {
         val startAt = System.currentTimeMillis()
+        var lastSnapshot: DouyinPageSnapshot? = null
         while (System.currentTimeMillis() - startAt < timeoutMs) {
             val rootNode = service.rootInActiveWindow
             if (rootNode != null) {
                 try {
                     val snapshot = douyinPageClassifier.classify(rootNode)
+                    lastSnapshot = snapshot
                     if (isUsableDouyinGroupBuySnapshot(snapshot) &&
                         snapshot.kind != DouyinPageKind.GROUPBUY_SEARCH_INPUT
                     ) {
@@ -1377,6 +1372,9 @@ class SearchController(
                 }
             }
             Thread.sleep(300)
+        }
+        if (lastSnapshot != null) {
+            Log.d(TAG, "Douyin group-buy wait timeout snapshot: ${describeDouyinSnapshot(lastSnapshot!!)}")
         }
         return false
     }
