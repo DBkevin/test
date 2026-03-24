@@ -24,6 +24,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 /**
@@ -312,6 +314,9 @@ class FrameworkAccessibilityService : AccessibilityService() {
     
     override fun onDestroy() {
         Log.i(TAG, "Service destroying")
+        if (captureCoordinator.hasActiveCapture()) {
+            Log.i(TAG, "Service destroying during active local capture, keep pending state for reconnect resume")
+        }
         captureCoordinator.cancelActiveCapture("service destroyed")
         serviceScope.cancel()
         pluginManager.getAllPlugins().forEach { it.cleanup() }
@@ -435,6 +440,9 @@ class FrameworkAccessibilityService : AccessibilityService() {
                     task = task,
                     launchTargetApp = pendingCapture.launchTargetApp
                 )
+                if (!result.success) {
+                    currentCoroutineContext().ensureActive()
+                }
                 clearPendingLocalCapture()
                 onCompleted?.let { callback ->
                     Handler(Looper.getMainLooper()).post {

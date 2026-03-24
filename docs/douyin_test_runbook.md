@@ -164,13 +164,28 @@
 ## 五、每轮测试的执行顺序
 
 1. 先看当前 APK 是否是最新云编译产物
-2. 第 1 轮必须从抖音冷启动开始跑
-3. 第 1 轮结束后，再强制冷启动抖音，完整跑第 2 轮
-4. 每一轮都要单独保留点击轨迹，不能只留最终截图
-5. 先看当前页面是否符合 runbook 的前置页面
-6. 只在前置页面成立时才执行固定点位
-7. 每次路径跑通后，先留一张截图和一份 XML
-8. 如果路径跑偏，先记录“从哪一步开始偏”，不要继续在错误页面上补点位
+2. 只要换成新的 APK，一律先走固定安装流程，不走覆盖安装捷径：
+   - `adb uninstall com.example.a11yframework`
+   - `adb install <latest-ci-apk>`
+   - `adb shell settings --user 0 put secure enabled_accessibility_services com.example.a11yframework/com.example.a11yframework.core.FrameworkAccessibilityService`
+   - `adb shell settings --user 0 put secure accessibility_enabled 1`
+3. 安装后立刻回读确认无障碍服务状态：
+   - `adb shell settings --user 0 get secure enabled_accessibility_services`
+   - `adb shell settings --user 0 get secure accessibility_enabled`
+   - 必要时再看 `adb shell dumpsys accessibility`
+4. 第 1 轮必须从抖音冷启动开始跑
+5. 第 1 轮结束后，再强制冷启动抖音，完整跑第 2 轮
+6. 每一轮都要单独保留点击轨迹，不能只留最终截图
+7. 先看当前页面是否符合 runbook 的前置页面
+8. 只在前置页面成立时才执行固定点位
+9. 每次路径跑通后，先留一张截图和一份 XML
+10. 如果路径跑偏，先记录“从哪一步开始偏”，不要继续在错误页面上补点位
+
+补充纪律：
+
+- “新的 APK”默认都要先卸载旧包再安装，避免签名不一致和旧状态残留。
+- 不要假设安装新包后无障碍服务会自动恢复；每次都由 ADB 显式拉起并验证。
+- 如果设备对 ADB 安装弹 `INSTALL_FAILED_USER_RESTRICTED`，先处理系统安装校验，再继续本轮验证。
 
 ### 5.1 新列表页/新边界的处理方法
 
