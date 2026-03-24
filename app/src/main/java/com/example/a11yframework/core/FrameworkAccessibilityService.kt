@@ -16,7 +16,6 @@ import com.example.a11yframework.config.ConfigManager
 import com.example.a11yframework.data.DataStore
 import com.example.a11yframework.plugins.MeituanPlugin
 import com.example.a11yframework.plugins.DouyinPlugin
-import com.example.a11yframework.remote.RemoteCommandManager
 import com.example.a11yframework.remote.HospitalTask
 import com.example.a11yframework.remote.TaskStatus
 import com.example.a11yframework.rule.engine.RuleEngine
@@ -47,7 +46,6 @@ class FrameworkAccessibilityService : AccessibilityService() {
     val appPluginManager by lazy { AppPluginManager(this) }
     private val pluginManager = PluginManager()
     private val captureCoordinator by lazy { CaptureCoordinator(this) }
-    private val remoteCommandManager by lazy { RemoteCommandManager(this) }
     private val ruleEngine by lazy { RuleEngine(this) }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
@@ -117,7 +115,7 @@ class FrameworkAccessibilityService : AccessibilityService() {
 
             Log.i(TAG, "Rule engine ready, loaded ${ruleEngine.getRuleCount()} rules")
             resumePendingLocalCaptureIfNeeded()
-            setupRemoteCommandFlow()
+            Log.i(TAG, "Remote command flow disabled; service running in local capture mode")
         } catch (e: Exception) {
             Log.e(TAG, "Error in onServiceConnected", e)
         }
@@ -315,7 +313,6 @@ class FrameworkAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         Log.i(TAG, "Service destroying")
         captureCoordinator.cancelActiveCapture("service destroyed")
-        remoteCommandManager.stopPolling()
         serviceScope.cancel()
         pluginManager.getAllPlugins().forEach { it.cleanup() }
         instance = null
@@ -326,16 +323,6 @@ class FrameworkAccessibilityService : AccessibilityService() {
         // 旧版 Kotlin 插件仍保留为兼容兜底。
         pluginManager.registerPlugin(MeituanPlugin())
         pluginManager.registerPlugin(DouyinPlugin())
-    }
-
-    private fun setupRemoteCommandFlow() {
-        remoteCommandManager.taskExecutor = { task ->
-            captureCoordinator.executeTask(task)
-        }
-        remoteCommandManager.onExecutionStopped = {
-            captureCoordinator.cancelActiveCapture("remote stop command")
-        }
-        remoteCommandManager.startPolling()
     }
 
     fun launchTargetApp(packageName: String): Boolean {

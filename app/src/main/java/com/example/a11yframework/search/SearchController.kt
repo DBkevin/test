@@ -53,16 +53,6 @@ class SearchController(
         private const val SEARCH_RETRY_DELAY_MS = 700L
         private const val MERCHANT_RESULT_OPEN_TIMEOUT_MS = 4200L
         private const val MERCHANT_RESULT_OPEN_GRACE_MS = 1500L
-        private const val DOUYIN_GROUPBUY_TAB_TAP_X = 1016
-        private const val DOUYIN_GROUPBUY_TAB_TAP_Y = 216
-        private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X = 177
-        private const val DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y = 392
-        private const val DOUYIN_SEARCH_SUBMIT_TAP_X = 1331
-        private const val DOUYIN_SEARCH_SUBMIT_TAP_Y = 215
-        private const val DOUYIN_HOME_BOTTOM_TAB_TAP_X = 113
-        private const val DOUYIN_HOME_BOTTOM_TAB_TAP_Y = 3020
-        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_X = 823
-        private const val DOUYIN_MERCHANT_ENTRY_BAND_TAP_Y = 516
         private const val DOUYIN_GROUPBUY_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_INPUT_WAIT_TIMEOUT_MS = 4_000L
         private const val DOUYIN_SEARCH_RESULT_WAIT_TIMEOUT_MS = 7_000L
@@ -1366,11 +1356,8 @@ class SearchController(
             }
         }
 
-        return tapScreen(
-            DOUYIN_HOME_BOTTOM_TAB_TAP_X,
-            DOUYIN_HOME_BOTTOM_TAB_TAP_Y,
-            "douyin_home_bottom_tab_preset"
-        )
+        Log.w(TAG, "Abort Douyin home bottom tab tap because no stable home tab node was resolved")
+        return false
     }
 
     private fun waitForDouyinGroupBuyPage(timeoutMs: Long): Boolean {
@@ -2047,18 +2034,13 @@ class SearchController(
             rootNode.recycle()
         }
 
-        val presetTapped = tapScreen(
-            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_X,
-            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_Y,
-            "douyin_merchant_groupbuy_tab_point_fallback"
+        val rectTapped = tapRect(
+            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT,
+            "douyin_merchant_groupbuy_tab_rect",
+            horizontalBias = 0.42f,
+            verticalBias = 0.52f
         )
-        if (!presetTapped && !tapRect(
-                DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT,
-                "douyin_merchant_groupbuy_tab_rect",
-                horizontalBias = 0.42f,
-                verticalBias = 0.52f
-            )
-        ) {
+        if (!rectTapped) {
             return false
         }
 
