@@ -68,9 +68,6 @@ class DouyinPlugin : IAccessibilityPlugin {
             "预约到店专属礼",
             "用户评价"
         )
-        private val BOTTOM_ACTION_BAR_HINTS = listOf("医疗美容", "订单", "预约有礼", "在线咨询")
-        private val DISTANCE_HINT_REGEX = Regex("""\d+(?:\.\d+)?\s*(?:km|m)""", RegexOption.IGNORE_CASE)
-
         private val TITLE_REGEX = Regex(
             """^(.*?)(?=,(?:周|至少提前|随时退|原价|现价|已售|[0-9A-Za-z+\-千wW万]+\s*人逛过|次卡|放心付|券后|周末节假日通用|预约|可用)|$)"""
         )
@@ -203,11 +200,6 @@ class DouyinPlugin : IAccessibilityPlugin {
             maxNodes = 520,
             maxTextLength = 10000
         )
-        if (isLikelyRecommendationSection(pageText)) {
-            Log.d(TAG, "Detected hard non-groupbuy module, skip target page")
-            return false
-        }
-
         val visibleCards = findVisibleGroupBuyCards(nodeInfo)
         val signalCount = SHOP_PAGE_SIGNALS.count { signal ->
             pageText.contains(signal, ignoreCase = true)
@@ -219,17 +211,16 @@ class DouyinPlugin : IAccessibilityPlugin {
         val hasConfiguredKeyword = keywords.any { keyword ->
             pageText.contains(keyword, ignoreCase = true)
         }
-        val hasDistanceRecommendationSignal = DISTANCE_HINT_REGEX.findAll(pageText).take(3).count() >= 2
-        if (hasDistanceRecommendationSignal && !hasTailSignals) {
-            Log.d(TAG, "Detected distance-heavy recommendation section, skip target page")
-            return false
-        }
-
         val hasMerchantContext =
             merchantName.isNotBlank() ||
                 signalCount >= 2 ||
                 (signalCount >= 1 && visibleCards.isNotEmpty()) ||
                 (hasTailSignals && visibleCards.isNotEmpty())
+        if (isLikelyRecommendationSection(pageText) && !hasMerchantContext && !hasConfiguredKeyword) {
+            Log.d(TAG, "Detected hard non-groupbuy module without merchant context, skip target page")
+            return false
+        }
+
         val isTarget = visibleCards.isNotEmpty() && (hasMerchantContext || hasConfiguredKeyword)
         if (isTarget) {
             Log.i(
@@ -361,16 +352,7 @@ class DouyinPlugin : IAccessibilityPlugin {
     }
 
     private fun isLikelyRecommendationSection(pageText: String): Boolean {
-        if (containsHardNonGroupBuyModule(pageText)) {
-            return true
-        }
-
-        val hasBottomActionBar = BOTTOM_ACTION_BAR_HINTS.all { hint ->
-            pageText.contains(hint, ignoreCase = true)
-        }
-        val hasDistanceRecommendationSignal =
-            DISTANCE_HINT_REGEX.findAll(pageText).take(3).count() >= 2
-        return hasBottomActionBar && hasDistanceRecommendationSignal
+        return containsHardNonGroupBuyModule(pageText)
     }
 
     private fun containsNonMerchantTextMarker(text: String): Boolean {

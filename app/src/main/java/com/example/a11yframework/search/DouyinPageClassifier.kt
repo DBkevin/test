@@ -113,23 +113,30 @@ internal class DouyinPageClassifier(
             if (hasStrongGroupBuyHomeSignals(signals) && !signals.hasRecommendationSignal) {
                 return DouyinPageKind.GROUPBUY_HOME
             }
-            if (signals.hasRecommendationSignal) {
-                return DouyinPageKind.RECOMMENDATION
-            }
             if (signals.hasMerchantNodeForTarget &&
                 !signals.hasMerchantBottomActionBar &&
                 (signals.hasMerchantResultSignals || signals.hasSearchResultTabCluster)
             ) {
                 return DouyinPageKind.MERCHANT_RESULT_LIST
             }
-            if (signals.hasMerchantHeaderAnchor && signals.hasMerchantBottomActionBar) {
-                return DouyinPageKind.MERCHANT_HOME
+            val inLifePoiActivity =
+                signals.currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true)
+            val hasMerchantDetailContext =
+                signals.hasMerchantBottomActionBar &&
+                    (
+                        signals.hasMerchantHeaderAnchor ||
+                            (signals.hasMerchantNodeForTarget && signals.hasMerchantCommerceSignal) ||
+                            (inLifePoiActivity && signals.hasMerchantCommerceSignal)
+                        )
+            if (hasMerchantDetailContext) {
+                return if (signals.hasMerchantTailSignal) {
+                    DouyinPageKind.MERCHANT_TAIL
+                } else {
+                    DouyinPageKind.MERCHANT_HOME
+                }
             }
-            if (signals.hasMerchantBottomActionBar &&
-                signals.hasMerchantTailSignal &&
-                signals.hasMerchantCommerceSignal
-            ) {
-                return DouyinPageKind.MERCHANT_TAIL
+            if (signals.hasRecommendationSignal) {
+                return DouyinPageKind.RECOMMENDATION
             }
             if (hasStrongGroupBuyHomeSignals(signals) &&
                 !signals.hasSearchResultTabCluster &&
@@ -344,13 +351,7 @@ internal class DouyinPageClassifier(
             hasSelectedRecommendationTab ||
                 RECOMMENDATION_HINTS.any { hint ->
                     pageText.contains(hint, ignoreCase = true)
-                } ||
-                (
-                    hasDistanceRecommendationSignal &&
-                        hasMerchantBottomActionBar &&
-                        !hasMerchantHeaderAnchor &&
-                        !hasMerchantTailSignal
-                    )
+                }
 
         return DouyinPageSignals(
             pageText = pageText,
