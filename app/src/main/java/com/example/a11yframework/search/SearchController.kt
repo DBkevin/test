@@ -1992,6 +1992,10 @@ class SearchController(
             if (snapshot.kind == DouyinPageKind.MERCHANT_HOME || snapshot.kind == DouyinPageKind.MERCHANT_TAIL) {
                 return true
             }
+            if (hasCollectableMerchantViewport(rootNode, normalizeText(merchantName))) {
+                Log.d(TAG, "Merchant viewport already collectable, skip forcing Douyin group-buy tab")
+                return true
+            }
 
             val groupBuyTabNode = NodeUtils.findNodeByCondition(
                 rootNode,
@@ -2038,18 +2042,8 @@ class SearchController(
             rootNode.recycle()
         }
 
-        val rectTapped = tapRect(
-            DOUYIN_MERCHANT_GROUPBUY_TAB_TAP_RECT,
-            "douyin_merchant_groupbuy_tab_rect",
-            horizontalBias = 0.42f,
-            verticalBias = 0.52f
-        )
-        if (!rectTapped) {
-            return false
-        }
-
-        Thread.sleep(1_000L)
-        return waitForMerchantHomepageAnchors(merchantName, timeoutMs)
+        Log.w(TAG, "Abort forcing Douyin merchant group-buy tab because no stable tab node was resolved")
+        return false
     }
 
     fun dismissDouyinMerchantOverlay(): Boolean {
@@ -2072,6 +2066,9 @@ class SearchController(
             if (rootNode != null) {
                 try {
                     if (hasMerchantHomepageAnchors(rootNode, normalizedTarget)) {
+                        return true
+                    }
+                    if (hasCollectableMerchantViewport(rootNode, normalizedTarget)) {
                         return true
                     }
                 } finally {
@@ -2155,6 +2152,38 @@ class SearchController(
         }
 
         return hasStickyTopBarSignal && hasCommerceSignal
+    }
+
+    private fun hasCollectableMerchantViewport(
+        rootNode: AccessibilityNodeInfo,
+        normalizedTarget: String
+    ): Boolean {
+        if (!hasMerchantBottomActionBarAnchor(rootNode)) {
+            return false
+        }
+
+        val visibleCardCount = countVisibleDouyinMerchantCards(rootNode)
+        if (visibleCardCount <= 0) {
+            return false
+        }
+
+        val currentWindowClassName = (service as? FrameworkAccessibilityService)
+            ?.getCurrentWindowClassName()
+            .orEmpty()
+        val pageText = NodeUtils.getAllNodeText(
+            rootNode,
+            maxDepth = 18,
+            maxNodes = 360,
+            maxTextLength = 5000
+        )
+        val normalizedPageText = normalizeText(pageText)
+        val hasMerchantName = normalizedTarget.isBlank() || normalizedPageText.contains(normalizedTarget)
+        val hasTopSignals = MERCHANT_HOME_TOP_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
+
+        return (hasMerchantName || visibleCardCount >= 2) &&
+            (hasTopSignals || currentWindowClassName.contains(DOUYIN_LIFE_POI_ACTIVITY, ignoreCase = true))
     }
 
     private fun isSafeToTapDouyinGroupBuyTab(rootNode: AccessibilityNodeInfo): Boolean {
