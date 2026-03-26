@@ -278,9 +278,15 @@ class DouyinPlugin : IAccessibilityPlugin {
 
         try {
             val hospitalInfo = extractHospitalInfo(nodeInfo)
-            if (hospitalInfo.hospitalName.isBlank()) {
-                Log.d(TAG, "Merchant name missing, skip capture")
+            val merchantName = hospitalInfo.hospitalName.ifBlank {
+                keywords.firstOrNull()?.trim().orEmpty()
+            }
+            if (merchantName.isBlank()) {
+                Log.d(TAG, "Merchant name missing and no configured keyword fallback, skip capture")
                 return emptyList()
+            }
+            if (hospitalInfo.hospitalName.isBlank()) {
+                Log.d(TAG, "Merchant name missing from detail header, fallback to configured keyword: $merchantName")
             }
 
             val groupBuyList = extractGroupBuyList(nodeInfo)
@@ -290,7 +296,6 @@ class DouyinPlugin : IAccessibilityPlugin {
             }
 
             val results = groupBuyList.map { groupBuy ->
-                val merchantName = hospitalInfo.hospitalName
                 ScrapedData(
                     pluginId = pluginId,
                     pageType = PAGE_HOSPITAL_DETAIL,
@@ -315,12 +320,17 @@ class DouyinPlugin : IAccessibilityPlugin {
                     rawText = groupBuy.rawText,
                     metadata = mapOf(
                         "pageName" to "商家详情页",
-                        "pageSignals" to hospitalInfo.honors
+                        "pageSignals" to hospitalInfo.honors,
+                        "merchantNameSource" to if (hospitalInfo.hospitalName.isBlank()) {
+                            "configured_keyword"
+                        } else {
+                            "detail_header"
+                        }
                     )
                 )
             }
 
-            Log.i(TAG, "Scraped ${results.size} visible cards from ${hospitalInfo.hospitalName}")
+            Log.i(TAG, "Scraped ${results.size} visible cards from $merchantName")
             return results
         } catch (e: Exception) {
             Log.e(TAG, "Error scraping data", e)
