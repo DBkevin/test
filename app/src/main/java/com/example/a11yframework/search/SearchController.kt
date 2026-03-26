@@ -95,9 +95,11 @@ class SearchController(
         )
         private val MERCHANT_DETAIL_PAGE_HINTS = listOf("收藏", "关注", "在线咨询", "预约有礼", "领券抢购")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
-        private val MERCHANT_TAIL_SECTION_HINTS = listOf(
+        private val MERCHANT_EXPAND_SECTION_HINTS = listOf(
             "展开更多",
-            "展开全部",
+            "展开全部"
+        )
+        private val MERCHANT_TAIL_SECTION_HINTS = listOf(
             "收起",
             "预约到店送好礼",
             "预约到店专属礼",
@@ -1960,9 +1962,13 @@ class SearchController(
 
         return try {
             val snapshot = douyinPageClassifier.classify(rootNode)
-            if (snapshot.kind == DouyinPageKind.RECOMMENDATION ||
-                snapshot.kind == DouyinPageKind.MERCHANT_TAIL
-            ) {
+            if (snapshot.kind == DouyinPageKind.RECOMMENDATION) {
+                return true
+            }
+            if (snapshot.signals.hasMerchantExpandSignal && !snapshot.signals.hasMerchantTailSignal) {
+                return false
+            }
+            if (snapshot.kind == DouyinPageKind.MERCHANT_TAIL) {
                 return true
             }
 
@@ -2110,6 +2116,9 @@ class SearchController(
             pageText.contains(hint, ignoreCase = true)
         }
         val hasDetailSignal = detailSignalCount > 0
+        val hasExpandSignal = MERCHANT_EXPAND_SECTION_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
         val hasTailSignal = MERCHANT_TAIL_SECTION_HINTS.any { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
@@ -2137,7 +2146,11 @@ class SearchController(
             return true
         }
 
-        if (hasStickyTopBarSignal && hasBottomActionBar && hasTailSignal && hasCommerceSignal) {
+        if (hasStickyTopBarSignal &&
+            hasBottomActionBar &&
+            (hasTailSignal || hasExpandSignal) &&
+            hasCommerceSignal
+        ) {
             return true
         }
 

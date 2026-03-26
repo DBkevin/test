@@ -37,6 +37,7 @@ internal data class DouyinPageSignals(
     val hasSearchResultTabCluster: Boolean = false,
     val hasMerchantHeaderAnchor: Boolean = false,
     val hasMerchantBottomActionBar: Boolean = false,
+    val hasMerchantExpandSignal: Boolean = false,
     val hasMerchantTailSignal: Boolean = false,
     val hasMerchantCommerceSignal: Boolean = false,
     val hasDistanceRecommendationSignal: Boolean = false,
@@ -57,7 +58,8 @@ internal class DouyinPageClassifier(
         private val GROUPBUY_SEARCH_ENTRY_HINTS = listOf("美莱团购", "郑州", "搜索")
         private val MERCHANT_RESULT_CONTEXT_HINTS = listOf("评价", "回头客", "km", "m", "/人", "人均", "价格优惠")
         private val MERCHANT_HOME_TOP_HINTS = listOf("关注", "回头客", "无隐形消费", "详情", "在线咨询", "电话")
-        private val MERCHANT_TAIL_SECTION_HINTS = listOf("展开更多", "展开全部", "收起", "预约到店送好礼", "预约到店专属礼", "用户评价")
+        private val MERCHANT_EXPAND_SECTION_HINTS = listOf("展开更多", "展开全部")
+        private val MERCHANT_TAIL_SECTION_HINTS = listOf("收起", "预约到店送好礼", "预约到店专属礼", "用户评价")
         private val MERCHANT_DETAIL_CARD_HINTS = listOf(
             "去抢购",
             "领券抢购",
@@ -339,6 +341,9 @@ internal class DouyinPageClassifier(
 
         val hasMerchantHeaderAnchor = hasMerchantHeaderAnchor(rootNode, normalizedTarget)
         val hasMerchantBottomActionBar = hasMerchantBottomActionBarAnchor(rootNode, pageText)
+        val hasMerchantExpandSignal = MERCHANT_EXPAND_SECTION_HINTS.any { hint ->
+            pageText.contains(hint, ignoreCase = true)
+        }
         val hasMerchantTailSignal = MERCHANT_TAIL_SECTION_HINTS.any { hint ->
             pageText.contains(hint, ignoreCase = true)
         }
@@ -373,6 +378,7 @@ internal class DouyinPageClassifier(
             hasSearchResultTabCluster = hasSearchResultTabCluster,
             hasMerchantHeaderAnchor = hasMerchantHeaderAnchor,
             hasMerchantBottomActionBar = hasMerchantBottomActionBar,
+            hasMerchantExpandSignal = hasMerchantExpandSignal,
             hasMerchantTailSignal = hasMerchantTailSignal,
             hasMerchantCommerceSignal = hasMerchantCommerceSignal,
             hasDistanceRecommendationSignal = hasDistanceRecommendationSignal,
