@@ -25,4 +25,31 @@ class DouyinPluginParsingTest {
 
         assertEquals("BB长效水光B润致娃娃针2ml", normalized)
     }
+
+    @Test
+    fun `normalize merchant label strips merchant header actions`() {
+        val normalized = DouyinPlugin.normalizeMerchantLabel(
+            "郑州美莱医疗美容医院 关注 回头客1千+ 无隐形消费"
+        )
+
+        assertEquals("郑州美莱医疗美容医院", normalized)
+    }
+
+    @Test
+    fun `normalize merchant label strips tab suffix`() {
+        val normalized = DouyinPlugin.normalizeMerchantLabel(
+            "郑州美莱医疗美容医院团购 服务 评价 推荐"
+        )
+
+        assertEquals("郑州美莱医疗美容医院", normalized)
+    }
+
+    @Test
+    fun `normalize merchant label keeps service center names`() {
+        val normalized = DouyinPlugin.normalizeMerchantLabel(
+            "郑州美莱生活美容服务中心"
+        )
+
+        assertEquals("郑州美莱生活美容服务中心", normalized)
+    }
 }

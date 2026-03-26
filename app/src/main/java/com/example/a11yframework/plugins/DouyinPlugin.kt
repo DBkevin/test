@@ -42,6 +42,24 @@ class DouyinPlugin : IAccessibilityPlugin {
             "预约到店专属礼",
             "专属礼"
         ) + HARD_NON_GROUPBUY_MODULE_MARKERS
+        private val MERCHANT_NAME_STOP_MARKERS = listOf(
+            "关注",
+            "收藏",
+            "回头客",
+            "无隐形消费",
+            "在线咨询",
+            "电话",
+            "团购",
+            "领券抢购",
+            "已售",
+            "原价",
+            "现价",
+            "搜索",
+            "返回",
+            "展开更多",
+            "展开全部",
+            "收起"
+        )
         private val CARD_HINT_KEYWORDS = listOf(
             "现价",
             "原价",
@@ -95,6 +113,24 @@ class DouyinPlugin : IAccessibilityPlugin {
                 .trim()
         }
 
+        internal fun normalizeMerchantLabel(text: String): String {
+            val normalized = normalizeCardText(text)
+            if (normalized.isBlank()) {
+                return ""
+            }
+
+            val cutIndex = MERCHANT_NAME_STOP_MARKERS
+                .mapNotNull { marker ->
+                    normalized.indexOf(marker).takeIf { it > 0 }
+                }
+                .minOrNull()
+                ?: normalized.length
+
+            return normalized
+                .substring(0, cutIndex)
+                .trim(' ', ',', '，', '|', '｜', '·', '•')
+        }
+
         internal fun parseGroupBuyCardText(cardText: String): ParsedCard? {
             val normalized = normalizeCardText(cardText)
             if (normalized.isBlank()) return null
@@ -146,6 +182,12 @@ class DouyinPlugin : IAccessibilityPlugin {
         val originalPrice: String = "",
         val sales: String = "",
         val rawText: String = ""
+    )
+
+    private data class MerchantCandidate(
+        val name: String,
+        val top: Int,
+        val score: Int
     )
 
     private var service: AccessibilityService? = null
@@ -317,32 +359,85 @@ class DouyinPlugin : IAccessibilityPlugin {
             .map { nodeTop(it) }
             .minOrNull()
             ?: Int.MAX_VALUE
+        val titleBottomLimit = if (firstCardTop == Int.MAX_VALUE) 1800 else firstCardTop - 24
+        val keywordHints = keywords
+            .map(::normalizeMerchantLabel)
+            .filter { it.isNotBlank() }
 
         val candidates = NodeUtils.findNodesByCondition(rootNode, { node ->
-            val label = NodeUtils.getNodeText(node)
+            val rawLabel = normalizeCardText(NodeUtils.getNodeText(node))
+            if (rawLabel.isBlank()) return@findNodesByCondition false
+            if (rawLabel.contains("现价") || rawLabel.contains("已售")) return@findNodesByCondition false
+            if (containsNonMerchantTextMarker(rawLabel)) return@findNodesByCondition false
+
+            val label = normalizeMerchantLabel(rawLabel)
             if (label.isBlank()) return@findNodesByCondition false
-            if (label.contains("现价") || label.contains("已售")) return@findNodesByCondition false
-            if (containsNonMerchantTextMarker(label)) return@findNodesByCondition false
 
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            rect.top in 300..1400 &&
-                rect.width() >= 400 &&
-                rect.height() <= 220 &&
-                rect.bottom <= firstCardTop - 40 &&
-                HOSPITAL_KEYWORDS.any { keyword -> label.contains(keyword, ignoreCase = true) }
-        }, maxDepth = 24)
-
-        return candidates
-            .map { node ->
-                val rect = Rect().also { node.getBoundsInScreen(it) }
-                rect.top to normalizeCardText(NodeUtils.getNodeText(node))
+            val matchesConfiguredKeyword = keywordHints.any { keyword ->
+                label.contains(keyword, ignoreCase = true)
             }
-            .sortedWith(compareBy<Pair<Int, String>> { it.first }.thenByDescending { it.second.length })
-            .map { it.second }
-            .firstOrNull()
-            .orEmpty()
+            val matchesHospitalKeyword = HOSPITAL_KEYWORDS.any { keyword ->
+                label.contains(keyword, ignoreCase = true)
+            }
+
+            rect.top in 350..1700 &&
+                rect.width() >= 280 &&
+                rect.height() <= 260 &&
+                rect.bottom <= titleBottomLimit &&
+                (matchesConfiguredKeyword || matchesHospitalKeyword)
+        }, maxDepth = 32)
+
+        try {
+            val merchantName = candidates
+                .mapNotNull { node ->
+                    val rect = Rect().also { node.getBoundsInScreen(it) }
+                    val label = normalizeMerchantLabel(NodeUtils.getNodeText(node))
+                    if (label.isBlank()) {
+                        return@mapNotNull null
+                    }
+
+                    val matchesConfiguredKeyword = keywordHints.any { keyword ->
+                        label.contains(keyword, ignoreCase = true)
+                    }
+                    val matchesHospitalKeyword = HOSPITAL_KEYWORDS.any { keyword ->
+                        label.contains(keyword, ignoreCase = true)
+                    }
+                    val score =
+                        (if (matchesConfiguredKeyword) 120 else 0) +
+                            (if (matchesHospitalKeyword) 40 else 0) +
+                            (if (rect.top in 450..1100) 18 else 0) +
+                            (if (rect.left <= 120) 12 else 0) +
+                            (if (rect.width() >= 600) 10 else 0) -
+                            (if (label.length < 4) 40 else 0)
+
+                    MerchantCandidate(
+                        name = label,
+                        top = rect.top,
+                        score = score
+                    )
+                }
+                .sortedWith(
+                    compareByDescending<MerchantCandidate> { it.score }
+                        .thenBy { it.top }
+                        .thenByDescending { it.name.length }
+                )
+                .firstOrNull()
+                ?.name
+                .orEmpty()
+
+            if (merchantName.isBlank()) {
+                Log.d(
+                    TAG,
+                    "Merchant title not found: firstCardTop=$firstCardTop, titleBottomLimit=$titleBottomLimit, keywordHints=$keywordHints"
+                )
+            }
+            return merchantName
+        } finally {
+            NodeUtils.recycleNodes(candidates)
+        }
     }
 
     private fun containsHardNonGroupBuyModule(text: String): Boolean {
