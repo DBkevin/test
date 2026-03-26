@@ -18,6 +18,8 @@
 8. 清空搜索框，输入 `郑州美莱`，自动触发搜索或点击 `搜索`
 9. 自动进入商家结果页
 10. 自动点击 `郑州美莱医疗美容医院` 卡片上半部分，进入店铺首页
+11. 如果详情页顶部商家标题没有稳定出现在无障碍树里，也继续抓取当前可见团购卡，并用当前任务医院名回填商家字段
+12. 首屏抓取完成后继续按团购列表向下推进，直到进入 `merchant tail` 或出现 `收起`
 
 补充口径：
 
@@ -124,6 +126,12 @@
   - `预约有礼`
   - `在线咨询`
 
+补充口径：
+
+- 当前这台机型上，商家标题有时不会稳定出现在无障碍文本里。
+- 只要首屏同时出现 `关注 / 回头客 / 无隐形消费` 和可解析团购卡，就继续抓取。
+- 当前代码会允许商家名留空进入抓取，再由 `CaptureCoordinator` 用任务医院名回填 `merchant_name` / `hospital_name` / `search_keyword`。
+
 ### 1.1 店铺页弹窗纪律
 
 - 如果进入店铺页后出现优惠券弹窗，一律优先点击关闭。
@@ -166,7 +174,8 @@
 1. 先看当前 APK 是否是最新云编译产物
 2. 只要换成新的 APK，一律先走固定安装流程，不走覆盖安装捷径：
    - `adb uninstall com.example.a11yframework`
-   - `adb install <latest-ci-apk>`
+   - `adb push <latest-ci-apk> /data/local/tmp/app-debug.apk`
+   - `adb shell pm install -t -r /data/local/tmp/app-debug.apk`
    - `adb shell settings --user 0 put secure enabled_accessibility_services com.example.a11yframework/com.example.a11yframework.core.FrameworkAccessibilityService`
    - `adb shell settings --user 0 put secure accessibility_enabled 1`
 3. 安装后立刻回读确认无障碍服务状态：
@@ -185,6 +194,7 @@
 
 - “新的 APK”默认都要先卸载旧包再安装，避免签名不一致和旧状态残留。
 - 不要假设安装新包后无障碍服务会自动恢复；每次都由 ADB 显式拉起并验证。
+- 如果 HyperOS 拉起 `com.miui.securitycenter/.permcenter.install.AdbInstallActivity`，先在手机上确认安装，再重试同一条 `pm install`。
 - 如果设备对 ADB 安装弹 `INSTALL_FAILED_USER_RESTRICTED`，先处理系统安装校验，再继续本轮验证。
 
 ### 5.1 新列表页/新边界的处理方法
@@ -319,3 +329,50 @@
    - 当前新 blocker 已经收敛为：商家详情页被 `DouyinPlugin` / `PageMatcher` 误判成推荐区，日志表现为
      - `PageMatcher: 页面匹配失败：商家详情页`
      - `DouyinPlugin: Detected distance-heavy recommendation section, skip target page`
+
+## 十四、2026-03-26 真机结论补充
+
+今天把“详情页标题缺失时允许回填并继续抓卡”这版真实跑通了。
+
+本轮固定基线：
+
+- 代码提交：`53e141c`
+- 提交信息：`fix: allow douyin capture without detail title`
+- GitHub Actions run：`23583638231`
+- APK：
+  - `D:\project\adb\ci-apk-23583638231\app-debug.apk`
+
+今天新增确认的稳定结论：
+
+1. HyperOS 上新 APK 的固定装机流程可以收敛为：
+   - `adb uninstall com.example.a11yframework`
+   - `adb push <latest-ci-apk> /data/local/tmp/app-debug.apk`
+   - `adb shell pm install -t -r /data/local/tmp/app-debug.apk`
+   - 安装后再重新写回无障碍 secure settings
+2. 这轮详情页真实进入了：
+   - `2026-03-26 16:07:32` 日志看到 `Window changed to ... LifePoiActivity`
+   - `2026-03-26 16:07:33` 日志看到 `Merchant result opened by entry band tap`
+3. 当前商家详情页里，商家标题依然可能在无障碍树中缺失，但这已经不是 blocker：
+   - `Merchant title not found`
+   - `Merchant name missing from detail header, continue capture and wait for coordinator backfill`
+   - 这两条出现时，仍然能继续抓卡并由 coordinator 回填医院名
+4. 当前成功链路的实际采集结果：
+   - `2026-03-26 16:07:36` 首屏抓到 `5` 条，`total=5`
+   - `2026-03-26 16:07:38` 第二轮补到 `7` 条，`total=7`
+   - `2026-03-26 16:07:44` 命中 `Detected Douyin merchant tail boundary` 后停止采集，并清理 pending
+5. 进入店铺尾部后的这组日志现在应视为“已完成后的正常表现”，不是新的 blocker：
+   - `Detected hard non-groupbuy module without merchant context, skip target page`
+   - `Not a target page, skipping`
+   - 它们对应的是团购列表尾部后的推荐区，不是“又没进商家详情”
+
+今天保留下来的关键取证：
+
+- `D:\project\adb\artifacts\douyin-after-fix-2026-03-26.png`
+- `D:\project\adb\artifacts\douyin-postrun-2026-03-26-v2.png`
+- `D:\project\adb\artifacts\host-before-run-2026-03-26-v2.xml`
+- `D:\project\adb\artifacts\host-after-run-2026-03-26-v2.xml`
+
+补充说明：
+
+- 今天的 `uiautomator dump` 仍可能返回 `ERROR: could not get idle state.`，所以这轮以日志和截图为主要证据。
+- 当前优先级已经从“先跑通”切到“围绕这条已跑通链路继续加固与沉淀”，不要再回到旧的 0 记录问题上重复排查。
