@@ -339,11 +339,13 @@ class SearchController(
     }
 
     private fun clickDouyinDedicatedSearchSubmit(searchBox: AccessibilityNodeInfo?): Boolean {
-        if (!isOnDouyinSearchInputPage()) {
-            return false
-        }
+        val dedicatedSearchInputVisible = isOnDouyinSearchInputPage()
 
-        val submitNode = findDouyinDedicatedSearchSubmitNode()
+        val submitNode = if (dedicatedSearchInputVisible) {
+            findDouyinDedicatedSearchSubmitNode()
+        } else {
+            null
+        }
         try {
             if (submitNode != null) {
                 val tapped = tapNodeCenterWithinRect(
@@ -367,18 +369,24 @@ class SearchController(
             submitNode?.recycle()
         }
 
-        val tapped = tapRect(
-            DOUYIN_SEARCH_SUBMIT_TAP_RECT,
-            "douyin_dedicated_search_submit_rect",
-            horizontalBias = 0.54f,
-            verticalBias = 0.52f
-        )
-        if (tapped) {
-            Log.d(TAG, "Tapped Douyin dedicated search submit button with rect tap")
-            return true
+        if (dedicatedSearchInputVisible) {
+            val tapped = tapRect(
+                DOUYIN_SEARCH_SUBMIT_TAP_RECT,
+                "douyin_dedicated_search_submit_rect",
+                horizontalBias = 0.54f,
+                verticalBias = 0.52f
+            )
+            if (tapped) {
+                Log.d(TAG, "Tapped Douyin dedicated search submit button with rect tap")
+                return true
+            }
         }
 
         if (searchBox != null) {
+            val focused = searchBox.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+            if (focused) {
+                Log.d(TAG, "Focused Douyin dedicated search box before IME submit")
+            }
             val imeResult = searchBox.performAction(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id
             )
@@ -388,6 +396,9 @@ class SearchController(
             }
         }
 
+        if (!dedicatedSearchInputVisible) {
+            Log.w(TAG, "Douyin dedicated search input not visible during submit, submit fallbacks exhausted")
+        }
         return false
     }
 
