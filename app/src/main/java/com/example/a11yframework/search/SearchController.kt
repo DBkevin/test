@@ -71,6 +71,10 @@ class SearchController(
         private const val DOUYIN_TAIL_BAND_MIN_BOTTOM_BAR_OFFSET = 760
         private const val DOUYIN_TAIL_BAND_MAX_BOTTOM_BAR_OFFSET = 1_260
         private const val DOUYIN_ACTION_BAND_BOTTOM_BAR_CLEARANCE = 320
+        private const val DOUYIN_EXPAND_BOTTOM_GAP_MIN_HEIGHT = 80
+        private const val DOUYIN_EXPAND_BOTTOM_GAP_MAX_HEIGHT = 320
+        private const val DOUYIN_EXPAND_BOTTOM_GAP_BOTTOM_BAR_MARGIN = 44
+        private const val DOUYIN_EXPAND_BOTTOM_GAP_SIDE_MARGIN = 280
 
         // 搜索框特征
         private val SEARCH_KEYWORDS = listOf("搜索", "搜索框", "search", "放大镜")
@@ -533,6 +537,15 @@ class SearchController(
         val rootNode = service.rootInActiveWindow ?: return false
 
         try {
+            val douyinSnapshot = douyinPageClassifier.classify(rootNode)
+            if (douyinSnapshot.kind == DouyinPageKind.MERCHANT_HOME ||
+                douyinSnapshot.kind == DouyinPageKind.MERCHANT_TAIL
+            ) {
+                val swiped = swipePage(forward)
+                Log.d(TAG, "Scrolled Douyin merchant page with gesture: $swiped")
+                return swiped
+            }
+
             val scrollableNode = NodeUtils.findNodeByCondition(
                 rootNode,
                 condition = { node: AccessibilityNodeInfo ->
@@ -681,6 +694,9 @@ class SearchController(
             exactMatch = false,
             maxClicks = maxClicks
         )
+        if (expandedCount > 0) {
+            Log.d(TAG, "Expanded Douyin merchant sections by text click: count=$expandedCount")
+        }
         if (expandedCount >= maxClicks) {
             return expandedCount
         }
@@ -691,6 +707,7 @@ class SearchController(
             }
             val label = "douyin_expand_band_r${expandedCount + round}"
             if (!tapDouyinMerchantExpandBand(label)) {
+                Log.d(TAG, "No more Douyin merchant expand bands found after $expandedCount clicks")
                 return expandedCount
             }
             expandedCount++
@@ -2742,7 +2759,9 @@ class SearchController(
             }
 
             beforeCardCount = countVisibleDouyinMerchantCards(rootNode)
-            actionBand = findDouyinMerchantActionBand(rootNode) ?: return false
+            actionBand = findDouyinMerchantActionBand(rootNode)
+                ?: findDouyinMerchantExpandBandByBottomGap(rootNode)
+                ?: return false
             if (actionBand.type != DouyinMerchantActionBandType.EXPAND) {
                 Log.d(
                     TAG,
@@ -2750,6 +2769,10 @@ class SearchController(
                 )
                 return false
             }
+            Log.d(
+                TAG,
+                "Attempt Douyin merchant expand band tap: label=$label, cards=$beforeCardCount, offset=${actionBand.bottomBarOffset}, band=${actionBand.bounds.flattenToString()}"
+            )
         } finally {
             rootNode.recycle()
         }
@@ -2800,7 +2823,7 @@ class SearchController(
 
             val afterBand = findDouyinMerchantActionBand(rootNode)
             if (afterBand == null) {
-                return true
+                return snapshot.signals.hasMerchantTailSignal
             }
             if (afterBand.type == DouyinMerchantActionBandType.TAIL_COLLAPSE) {
                 return true
@@ -2813,6 +2836,46 @@ class SearchController(
             movedEnough && afterCardCount >= beforeCardCount
         } finally {
             rootNode.recycle()
+        }
+    }
+
+    private fun findDouyinMerchantExpandBandByBottomGap(
+        rootNode: AccessibilityNodeInfo
+    ): DouyinMerchantActionBand? {
+        val cardBounds = findVisibleDouyinMerchantCardBounds(rootNode)
+        if (cardBounds.isEmpty()) {
+            return null
+        }
+
+        val bottomBarRect = findMerchantBottomActionBarRect(rootNode) ?: return null
+        val lastCardBottom = cardBounds.maxOf { it.bottom }
+        val metrics = service.resources.displayMetrics
+        val gapTop = lastCardBottom + DOUYIN_EXPAND_CARD_GAP_MIN
+        val gapBottom = bottomBarRect.top - DOUYIN_EXPAND_BOTTOM_GAP_BOTTOM_BAR_MARGIN
+        val gapHeight = gapBottom - gapTop
+        if (gapHeight !in DOUYIN_EXPAND_BOTTOM_GAP_MIN_HEIGHT..DOUYIN_EXPAND_BOTTOM_GAP_MAX_HEIGHT) {
+            return null
+        }
+
+        val bounds = Rect(
+            DOUYIN_EXPAND_BOTTOM_GAP_SIDE_MARGIN,
+            gapTop,
+            metrics.widthPixels - DOUYIN_EXPAND_BOTTOM_GAP_SIDE_MARGIN,
+            gapBottom
+        )
+        if (!isRectUsable(bounds)) {
+            return null
+        }
+
+        return DouyinMerchantActionBand(
+            bounds = bounds,
+            type = DouyinMerchantActionBandType.EXPAND,
+            bottomBarOffset = bottomBarRect.top - bounds.centerY()
+        ).also { band ->
+            Log.d(
+                TAG,
+                "Resolved Douyin expand band by bottom gap: lastCardBottom=$lastCardBottom, gapHeight=$gapHeight, offset=${band.bottomBarOffset}, band=${band.bounds.flattenToString()}"
+            )
         }
     }
 
